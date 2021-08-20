@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#python3 ./list_users.py
+#python3 ./get_user.py <username>
+
+python3 ./create_compute.py sdk-test-xs --size=XS
+python3 ./list_computes.py
+python3 ./list_computes.py --state=PROVISIONED
+python3 ./get_compute.py sdk-test-xs
+
+python3 ./create_database.py sdk-test sdk-test-xs --overwrite
+python3 ./list_databases.py
+python3 ./get_database.py sdk-test
+
+python3 ./install_source.py sdk-test sdk-test-xs hello.rel
+python3 ./list_sources.py sdk-test sdk-test-xs
+python3 ./get_source.py sdk-test sdk-test-xs hello
