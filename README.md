@@ -46,7 +46,7 @@ SDK dependencies:
 $ [sudo] pip install -f requirements.txt
 ```
 
-## Create a configuraiton file
+## Create a configuration file
 
 In order to run the examples and, you will need to create an SDK config file.
 The default location for the file is `$HOME/.rai/config` and the file should
