@@ -224,7 +224,7 @@ def _source(name: str, source: str) -> dict:
 
 # Returns full list of source objects, including source values.
 def _list_sources(ctx: Context, database: str, compute: str) -> dict:
-    tx = Transaction(database, compute, mode="OPEN")
+    tx = Transaction(database, compute, mode=MODE_OPEN)
     rsp = tx.run(ctx, _list_action())
     actions = rsp["actions"]
     assert len(actions) == 1
@@ -251,7 +251,7 @@ def get_source(ctx: Context, database: str, compute: str, name: str) -> str:
 
 
 def install_source(ctx: Context, database: str, compute: str, sources: dict) -> dict:
-    tx = Transaction(database, compute, mode="OPEN", readonly=False)
+    tx = Transaction(database, compute, mode=MODE_OPEN, readonly=False)
     actions = [_install_action(name, source)
                for name, source in sources.items()]
     return tx.run(ctx, *actions)
