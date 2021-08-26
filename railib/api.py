@@ -235,7 +235,6 @@ def _list_sources(ctx: Context, database: str, compute: str) -> dict:
 
 def create_database(ctx: Context, database: str, compute: str,
                     source: str = None, overwrite=False) -> dict:
-    overwrite = True
     mode = _create_mode(source, overwrite)
     tx = Transaction(database, compute, mode=mode, source_database=source)
     return tx.run(ctx)
