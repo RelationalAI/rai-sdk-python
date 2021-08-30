@@ -12,12 +12,6 @@ REST APIs from Python.
 
 ### Installing the SDK
 
-You can install the SDK using pip:
-
-```console
-$ pip install rai-sdk
-```
-
 You can install from sources using pip:
 
 ```console
