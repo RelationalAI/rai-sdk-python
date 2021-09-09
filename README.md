@@ -20,7 +20,7 @@ $ cd rai-sdk-python
 $ [sudo] python setup.py install
 ```
 
-You can install from sources in `editable` mode.
+You can install from sources in `editable` mode. Insteaad of `[sudo] python setup.py install` use:
 
 ```console
 $ [sudo] pip install -e .
