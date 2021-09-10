@@ -204,6 +204,10 @@ def _list_action():
     return {"type": "ListSourceAction"}
 
 
+def _list_edb_action():
+    return {"type": "ListEdbAction"}
+
+
 def _query_action(source: str, name="query", inputs: list = None,
                   outputs: list = None) -> dict:
     return {
@@ -254,6 +258,16 @@ def install_source(ctx: Context, database: str, compute: str, sources: dict) -> 
     actions = [_install_action(name, source)
                for name, source in sources.items()]
     return tx.run(ctx, *actions)
+
+
+def list_edb(ctx: Context, database: str, compute: str) -> list:
+    tx = Transaction(database, compute, mode=MODE_OPEN)
+    rsp = tx.run(ctx, _list_edb_action())
+    actions = rsp["actions"]
+    assert len(actions) == 1
+    action = actions[0]
+    rels = action["result"]["rels"]
+    return rels
 
 
 # Returns a list of source names installed in the given database.

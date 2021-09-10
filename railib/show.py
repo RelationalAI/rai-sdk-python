@@ -69,11 +69,14 @@ def problems(rsp: dict):
         else:
             kind = "warning"  # ?
         print(f"{kind}: {problem['message']}")
+        report = problem.get("report", None)
+        if report:
+            print(report.rstrip())
 
 
 def results(rsp: dict, format="physical"):
     if format == "wire":
-        json.dump(rsp, sys.stdout)
+        json.dump(rsp, sys.stdout, indent=2)
     elif format == "physical":
         _show_rel(rsp)
         problems(rsp)
