@@ -19,18 +19,10 @@ from railib import api
 import config
 
 
-# Reeturns the file basename without extension.
-def _sansext(fname: str) -> str:
-    return path.splitext(path.basename(fname))[0]
-
-
-def run(database: str, compute: str, fname: str):
-    sources = {}
-    with open(fname) as fp:
-        sources[_sansext(fname)] = fp.read()  # source name => source
+def run(database: str, compute: str, source: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.install_source(ctx, database, compute, sources)
+    rsp = api.delete_source(ctx, database, compute, source)
     print(json.dumps(rsp, indent=2))
 
 
@@ -38,6 +30,6 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
     p.add_argument("compute", type=str, help="compute name")
-    p.add_argument("file", type=str, help="source file")
+    p.add_argument("source", type=str, help="source name")
     args = p.parse_args()
-    run(args.database, args.compute, args.file)
+    run(args.database, args.compute, args.source)

@@ -41,4 +41,7 @@ python3 ./list_sources.py sdk-test $COMPUTE
 python3 ./get_source.py sdk-test $COMPUTE hello
 python3 ./list_edb.py sdk-test $COMPUTE
 
-# todo: delete source
+# delete source
+python3 ./list_sources.py sdk-test $COMPUTE
+python3 ./delete_source.py sdk-test $COMPUTE hello
+python3 ./list_sources.py sdk-test $COMPUTE
