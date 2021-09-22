@@ -24,6 +24,7 @@ import config
 # error payload can be retrieved by reading it from the HTTPError object.
 def show_error(e: HTTPError) -> None:
     rsp = json.loads(e.read())
+    print(f"status: {e.status}")
     print(json.dumps(rsp, indent=2))
 
 
