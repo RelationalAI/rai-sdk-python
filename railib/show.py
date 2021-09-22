@@ -57,7 +57,9 @@ def _show_rel(rsp: dict) -> None:
         count += 1
 
 
-def problems(rsp: dict):
+def problems(rsp: dict) -> None:
+    if rsp is None:
+        return
     problems = rsp.get("problems", None)
     if not problems:
         return
@@ -74,7 +76,9 @@ def problems(rsp: dict):
             print(report.rstrip())
 
 
-def results(rsp: dict, format="physical"):
+def results(rsp: dict, format="physical") -> None:
+    if rsp is None:
+        return
     if format == "wire":
         json.dump(rsp, sys.stdout, indent=2)
     elif format == "physical":

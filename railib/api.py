@@ -166,7 +166,6 @@ class Transaction(object):
 
     @property
     def data(self):
-        # can't use __dict__ because we need to control which attrs appears
         result = {
             "abort": self.abort,
             "dbname": self.database,
@@ -191,6 +190,8 @@ class Transaction(object):
             "compute_name": self.compute,
             "open_mode": self.mode,
             "region": ctx.region}
+        if self.source_database:
+            kwargs["source_dbname"] = self.source_database
         url = _mkurl(ctx, PATH_TRANSACTION)
         rsp = rest.post(ctx, url, data, **kwargs)
         return json.loads(rsp)
