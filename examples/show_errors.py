@@ -31,7 +31,6 @@ if __name__ == "__main__":
     try:
         cfg = config.read()
         ctx = api.Context(**cfg)
-        rsp = api.create_compute(
-            ctx, "new-compute", "bad-size")  # generate a 400
+        rsp = api.create_compute(ctx, "new-compute", "bad-size")  # force 400
     except HTTPError as e:
         show_error(e)
