@@ -21,9 +21,11 @@ python3 ./create_database.py sdk-test $COMPUTE --overwrite
 python3 ./list_databases.py
 python3 ./get_database.py sdk-test
 
+# show results, problems and errors
 python3 ./run_query.py sdk-test $COMPUTE "1+1"
 python3 ./show_results.py sdk-test $COMPUTE
 python3 ./show_problems.py sdk-test $COMPUTE
+python3 ./show_errors.py
 
 # install source
 python3 ./install_source.py sdk-test $COMPUTE hello.rel
