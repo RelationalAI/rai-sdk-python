@@ -197,7 +197,11 @@ class Transaction(object):
         return json.loads(rsp)
 
 
-def _install_action(name: str, source: str) -> dict:
+def _delete_source_action(name: str) -> dict:
+    return {"type": "ModifyWorkspaceAction", "delete_source": [name]}
+
+
+def _install_source_action(name: str, source: str) -> dict:
     return {"type": "InstallAction", "sources": [_source(name, source)]}
 
 
@@ -245,6 +249,12 @@ def create_database(ctx: Context, database: str, compute: str,
     return tx.run(ctx)
 
 
+def delete_source(ctx: Context, database: str, compute: str, source: str) -> dict:
+    tx = Transaction(database, compute, mode=MODE_OPEN, readonly=False)
+    actions = [_delete_source_action(source)]
+    return tx.run(ctx, *actions)
+
+
 # Returns the source value for the named source.
 def get_source(ctx: Context, database: str, compute: str, name: str) -> str:
     sources = _list_sources(ctx, database, compute)
@@ -256,7 +266,7 @@ def get_source(ctx: Context, database: str, compute: str, name: str) -> str:
 
 def install_source(ctx: Context, database: str, compute: str, sources: dict) -> dict:
     tx = Transaction(database, compute, mode=MODE_OPEN, readonly=False)
-    actions = [_install_action(name, source)
+    actions = [_install_source_action(name, source)
                for name, source in sources.items()]
     return tx.run(ctx, *actions)
 
