@@ -78,7 +78,7 @@ def _default_headers(url: str, headers: dict) -> None:
     if not _contains_insensitive(headers, "host"):
         headers["Host"] = _gethost(url)
     if not _contains_insensitive(headers, "user-agent"):
-        headers["User-Agent"] = f"rai-cli/{__version__}"
+        headers["User-Agent"] = f"rai-sdk-python/{__version__}"
         # "OpenAPI-Generator/1.0.0/python"
 
 
