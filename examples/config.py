@@ -19,6 +19,8 @@ import json
 import os
 from pathlib import Path
 
+from railib.raiconfig import AccessKeyCredentials, ClientCredentials, RAIConfig
+
 
 def _read_config_profile(fname: str, profile: str) -> dict:
     config = configparser.ConfigParser()
@@ -38,22 +40,61 @@ def _read_pkey(fname: Path):
         return pkey
 
 
+# read - Reads the RAI config along with the credentials.
+# It would first try to read the AccessKeyCredentials, if not found, then it would try reading -
+# the ClientCredentials. AccessKeyCredentials are preferred credentials if both the credentials -
+# are present in the config file. AccessKeyCredentials are supported for backward compatibility.
 def read(fname: str = "~/.rai/config", profile: str = "default"):
     path = Path(fname).expanduser()
     if not path.is_file():
         raise Exception(f"can't find file: {path}")
     data = _read_config_profile(path, profile)
+    # Try reading the AccessKeyCredentials
+    credentials = try_read_access_key_credentials(data, path)
+    if credentials is None:
+        # If AccessKeyCredentials are not found, then try reading ClientCredentials
+        credentials = try_read_client_credentials(data)
+    # Raise exception if no credentials are found
+    if credentials is None:
+        raise Exception("no credentials found in the config")
+
+    # Return the RAIConfig along with the credentials
+    return RAIConfig(
+                data.get("host", "localhost"),
+                data.get("port", "443"),
+                data.get("region", "us-east"),
+                data.get("scheme", "https"), credentials)
+
+
+# try_read_access_key_credentials - Tries to read access key credentials from the config file.
+# Will raise exception if partial credentials are found, for example, access_key is found -
+# but private_key is not present. It will return None if access_key field is not present.
+def try_read_access_key_credentials(data, path: Path):
     akey = data.get("access_key", None)
-    if akey is None:
-        raise Exception("access_key not found in config")
-    fname = data.get("private_key_filename", None)
-    if fname is None:
-        raise Exception("private_key_filename not found in config")
-    pkey = _read_pkey(path.with_name(fname))
-    return {
-        "akey": akey,
-        "pkey": pkey,
-        "host": data["host"],
-        "port": data.get("port", "443"),
-        "region": data.get("region", "us-east"),
-        "scheme": data.get("scheme", "https")}
+    if akey is not None:
+        pk_fname = data.get("private_key_filename", None)
+        if pk_fname is not None:
+            pkey = _read_pkey(path.with_name(pk_fname))
+            return AccessKeyCredentials(akey, pkey)
+        else:
+            raise Exception("private_key_filename not found in the config")
+
+    return None
+
+
+# try_read_client_credentials - Tries to read client credentials from the config file.
+# Will raise exception if partial credentials are found, for example, client_id is found -
+# but client_secret is not found. It will return None if client_id field is not present.
+def try_read_client_credentials(data):
+    client_id = data.get("client_id", None)
+    if client_id is not None:
+        client_secret = data.get("client_secret", None)
+        if client_secret is not None:
+            return ClientCredentials(client_id, client_secret)
+        else:
+            raise Exception("client_secret not found in the config")
+
+    return None
+
+
+

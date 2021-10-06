@@ -21,7 +21,7 @@ import config
 # to the console.
 def run(database: str, compute: str):
     cfg = config.read()
-    ctx = api.Context(**cfg)
+    ctx = api.Context(cfg)
     rsp = api.query(ctx, database, compute, "def output = **nonsense**")
     show.problems(rsp)
 

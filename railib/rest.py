@@ -26,10 +26,22 @@ from urllib.request import HTTPError, Request, urlopen
 
 from .__init__ import __version__
 
-
 __all__ = ["Context", "get", "put", "post", "request"]
 
+from .raiconfig import RAIConfig, ClientCredentials, AccessKeyCredentials
+
 _empty = bytes('', encoding='utf8')
+
+ACCESS_KEY_TOKEN_KEY = "access_token"
+CLIENT_ID_KEY = "client_id"
+CLIENT_SECRET_KEY = "client_secret"
+AUDIENCE_KEY = "audience"
+GRANT_TYPE_KEY = "grant_type"
+CLIENT_CREDENTIALS_KEY = "client_credentials"
+CLIENT_CREDENTIALS_API_URL_PREFIX = "https://login"
+CLIENT_CREDENTIALS_API_URL_POSTFIX = ".relationalai.com/oauth/token"
+CLIENT_CREDENTIALS_API_SCHEME = "https://"
+DEV_ENV_CHAR = "-"
 
 
 def _print_request(req: Request, level=0):
@@ -46,10 +58,8 @@ def _print_request(req: Request, level=0):
 
 # Context contains the state required to make rAI REST API calls.
 class Context(object):
-    def __init__(self, region=None, akey=None, pkey=None):
-        self.region = region
-        self.akey = akey
-        self.pkey = pkey
+    def __init__(self, rai_config: RAIConfig):
+        self.config = rai_config
         self.service = "transaction"
 
 
@@ -108,7 +118,7 @@ def _sign(ctx: Context, req: Request) -> None:
     scope_date = ts.strftime("%Y%m%d")
 
     # Authentication scope
-    scope = f"{scope_date}/{ctx.region}/{ctx.service}/rai01_request"
+    scope = f"{scope_date}/{ctx.config.region}/{ctx.service}/rai01_request"
 
     # SHA256 hash of content
     content = req.data or _empty
@@ -117,9 +127,9 @@ def _sign(ctx: Context, req: Request) -> None:
     # Include "x-rai-date" in signed headers
     req.headers["x-rai-date"] = signature_date
 
-    # Sort and lowercare headers to produce a canonical form
+    # Sort and lowercase headers to produce a canonical form
     canonical_headers = [f"{k.lower()}:{v.strip()}" for k,
-                         v in req.headers.items()]
+                                                        v in req.headers.items()]
     canonical_headers.sort()
 
     h_names = [k.lower() for k in req.headers]
@@ -143,21 +153,31 @@ def _sign(ctx: Context, req: Request) -> None:
         scope,
         canonical_hash)
 
-    seed = base64.b64decode(ctx.pkey)
+    seed = base64.b64decode(ctx.config.credentials.pkey)
     signing_key = ed25519.SigningKey(seed)
     sig = signing_key.sign(string_to_sign.encode("utf-8")).hex()
 
     req.headers["authorization"] = "RAI01-ED25519-SHA256 Credential={}/{}, SignedHeaders={}, Signature={}".format(
-        ctx.akey, scope, signed_headers, sig)
+        ctx.config.credentials.akey, scope, signed_headers, sig)
 
 
+# request - Makes the RAI api request.
+# It will use the provided credentials type to make the request.
+# Currently it takes care of AccessKeyCredentials and ClientCredentials.
+# AccessKeyCredentials are given precedence over the ClientCredentials, for backward compatibility.
 def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs):
     _default_headers(url, headers)
     if kwargs:
         url = f"{url}?{_encode_qs(kwargs)}"
     data = _encode(data)
     req = Request(method=method, url=url, headers=headers, data=data)
-    _sign(ctx, req)
+    if type(ctx.config.credentials) is AccessKeyCredentials:
+        _sign(ctx, req)
+    elif type(ctx.config.credentials) is ClientCredentials:
+        access_token = get_auth_token(ctx.config.credentials, ctx.config.host)
+        req.headers["authorization"] = "Bearer " + access_token
+    else:
+        raise Exception("given type of credentials are not supported")
     _print_request(req)
     with urlopen(req) as rsp:
         return rsp.read()
@@ -177,3 +197,57 @@ def put(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
 
 def post(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
     return request(ctx, "POST", url, headers=headers, data=data, **kwargs)
+
+
+# get_auth_token - Gets the auth token from client credentials api service.
+def get_auth_token(client_credentials: ClientCredentials, audience: str):
+    # normalize the audience or the host field to include the protocol scheme, like https
+    # if the protocol scheme is already there, then it would use the host as-is
+    # otherwise it will prepend the scheme, like https://auzre-ux.relationalai.com
+    normalized_audience = audience
+    if not normalized_audience.startswith(CLIENT_CREDENTIALS_API_SCHEME):
+        normalized_audience = CLIENT_CREDENTIALS_API_SCHEME + audience
+
+    # create the payload for api call to get the client credentials (oauth token)
+    body = {CLIENT_ID_KEY: client_credentials.client_id,
+            CLIENT_SECRET_KEY: client_credentials.client_secret,
+            AUDIENCE_KEY: normalized_audience,
+            GRANT_TYPE_KEY: CLIENT_CREDENTIALS_KEY}
+    data = _encode(body)
+
+    # build the client credentials api url from audidence
+    client_credentials_api_url = build_client_credentials_api_url(audience)
+
+    headers = {}
+    _default_headers(client_credentials_api_url, headers)
+
+    # make POST call to the API to get an oauth token
+    req = Request(method="POST", url=client_credentials_api_url, headers=headers, data=data)
+    with urlopen(req) as rsp:
+        result = json.loads(rsp.read())
+        if result[ACCESS_KEY_TOKEN_KEY]:
+            return result[ACCESS_KEY_TOKEN_KEY]
+
+    raise Exception("failed to get the auth token")
+
+
+# build_auth_token_api_url - Builds the url from audience/host field in the config.
+# If the host has an environment like auzre-ux.relationalai.com, then it extracts the environment,
+# and then build the url by concatenating CLIENT_CREDENTIALS_API_URL_PREFIX and CLIENT_CREDENTIALS_API_URL_POSTFIX
+# like https://login-ux.relationalai.com/oauth/token
+# If there is no environment then it would return the url like https://login.relationalai.com/oauth/token
+def build_client_credentials_api_url(audience: str):
+    environment = None
+
+    dev_env_index = audience.find(DEV_ENV_CHAR)
+    if dev_env_index != -1:
+        dot_index = audience.find(".", dev_env_index + 1)
+        if dot_index != -1:
+            environment = audience[dev_env_index + 1:-(len(audience) - dot_index)]
+        else:
+            environment = audience[dev_env_index + 1]
+    if environment:
+        return "{}{}{}{}".format(CLIENT_CREDENTIALS_API_URL_PREFIX, DEV_ENV_CHAR, environment,
+                                 CLIENT_CREDENTIALS_API_URL_POSTFIX)
+    else:
+        return "{}{}".format(CLIENT_CREDENTIALS_API_URL_PREFIX, CLIENT_CREDENTIALS_API_URL_POSTFIX)

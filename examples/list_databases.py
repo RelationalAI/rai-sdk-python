@@ -19,7 +19,7 @@ import config
 
 def run():
     cfg = config.read()
-    ctx = api.Context(**cfg)
+    ctx = api.Context(cfg)
     rsp = api.list_databases(ctx)
     print(json.dumps(rsp, indent=2))
 

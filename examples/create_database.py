@@ -20,7 +20,7 @@ import config
 
 def run(database: str, compute: str, overwrite: bool):
     cfg = config.read()
-    ctx = api.Context(**cfg)
+    ctx = api.Context(cfg)
     rsp = api.create_database(ctx, database, compute, overwrite=overwrite)
     print(json.dumps(rsp, indent=2))
 

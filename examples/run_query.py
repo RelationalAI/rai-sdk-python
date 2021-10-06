@@ -19,7 +19,7 @@ import config
 
 def run(database: str, compute: str, command: str):
     cfg = config.read()
-    ctx = api.Context(**cfg)
+    ctx = api.Context(cfg)
     rsp = api.query(ctx, database, compute, command)
     show.results(rsp)
 

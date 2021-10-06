@@ -20,7 +20,7 @@ import config
 
 def run(database: str, compute: str):
     cfg = config.read()
-    ctx = api.Context(**cfg)
+    ctx = api.Context(cfg)
     rsp = api.list_sources(ctx, database, compute)
     print(json.dumps(rsp, indent=2))
 

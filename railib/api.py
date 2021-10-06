@@ -41,16 +41,13 @@ MODE_CLONE_OVERWRITE = "CLONE_OVERWRITE"
 
 # Context contains the state required to make rAI API calls.
 class Context(rest.Context):
-    def __init__(self, region=None, scheme=None, host=None, port=None, akey=None, pkey=None):
-        super().__init__(region=region, akey=akey, pkey=pkey)
-        self.scheme = scheme
-        self.host = host
-        self.port = port
+    def __init__(self, rai_config):
+        super().__init__(rai_config)
 
 
-# Cosntruct a URL from the given context and path.
+# Construct a URL from the given context and path.
 def _mkurl(ctx: Context, path: str) -> str:
-    return f"{ctx.scheme}://{ctx.host}:{ctx.port}{path}"
+    return f"{ctx.config.scheme}://{ctx.config.host}:{ctx.config.port}{path}"
 
 
 # Retrieve an individual resource.
@@ -75,7 +72,7 @@ def _list_collection(ctx, path: str, key=None, **kwargs):
 
 def create_compute(ctx: Context, compute: str, size: str):
     data = {
-        "region": ctx.region,
+        "region": ctx.config.region,
         "name": compute,
         "size": str(size)}
     url = _mkurl(ctx, PATH_COMPUTE)
@@ -189,7 +186,7 @@ class Transaction(object):
             "dbname": self.database,
             "compute_name": self.compute,
             "open_mode": self.mode,
-            "region": ctx.region}
+            "region": ctx.config.region}
         if self.source_database:
             kwargs["source_dbname"] = self.source_database
         url = _mkurl(ctx, PATH_TRANSACTION)

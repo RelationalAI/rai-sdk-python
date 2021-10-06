@@ -20,7 +20,7 @@ import config
 
 def run(compute: str):
     cfg = config.read()
-    ctx = api.Context(**cfg)
+    ctx = api.Context(cfg)
     rsp = api.get_compute(ctx, compute)
     print(json.dumps(rsp, indent=2))
 
