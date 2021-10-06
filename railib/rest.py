@@ -201,12 +201,12 @@ def post(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
 
 # get_auth_token - Gets the auth token from client credentials api service.
 def get_auth_token(client_credentials: ClientCredentials, audience: str):
-    # normalize the audience or the host field to include the protocol scheme, like https
-    # if the protocol scheme is already there, then it would use the host as-is
+    # Normalize the audience or the host field to include the protocol scheme, like https.
+    # If the protocol scheme is already there, then it would use the host as-is,
     # otherwise it will prepend the scheme, like https://auzre-ux.relationalai.com
     normalized_audience = audience
     if not normalized_audience.startswith(CLIENT_CREDENTIALS_API_SCHEME):
-        normalized_audience = CLIENT_CREDENTIALS_API_SCHEME + audience
+        normalized_audience = "{}{}".format(CLIENT_CREDENTIALS_API_SCHEME, audience)
 
     # create the payload for api call to get the client credentials (oauth token)
     body = {CLIENT_ID_KEY: client_credentials.client_id,
@@ -246,6 +246,7 @@ def build_client_credentials_api_url(audience: str):
             environment = audience[dev_env_index + 1:-(len(audience) - dot_index)]
         else:
             environment = audience[dev_env_index + 1]
+
     if environment:
         return "{}{}{}{}".format(CLIENT_CREDENTIALS_API_URL_PREFIX, DEV_ENV_CHAR, environment,
                                  CLIENT_CREDENTIALS_API_URL_POSTFIX)
