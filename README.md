@@ -15,9 +15,9 @@ REST APIs from Python.
 You can install from sources using pip:
 
 ```console
-$ git clone git://github.com/RelationalAI/rai-sdk-python.git
+$ git clone git@github.com:RelationalAI/rai-sdk-python.git
 $ cd rai-sdk-python
-$ [sudo] python setup.py install
+$ [sudo] python3 setup.py install
 ```
 
 You can install from sources in `editable` mode. Instead of `[sudo] python setup.py install` use:
