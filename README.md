@@ -47,12 +47,26 @@ The default location for the file is `$HOME/.rai/config` and the file should
 include the following:
 
 ```conf
+Sample configurtion for access key credentials
 [default]
 host = <api-host>      # optional, default: azure.relational.ai
 port = <api-port>      # optional, default: 443
 scheme = <scheme>      # optional, default: https
 access_key = <your public access key>
 private_key_filname = <name of file containing private key>
+```
+
+```conf
+Sample configurtion for client credentials
+[default]
+host = <api-host>      # optional, default: azure.relational.ai
+port = <api-port>      # optional, default: 443
+scheme = <scheme>      # optional, default: https
+client_id = <your client_id>
+client_secret = <your client secret>
+client_credentials_api_url = <your tenant api url to get the access token>   #optional
+# default: https://login.relationalai.com/oauth/token
+# dev-env: https://login-ux.relationalai.com/oauth/token 
 ```
 
 You can copy `config.spec` from the root of this repo and modify as needed.

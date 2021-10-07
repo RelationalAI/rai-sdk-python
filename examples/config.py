@@ -21,6 +21,8 @@ from pathlib import Path
 
 from railib.rai_config import AccessKeyCredentials, ClientCredentials, RAIConfig
 
+DEFAULT_CLIENT_CREDENTIALS_API_URL = "https://login.relationalai.com/oauth/token"
+
 
 def _read_config_profile(fname: str, profile: str) -> dict:
     config = configparser.ConfigParser()
@@ -71,7 +73,8 @@ def read(fname: str = "~/.rai/config", profile: str = "default"):
                 data.get("host", "localhost"),
                 data.get("port", "443"),
                 data.get("region", "us-east"),
-                data.get("scheme", "https"), arr_credentials[0])
+                data.get("scheme", "https"), arr_credentials[0],
+                data.get("client_credentials_api_url", DEFAULT_CLIENT_CREDENTIALS_API_URL))
 
 
 # read_access_key_credentials - Tries to read access key credentials from the config file.
