@@ -44,7 +44,7 @@ def _read_pkey(fname: Path):
 # It would first try to read the AccessKeyCredentials, if not found, then it would try reading -
 # the ClientCredentials. AccessKeyCredentials are preferred credentials if both the credentials -
 # are present in the config file. AccessKeyCredentials are supported for backward compatibility.
-def read(fname: str = "~/.rai/config", profile: str = "ux"):
+def read(fname: str = "~/.rai/config", profile: str = "default"):
     path = Path(fname).expanduser()
     if not path.is_file():
         raise Exception(f"can't find file: {path}")
