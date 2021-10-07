@@ -49,27 +49,26 @@ def read(fname: str = "~/.rai/config", profile: str = "default"):
     if not path.is_file():
         raise Exception(f"can't find file: {path}")
     data = _read_config_profile(path, profile)
-    # Try reading the AccessKeyCredentials
-    credentials = try_read_access_key_credentials(data, path)
-    if credentials is None:
-        # If AccessKeyCredentials are not found, then try reading ClientCredentials
-        credentials = try_read_client_credentials(data)
-    # Raise exception if no credentials are found
-    if credentials is None:
-        raise Exception("no credentials found in the config")
+
+    # Try reading all the credentials
+    credentials = [read_access_key_credentials(data, path), read_client_credentials(data)]
+    if len(credentials) == 0:
+        Exception("no credentials found in the config")
+    elif len(credentials) > 1:
+        Exception("multiple credentials found in the config")
 
     # Return the RAIConfig along with the credentials
     return RAIConfig(
                 data.get("host", "localhost"),
                 data.get("port", "443"),
                 data.get("region", "us-east"),
-                data.get("scheme", "https"), credentials)
+                data.get("scheme", "https"), credentials[0])
 
 
-# try_read_access_key_credentials - Tries to read access key credentials from the config file.
+# read_access_key_credentials - Tries to read access key credentials from the config file.
 # Will raise exception if partial credentials are found, for example, access_key is found -
 # but private_key is not present. It will return None if access_key field is not present.
-def try_read_access_key_credentials(data, path: Path):
+def read_access_key_credentials(data, path: Path):
     akey = data.get("access_key", None)
     if akey is not None:
         pk_fname = data.get("private_key_filename", None)
@@ -82,10 +81,10 @@ def try_read_access_key_credentials(data, path: Path):
     return None
 
 
-# try_read_client_credentials - Tries to read client credentials from the config file.
+# read_client_credentials - Tries to read client credentials from the config file.
 # Will raise exception if partial credentials are found, for example, client_id is found -
 # but client_secret is not found. It will return None if client_id field is not present.
-def try_read_client_credentials(data):
+def read_client_credentials(data):
     client_id = data.get("client_id", None)
     if client_id is not None:
         client_secret = data.get("client_secret", None)
