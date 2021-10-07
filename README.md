@@ -30,7 +30,7 @@ Or you can use the sources directly by putting the repo on your `$PYTHONPATH`
 by modifying your environment, or by running `source` on the `setenv` script.
 
 ```console
-$ source ./sentenv
+$ source ./setenv
 ```
 
 If you run from sources directly, you will also have to manually install the
