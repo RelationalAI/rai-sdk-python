@@ -122,7 +122,7 @@ def _sign(ctx: Context, req: Request) -> None:
 def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs):
     utils.default_headers(url, headers)
     if kwargs:
-        url = f"{url}?{utils.encode_qs(kwargs)}"
+        url = f"{url}?{_encode_qs(kwargs)}"
     data = utils.encode(data)
     req = Request(method=method, url=url, headers=headers, data=data)
     if type(ctx.config.credentials) is AccessKeyCredentials:
