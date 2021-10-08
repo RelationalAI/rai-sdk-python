@@ -1,8 +1,11 @@
-# RAIConfig - Class to represent RAIConfig
+# RAICredentials - Class to represent the RAICredentials
+# It is an empty base class to represent generic credentials object for @Context.
 class RAICredentials:
-    pass
+    def __init__(self):
+        pass
 
 
+# RAIConfig - Class to represent RAIConfig
 class RAIConfig:
     def __init__(self, host: str, port: str, region: str, scheme: str,
                  credentials: RAICredentials, client_credentials_api_url: str):
@@ -12,13 +15,6 @@ class RAIConfig:
         self.scheme = scheme
         self.credentials = credentials
         self.client_credentials_api_url = client_credentials_api_url
-
-
-# RAICredentials - Class to represent the RAICredentials
-# It is an empty base class to represent generic credentials object for @Context.
-class RAICredentials:
-    def __init__(self):
-        pass
 
 
 # AccessKeyCredentials - Class to represent access key credentials, with access_key and private_key
