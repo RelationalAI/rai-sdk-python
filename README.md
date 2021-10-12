@@ -64,7 +64,7 @@ port = <api-port>      # optional, default: 443
 scheme = <scheme>      # optional, default: https
 client_id = <your client_id>
 client_secret = <your client secret>
-client_credentials_api_url = <your tenant api url to get the access token>   #optional
+client_credentials_url = <your tenant api url to get the access token>   #optional
 # default: https://login.relationalai.com/oauth/token
 # dev-env: https://login-ux.relationalai.com/oauth/token 
 ```
