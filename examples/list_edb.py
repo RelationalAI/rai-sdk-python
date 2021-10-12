@@ -14,13 +14,12 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api
-import config
+from railib import api, config
 
 
 def run(database: str, compute: str):
     cfg = config.read()
-    ctx = api.Context(cfg)
+    ctx = api.Context(**cfg)
     rsp = api.list_edb(ctx, database, compute)
     print(json.dumps(rsp, indent=2))
 

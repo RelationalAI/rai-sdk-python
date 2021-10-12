@@ -13,13 +13,12 @@
 # limitations under the License
 
 from argparse import ArgumentParser
-from railib import api
-import config
+from railib import api, config
 
 
 def run(database: str, compute: str, source: str):
     cfg = config.read()
-    ctx = api.Context(cfg)
+    ctx = api.Context(**cfg)
     rsp = api.get_source(ctx, database, compute, source)
     print(rsp)
 

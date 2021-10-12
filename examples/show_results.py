@@ -13,15 +13,14 @@
 # limitations under the License
 
 from argparse import ArgumentParser
-from railib import api, show
-import config
+from railib import api, config, show
 
 
 # show.results can be used to "pretty print" the results of a transaction
 # to the console.
 def run(database: str, compute: str):
     cfg = config.read()
-    ctx = api.Context(cfg)
+    ctx = api.Context(**cfg)
     rsp = api.query(ctx, database, compute, "def output = 'a'; 'b'; 'c'")
     show.results(rsp)
 

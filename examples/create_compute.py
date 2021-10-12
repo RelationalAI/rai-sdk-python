@@ -15,13 +15,12 @@
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
-from railib import api
-import config
+from railib import api, config
 
 
 def run(compute: str, size: str):
     cfg = config.read()
-    ctx = api.Context(cfg)
+    ctx = api.Context(**cfg)
     rsp = api.create_compute(ctx, compute, size)
     print(json.dumps(rsp, indent=2))
 

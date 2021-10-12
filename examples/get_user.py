@@ -14,13 +14,12 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api
-import config
+from railib import api, config
 
 
 def run(user: str):
     cfg = config.read()
-    ctx = api.Context(cfg)
+    ctx = api.Context(**cfg)
     rsp = api.get_user(ctx, user)
     print(json.dumps(rsp, indent=2))
 
