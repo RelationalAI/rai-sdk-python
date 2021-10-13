@@ -41,14 +41,15 @@ MODE_CLONE_OVERWRITE = "CLONE_OVERWRITE"
 
 # Context contains the state required to make rAI API calls.
 class Context(rest.Context):
-    def __init__(self, region=None, scheme=None, host=None, port=None, akey=None, pkey=None):
-        super().__init__(region=region, akey=akey, pkey=pkey)
-        self.scheme = scheme
+    def __init__(self, host: str = None, port: str = None, scheme: str = None,
+                 region: str = None, credentials=None):
+        super().__init__(region=region, credentials=credentials)
         self.host = host
-        self.port = port
+        self.port = port or "443"
+        self.scheme = scheme or "https"
 
 
-# Cosntruct a URL from the given context and path.
+# Construct a URL from the given context and path.
 def _mkurl(ctx: Context, path: str) -> str:
     return f"{ctx.scheme}://{ctx.host}:{ctx.port}{path}"
 

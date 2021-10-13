@@ -15,8 +15,7 @@
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
-from railib import api
-import config
+from railib import api, config
 
 
 def run(compute: str, size: str):

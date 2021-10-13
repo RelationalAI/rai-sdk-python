@@ -14,8 +14,7 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api
-import config
+from railib import api, config
 
 
 def run(database: str, compute: str):

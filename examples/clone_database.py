@@ -14,8 +14,7 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api
-import config
+from railib import api, config
 
 
 # Clone an existing database by creating a new database and setting the

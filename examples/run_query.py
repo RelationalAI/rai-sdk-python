@@ -13,8 +13,7 @@
 # limitations under the License
 
 from argparse import ArgumentParser
-from railib import api, show
-import config
+from railib import api, config, show
 
 
 def run(database: str, compute: str, command: str):
