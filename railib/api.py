@@ -288,6 +288,6 @@ def list_sources(ctx: Context, database: str, compute: str) -> list:
     return [source["name"] for source in sources]
 
 
-def query(ctx: Context, database: str, compute: str, command: str, **kwargs) -> dict:
-    tx = Transaction(database, compute, readonly=True)
+def query(ctx: Context, database: str, compute: str, command: str, readonly: bool = True) -> dict:
+    tx = Transaction(database, compute, readonly=readonly)
     return tx.run(ctx, _query_action(command))
