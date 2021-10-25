@@ -17,16 +17,16 @@ import json
 from railib import api, config
 
 
-def run(database: str, compute: str):
+def run(database: str, engine: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.list_edb(ctx, database, compute)
+    rsp = api.list_edb(ctx, database, engine)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
-    run(args.database, args.compute)
+    run(args.database, args.engine)

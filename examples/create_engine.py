@@ -14,18 +14,26 @@
 
 from argparse import ArgumentParser
 import json
+from urllib.request import HTTPError
 from railib import api, config
 
 
-def run(compute: str):
+def run(engine: str, size: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.get_compute(ctx, compute)
+    rsp = api.create_engine(ctx, engine, size)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
+    p.add_argument("--size", type=str, default="XS",
+                   help="engine size (default: XS)")
     args = p.parse_args()
-    run(args.compute)
+    try:
+        run(args.engine, args.size)
+    except HTTPError as e:
+        if e.code == 409:
+            print(f"Compute '{args.engine}' already exists")
+        else: raise

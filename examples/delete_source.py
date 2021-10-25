@@ -18,17 +18,17 @@ from os import path
 from railib import api, config
 
 
-def run(database: str, compute: str, source: str):
+def run(database: str, engine: str, source: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.delete_source(ctx, database, compute, source)
+    rsp = api.delete_source(ctx, database, engine, source)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="source name")
     args = p.parse_args()
-    run(args.database, args.compute, args.source)
+    run(args.database, args.engine, args.source)

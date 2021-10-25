@@ -17,18 +17,18 @@ import json
 from railib import api, config
 
 
-def run(database: str, compute: str, overwrite: bool):
+def run(database: str, engine: str, overwrite: bool):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.create_database(ctx, database, compute, overwrite=overwrite)
+    rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     p.add_argument("--overwrite", action="store_true",
                    help="overwrite existing database")
     args = p.parse_args()
-    run(args.database, args.compute, args.overwrite)
+    run(args.database, args.engine, args.overwrite)

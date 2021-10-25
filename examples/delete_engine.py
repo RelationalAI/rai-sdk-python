@@ -17,16 +17,15 @@ import json
 from railib import api, config
 
 
-def run(state: str):
+def run(engine: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.list_computes(ctx, state=state)
+    rsp = api.delete_engine(ctx, engine)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("--state", type=str, default=None,
-                   help="state filter (default: none")
+    p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
-    run(args.state)
+    run(args.engine)

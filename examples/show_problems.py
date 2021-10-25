@@ -18,16 +18,16 @@ from railib import api, config, show
 
 # show.results can be used to "pretty print" the results of a transaction
 # to the console.
-def run(database: str, compute: str):
+def run(database: str, engine: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.query(ctx, database, compute, "def output = **nonsense**")
+    rsp = api.query(ctx, database, engine, "def output = **nonsense**")
     show.problems(rsp)
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
-    run(args.database, args.compute)
+    run(args.database, args.engine)

@@ -18,6 +18,12 @@ import json
 import sys
 
 
+__all__ = [
+    "problems"
+    "results"
+]
+
+
 def _show_row(row: list, end='\n'):
     row = [f'"{item}"' if isinstance(item, str) else str(item) for item in row]
     row = ', '.join(row)
@@ -57,6 +63,7 @@ def _show_rel(rsp: dict) -> None:
         count += 1
 
 
+# Print the problems in the given response dict.
 def problems(rsp: dict) -> None:
     if rsp is None:
         return
@@ -76,6 +83,7 @@ def problems(rsp: dict) -> None:
             print(report.rstrip())
 
 
+# Print the results contained in the given response dict.
 def results(rsp: dict, format="physical") -> None:
     if rsp is None:
         return
