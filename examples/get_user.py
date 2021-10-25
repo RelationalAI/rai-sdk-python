@@ -17,8 +17,8 @@ import json
 from railib import api, config
 
 
-def run(user: str):
-    cfg = config.read()
+def run(user: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.get_user(ctx, user)
     print(json.dumps(rsp, indent=2))
@@ -27,5 +27,6 @@ def run(user: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("user", type=str, help="user name")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.user)
+    run(args.user, args.profile)

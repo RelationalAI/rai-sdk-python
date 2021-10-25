@@ -23,11 +23,11 @@ def _sansext(fname: str) -> str:
     return path.splitext(path.basename(fname))[0]
 
 
-def run(database: str, compute: str, fname: str):
+def run(database: str, compute: str, fname: str, profile: str):
     sources = {}
     with open(fname) as fp:
         sources[_sansext(fname)] = fp.read()  # source name => source
-    cfg = config.read()
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.install_source(ctx, database, compute, sources)
     print(json.dumps(rsp, indent=2))
@@ -38,5 +38,6 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("compute", type=str, help="compute name")
     p.add_argument("file", type=str, help="source file")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.file)
+    run(args.database, args.compute, args.file, args.profile)

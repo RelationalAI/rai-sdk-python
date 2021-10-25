@@ -17,16 +17,24 @@ import json
 from railib import api, config
 
 
-def run(state: str):
-    cfg = config.read()
+def run(state: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.list_computes(ctx, state=state)
+    print("There are %d items in the response" % len(rsp))
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("--state", type=str, default=None,
-                   help="state filter (default: none")
+    state_default = "PROVISIONED"
+    p.add_argument("--state",
+                   type=str,
+                   default=state_default,
+                   help="state filter (default: %s)" % state_default + " ALL | DELETED | PROVISIONED | ..."
+                   )
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.state)
+    if args.state == "ALL":
+        args.state = None
+    run(args.state, args.profile)

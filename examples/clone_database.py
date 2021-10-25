@@ -19,8 +19,8 @@ from railib import api, config
 
 # Clone an existing database by creating a new database and setting the
 # optional source argument to the name of the database you want to clone.
-def run(database: str, compute: str, source: str):
-    cfg = config.read()
+def run(database: str, compute: str, source: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_database(
         ctx, database, compute, source=source, overwrite=True)
@@ -32,5 +32,6 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("compute", type=str, help="compute name")
     p.add_argument("source", type=str, help="name of database to clone")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.source)
+    run(args.database, args.compute, args.source, args.profile)

@@ -17,8 +17,8 @@ import json
 from railib import api, config
 
 
-def run(database: str, compute: str, overwrite: bool):
-    cfg = config.read()
+def run(database: str, compute: str, overwrite: bool, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_database(ctx, database, compute, overwrite=overwrite)
     print(json.dumps(rsp, indent=2))
@@ -30,5 +30,7 @@ if __name__ == "__main__":
     p.add_argument("compute", type=str, help="compute name")
     p.add_argument("--overwrite", action="store_true",
                    help="overwrite existing database")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.overwrite)
+    run(args.database, args.compute, args.overwrite, args.profile)
+

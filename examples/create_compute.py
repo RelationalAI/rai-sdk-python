@@ -18,8 +18,8 @@ from urllib.request import HTTPError
 from railib import api, config
 
 
-def run(compute: str, size: str):
-    cfg = config.read()
+def run(compute: str, size: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_compute(ctx, compute, size)
     print(json.dumps(rsp, indent=2))
@@ -30,9 +30,10 @@ if __name__ == "__main__":
     p.add_argument("compute", type=str, help="compute name")
     p.add_argument("--size", type=str, default="XS",
                    help="compute size (default: XS)")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.compute, args.size)
+        run(args.compute, args.size, args.profile)
     except HTTPError as e:
         if e.code == 409:
             print(f"Compute '{args.compute}' already exists")

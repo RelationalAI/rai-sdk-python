@@ -17,8 +17,8 @@ import json
 from railib import api, config
 
 
-def run(compute: str):
-    cfg = config.read()
+def run(compute: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.delete_compute(ctx, compute)
     print(json.dumps(rsp, indent=2))
@@ -27,5 +27,6 @@ def run(compute: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.compute)
+    run(args.compute, args.profile)

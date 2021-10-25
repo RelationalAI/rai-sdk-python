@@ -16,8 +16,8 @@ from argparse import ArgumentParser
 from railib import api, config, show
 
 
-def run(database: str, compute: str, command: str):
-    cfg = config.read()
+def run(database: str, compute: str, command: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.query(ctx, database, compute, command)
     show.results(rsp)
@@ -29,4 +29,4 @@ if __name__ == "__main__":
     p.add_argument("compute", type=str, help="compute name")
     p.add_argument("command", type=str, help="rel source string")
     args = p.parse_args()
-    run(args.database, args.compute, args.command)
+    run(args.database, args.compute, args.command, args:profile)
