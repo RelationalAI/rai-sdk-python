@@ -14,19 +14,26 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
+from railib.api import EngineSize
 
 
-def run(compute: str, profile: str):
-    cfg = config.read(profile=profile)
+def run(engine: str, size: str):
+    cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.delete_compute(ctx, compute)
+    rsp = api.create_engine(ctx, engine, EngineSize(size))
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
+    p.add_argument("--size", type=str, default="XS",
+                   help="compute size (default: XS)")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.compute, args.profile)
+    try:
+        run(args.engine, args.size, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

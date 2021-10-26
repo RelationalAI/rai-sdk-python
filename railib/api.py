@@ -14,29 +14,60 @@
 
 """Operation level interface to the RelationalAI REST API."""
 
+from enum import Enum, unique
 import json
 
 from . import rest
 
-PATH_COMPUTE = "/compute"
+PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
 PATH_TRANSACTION = "/transaction"
-PATH_USER = "/user"
+PATH_USER = "/users"
 
-# Compute sizes
-COMPUTE_XS = "XS"
-COMPUTE_S = "S"
-COMPUTE_M = "M"
-COMPUTE_L = "L"
-COMPUTE_XL = "XL"
+
+# Engine sizes
+@unique
+class EngineSize(str, Enum):
+    XS = "XS"
+    S = "S"
+    M = "M"
+    L = "L"
+    XL = "XL"
+
 
 # Database modes
-MODE_OPEN = "OPEN"
-MODE_CREATE = "CREATE"
-MODE_CREATE_OVERWRITE = "CREATE_OVERWRITE"
-MODE_OPEN_OR_CREATE = "OPEN_OR_CREATE"
-MODE_CLONE = "CLONE"
-MODE_CLONE_OVERWRITE = "CLONE_OVERWRITE"
+@unique
+class Mode(str, Enum):
+    OPEN = "OPEN"
+    CREATE = "CREATE"
+    CREATE_OVERWRITE = "CREATE_OVERWRITE"
+    OPEN_OR_CREATE = "OPEN_OR_CREATE"
+    CLONE = "CLONE"
+    CLONE_OVERWRITE = "CLONE_OVERWRITE"
+
+
+__all__ = [
+    "Context",
+    "EngineSize",
+    "Mode",
+    "create_database",
+    "create_engine",
+    "create_user",
+    "delete_database",
+    "delete_engine",
+    "delete_source",
+    "delete_user",
+    "get_database",
+    "get_engine",
+    "get_source",
+    "get_user",
+    "list_databases",
+    "list_edb",
+    "list_engines",
+    "list_sources",
+    "list_users",
+    "query",
+]
 
 
 # Context contains the state required to make rAI API calls.
@@ -74,12 +105,12 @@ def _list_collection(ctx, path: str, key=None, **kwargs):
     return rsp[key] if key else rsp
 
 
-def create_compute(ctx: Context, compute: str, size: str):
+def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     data = {
         "region": ctx.region,
-        "name": compute,
-        "size": str(size)}
-    url = _mkurl(ctx, PATH_COMPUTE)
+        "name": engine,
+        "size": size.value}
+    url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data)
     return json.loads(rsp)
 
@@ -89,17 +120,17 @@ def create_user(ctx: Context, user: str):
 
 
 # Derives the database open_mode based on the given arguments.
-def _create_mode(source_name: str, overwrite: bool) -> str:
+def _create_mode(source_name: str, overwrite: bool) -> Mode:
     if source_name is not None:
-        result = MODE_CLONE_OVERWRITE if overwrite else MODE_CLONE
+        result = Mode.CLONE_OVERWRITE if overwrite else Mode.CLONE
     else:
-        result = MODE_CREATE_OVERWRITE if overwrite else MODE_CREATE
-    return str(result)
+        result = Mode.CREATE_OVERWRITE if overwrite else Mode.CREATE
+    return result
 
 
-def delete_compute(ctx: Context, compute: str) -> dict:
-    data = {"name": compute}
-    url = _mkurl(ctx, PATH_COMPUTE)
+def delete_engine(ctx: Context, engine: str) -> dict:
+    data = {"name": engine}
+    url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.delete(ctx, url, data)
     return json.loads(rsp)
 
@@ -112,8 +143,8 @@ def delete_user(ctx: Context, user: str) -> dict:
     raise Exception("not implemented")
 
 
-def get_compute(ctx: Context, compute: str) -> dict:
-    return _get_resource(ctx, PATH_COMPUTE, name=compute, key="computes")
+def get_engine(ctx: Context, engine: str) -> dict:
+    return _get_resource(ctx, PATH_ENGINE, name=engine, key="computes")
 
 
 def get_database(ctx: Context, database: str) -> dict:
@@ -121,18 +152,22 @@ def get_database(ctx: Context, database: str) -> dict:
 
 
 def get_user(ctx: Context, user: str) -> dict:
-    return _get_resource(ctx, PATH_USER, name=user, key="users")
+    return _get_resource(ctx, f"{PATH_USER}/{user}", name=user)
+    # return _get_resource(ctx, PATH_USER, name=user, key="users")
 
 
-def list_computes(ctx: Context, state=None) -> list:
+def list_engines(ctx: Context, state=None) -> list:
     kwargs = {}
     if state is not None:
         kwargs["state"] = state
-    return _list_collection(ctx, PATH_COMPUTE, key="computes", **kwargs)
+    return _list_collection(ctx, PATH_ENGINE, key="computes", **kwargs)
 
 
-def list_databases(ctx: Context) -> list:
-    return _list_collection(ctx, PATH_DATABASE, key="databases")
+def list_databases(ctx: Context, state=None) -> list:
+    kwargs = {}
+    if state is not None:
+        kwargs["state"] = state
+    return _list_collection(ctx, PATH_DATABASE, key="databases", **kwargs)
 
 
 def list_users(ctx: Context) -> list:
@@ -144,12 +179,12 @@ def list_users(ctx: Context) -> list:
 #
 
 class Transaction(object):
-    def __init__(self, database: str, compute: str, abort=False,
-                 mode: str = MODE_OPEN, nowait_durable=False, readonly=False,
+    def __init__(self, database: str, engine: str, abort=False,
+                 mode: Mode = Mode.OPEN, nowait_durable=False, readonly=False,
                  source_database=None):
         self.abort = abort
         self.database = database
-        self.compute = compute
+        self.engine = engine
         self.mode = mode
         self.nowait_durable = nowait_durable
         self.readonly = readonly
@@ -170,14 +205,14 @@ class Transaction(object):
         result = {
             "abort": self.abort,
             "dbname": self.database,
-            "mode": self.mode,
+            "mode": self.mode.value,
             "nowait_durable": self.nowait_durable,
             "readonly": self.readonly,
             "type": "Transaction",
             "version": 0  # 25
         }
-        if self.compute is not None:
-            result["computeName"] = self.compute
+        if self.engine is not None:
+            result["computeName"] = self.engine
         if self.source_database is not None:
             result["source_dbname"] = self.source_database
         return result
@@ -188,8 +223,8 @@ class Transaction(object):
         # several of the request params are duplicated in the query
         kwargs = {
             "dbname": self.database,
-            "compute_name": self.compute,
-            "open_mode": self.mode,
+            "compute_name": self.engine,
+            "open_mode": self.mode.value,
             "region": ctx.region}
         if self.source_database:
             kwargs["source_dbname"] = self.source_database
@@ -233,8 +268,8 @@ def _source(name: str, source: str) -> dict:
 
 
 # Returns full list of source objects, including source values.
-def _list_sources(ctx: Context, database: str, compute: str) -> dict:
-    tx = Transaction(database, compute, mode=MODE_OPEN)
+def _list_sources(ctx: Context, database: str, engine: str) -> dict:
+    tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_action())
     actions = rsp["actions"]
     assert len(actions) == 1
@@ -243,37 +278,37 @@ def _list_sources(ctx: Context, database: str, compute: str) -> dict:
     return sources
 
 
-def create_database(ctx: Context, database: str, compute: str,
+def create_database(ctx: Context, database: str, engine: str,
                     source: str = None, overwrite=False) -> dict:
     mode = _create_mode(source, overwrite)
-    tx = Transaction(database, compute, mode=mode, source_database=source)
+    tx = Transaction(database, engine, mode=mode, source_database=source)
     return tx.run(ctx)
 
 
-def delete_source(ctx: Context, database: str, compute: str, source: str) -> dict:
-    tx = Transaction(database, compute, mode=MODE_OPEN, readonly=False)
+def delete_source(ctx: Context, database: str, engine: str, source: str) -> dict:
+    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
     actions = [_delete_source_action(source)]
     return tx.run(ctx, *actions)
 
 
 # Returns the source value for the named source.
-def get_source(ctx: Context, database: str, compute: str, name: str) -> str:
-    sources = _list_sources(ctx, database, compute)
+def get_source(ctx: Context, database: str, engine: str, name: str) -> str:
+    sources = _list_sources(ctx, database, engine)
     for source in sources:
         if source["name"] == name:
             return source["value"]
     raise Exception(f"source '{name}' not found")
 
 
-def install_source(ctx: Context, database: str, compute: str, sources: dict) -> dict:
-    tx = Transaction(database, compute, mode=MODE_OPEN, readonly=False)
+def install_source(ctx: Context, database: str, engine: str, sources: dict) -> dict:
+    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
     actions = [_install_source_action(name, source)
                for name, source in sources.items()]
     return tx.run(ctx, *actions)
 
 
-def list_edb(ctx: Context, database: str, compute: str) -> list:
-    tx = Transaction(database, compute, mode=MODE_OPEN)
+def list_edb(ctx: Context, database: str, engine: str) -> list:
+    tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_edb_action())
     actions = rsp["actions"]
     assert len(actions) == 1
@@ -283,11 +318,17 @@ def list_edb(ctx: Context, database: str, compute: str) -> list:
 
 
 # Returns a list of source names installed in the given database.
-def list_sources(ctx: Context, database: str, compute: str) -> list:
-    sources = _list_sources(ctx, database, compute)
+def list_sources(ctx: Context, database: str, engine: str) -> list:
+    sources = _list_sources(ctx, database, engine)
     return [source["name"] for source in sources]
 
 
-def query(ctx: Context, database: str, compute: str, command: str, readonly: bool = True) -> dict:
-    tx = Transaction(database, compute, readonly=readonly)
+def query(ctx: Context, database: str, engine: str, command: str, readonly: bool = True) -> dict:
+    tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command))
+
+
+create_compute = create_engine  # deprecated, use create_engine
+delete_compute = delete_engine  # deprecated, use delete_engine
+get_compute = get_engine        # deprecated, use get_engine
+list_computes = list_engines    # deprecated, use list_engines

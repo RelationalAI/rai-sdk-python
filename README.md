@@ -50,7 +50,7 @@ Sample configurtion for access key credentials:
 
 ```conf
 [default]
-host = <api-host>      # optional, default: azure.relational.ai
+host = azure.relationalai.com
 port = <api-port>      # optional, default: 443
 scheme = <scheme>      # optional, default: https
 access_key = <your public access key>
@@ -64,7 +64,7 @@ Sample configurtion for client credentials:
 
 ```conf
 [default]
-host = <api-host>      # optional, default: azure.relational.ai
+host = azure.relationalai.com
 port = <api-port>      # optional, default: 443
 scheme = <scheme>      # optional, default: https
 client_id = <your client_id>

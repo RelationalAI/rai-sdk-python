@@ -14,23 +14,23 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
-
-# Q: how to write a more general wrapper?
 from urllib.request import HTTPError
-from wrap_error import wrap_error
+from railib import api, config, show
 
-def run(database: str, compute: str, profile: str):
-    cfg = config.read(profile=profile)
+
+def run(database: str, engine: str, profile: str):
+    cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.list_sources(ctx, database, compute)
+    rsp = api.list_sources(ctx, database, engine)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
-    wrap_error(run, args.database, args.compute, args.profile)
+    try:
+        run(args.database, args.engine, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

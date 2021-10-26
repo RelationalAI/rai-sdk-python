@@ -14,35 +14,26 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
 from urllib.request import HTTPError
-
-def show_error(e: HTTPError) -> None:
-    r = e.read()
-    if len(r) > 0:
-        rsp = json.loads(r)
-        print(f"Got error, status: {e.status}")
-        print(json.dumps(rsp, indent=2))
-    else:
-        print("There is no descriptive error message, got:", e)
+from railib import api, config, show
 
 
-def run(database: str, compute: str, overwrite: bool, profile: str):
-    cfg = config.read(profile=profile)
+def run(database: str, engine: str, overwrite: bool):
+    cfg = config.read()
     ctx = api.Context(**cfg)
-    try:
-        rsp = api.create_database(ctx, database, compute, overwrite=overwrite)
-        print(json.dumps(rsp, indent=2))
-    except HTTPError as e:
-        show_error(e)
+    rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
+    print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     p.add_argument("--overwrite", action="store_true",
                    help="overwrite existing database")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.overwrite, args.profile)
+    try:
+        run(args.database, args.engine, args.overwrite, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

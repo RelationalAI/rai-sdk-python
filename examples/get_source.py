@@ -13,21 +13,25 @@
 # limitations under the License
 
 from argparse import ArgumentParser
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
-def run(database: str, compute: str, source: str, profile:str):
+def run(database: str, engine: str, source: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_source(ctx, database, compute, source)
+    rsp = api.get_source(ctx, database, engine, source)
     print(rsp)
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="source name")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.source, args.profile)
+    try:
+        run(args.database, args.engine, args.source, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

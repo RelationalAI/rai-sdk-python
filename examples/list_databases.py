@@ -18,16 +18,19 @@ from railib import api, config
 
 from wrap_error import wrap_error
 
-def run(profile: str):
+def run(state: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.list_databases(ctx)
+    rsp = api.list_databases(ctx, state=state)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("--state", type=str, default=None,
+                   help="state filter (default: none")
     args = p.parse_args()
-    wrap_error(run, args.profile)
-
+    try:
+        run(args.state, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

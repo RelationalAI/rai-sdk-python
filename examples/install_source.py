@@ -15,7 +15,8 @@
 from argparse import ArgumentParser
 import json
 from os import path
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 # Reeturns the file basename without extension.
@@ -23,21 +24,24 @@ def _sansext(fname: str) -> str:
     return path.splitext(path.basename(fname))[0]
 
 
-def run(database: str, compute: str, fname: str, profile: str):
+def run(database: str, engine: str, fname: str, profile: str):
     sources = {}
     with open(fname) as fp:
         sources[_sansext(fname)] = fp.read()  # source name => source
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.install_source(ctx, database, compute, sources)
+    rsp = api.install_source(ctx, database, engine, sources)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     p.add_argument("file", type=str, help="source file")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.file, args.profile)
+    try:
+        run(args.database, args.engine, args.file, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

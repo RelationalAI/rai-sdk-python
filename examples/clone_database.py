@@ -14,24 +14,28 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 # Clone an existing database by creating a new database and setting the
 # optional source argument to the name of the database you want to clone.
-def run(database: str, compute: str, source: str, profile: str):
-    cfg = config.read(profile=profile)
+def run(database: str, engine: str, source: str):
+    cfg = config.read()
     ctx = api.Context(**cfg)
     rsp = api.create_database(
-        ctx, database, compute, source=source, overwrite=True)
+        ctx, database, engine, source=source, overwrite=True)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("compute", type=str, help="compute name")
+    p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="name of database to clone")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.source, args.profile)
+    try:
+        run(args.database, args.engine, args.source, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

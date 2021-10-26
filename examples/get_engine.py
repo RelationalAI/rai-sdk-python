@@ -14,27 +14,23 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
-def run(state: str, profile: str):
-    cfg = config.read(profile=profile)
+def run(engine: str, profile: str):
+    cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.list_computes(ctx, state=state)
-    print(f"There are {len(rsp)} items in the response")
+    rsp = api.get_engine(ctx, engine)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    state_default = "PROVISIONED"
-    p.add_argument("--state",
-                   type=str,
-                   default=state_default,
-                   help=f"state filter (default: {state_default})" + " ALL | DELETED | PROVISIONED | ..."
-                   )
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
-    if args.state == "ALL":
-        args.state = None
-    run(args.state, args.profile)
+    try:
+        run(args.engine, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

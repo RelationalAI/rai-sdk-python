@@ -14,7 +14,8 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 def run(database: str, profile: str):
@@ -29,4 +30,7 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.profile)
+    try:
+        run(args.database, args.profile)
+    except HTTPError as e:
+        show.http_error(e)

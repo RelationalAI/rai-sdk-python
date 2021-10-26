@@ -12,10 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Helpers for formatting query results."""
+"""Helpers for formatting errors, problems and query results."""
 
 import json
 import sys
+from urllib.request import HTTPError
+
+
+__all__ = [
+    "http_error"
+    "problems"
+    "results"
+]
+
+
+def http_error(e: HTTPError) -> None:
+    rsp = json.loads(e.read())
+    print(f"status: {e.status}")
+    print(json.dumps(rsp, indent=2))
 
 
 def _show_row(row: list, end='\n'):
@@ -57,6 +71,7 @@ def _show_rel(rsp: dict) -> None:
         count += 1
 
 
+# Print the problems in the given response dict.
 def problems(rsp: dict) -> None:
     if rsp is None:
         return
@@ -76,6 +91,7 @@ def problems(rsp: dict) -> None:
             print(report.rstrip())
 
 
+# Print the results contained in the given response dict.
 def results(rsp: dict, format="physical") -> None:
     if rsp is None:
         return
