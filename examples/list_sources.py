@@ -16,6 +16,9 @@ from argparse import ArgumentParser
 import json
 from railib import api, config
 
+# Q: how to write a more general wrapper?
+from urllib.request import HTTPError
+from wrap_error import wrap_error
 
 def run(database: str, compute: str, profile: str):
     cfg = config.read(profile=profile)
@@ -30,4 +33,4 @@ if __name__ == "__main__":
     p.add_argument("compute", type=str, help="compute name")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.compute, args.profile)
+    wrap_error(run, args.database, args.compute, args.profile)

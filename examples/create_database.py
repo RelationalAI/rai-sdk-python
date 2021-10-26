@@ -15,13 +15,26 @@
 from argparse import ArgumentParser
 import json
 from railib import api, config
+from urllib.request import HTTPError
+
+def show_error(e: HTTPError) -> None:
+    r = e.read()
+    if len(r) > 0:
+        rsp = json.loads(r)
+        print(f"Got error, status: {e.status}")
+        print(json.dumps(rsp, indent=2))
+    else:
+        print("There is no descriptive error message, got:", e)
 
 
 def run(database: str, compute: str, overwrite: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_database(ctx, database, compute, overwrite=overwrite)
-    print(json.dumps(rsp, indent=2))
+    try:
+        rsp = api.create_database(ctx, database, compute, overwrite=overwrite)
+        print(json.dumps(rsp, indent=2))
+    except HTTPError as e:
+        show_error(e)
 
 
 if __name__ == "__main__":
@@ -33,4 +46,3 @@ if __name__ == "__main__":
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     run(args.database, args.compute, args.overwrite, args.profile)
-

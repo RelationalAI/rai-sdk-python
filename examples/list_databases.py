@@ -1,4 +1,4 @@
-# Copyright 2021 RelationalAI, Inc.
+1# Copyright 2021 RelationalAI, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+from argparse import ArgumentParser
 import json
 from railib import api, config
 
+from wrap_error import wrap_error
 
-def run():
-    cfg = config.read()
+def run(profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.list_databases(ctx)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
-    run()
+    p = ArgumentParser()
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    args = p.parse_args()
+    wrap_error(run, args.profile)
+

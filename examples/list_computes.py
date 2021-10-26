@@ -21,7 +21,7 @@ def run(state: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.list_computes(ctx, state=state)
-    print("There are %d items in the response" % len(rsp))
+    print(f"There are {len(rsp)} items in the response")
     print(json.dumps(rsp, indent=2))
 
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     p.add_argument("--state",
                    type=str,
                    default=state_default,
-                   help="state filter (default: %s)" % state_default + " ALL | DELETED | PROVISIONED | ..."
+                   help=f"state filter (default: {state_default})" + " ALL | DELETED | PROVISIONED | ..."
                    )
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
