@@ -15,7 +15,8 @@
 from argparse import ArgumentParser
 import json
 from os import path
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 # Reeturns the file basename without extension.
@@ -39,4 +40,7 @@ if __name__ == "__main__":
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("file", type=str, help="source file")
     args = p.parse_args()
-    run(args.database, args.engine, args.file)
+    try:
+        run(args.database, args.engine, args.file)
+    except HTTPError as e:
+        show.http_error(e)

@@ -14,6 +14,7 @@
 
 """Operation level interface to the RelationalAI REST API."""
 
+from enum import Enum, unique
 import json
 
 from . import rest
@@ -21,40 +22,34 @@ from . import rest
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
 PATH_TRANSACTION = "/transaction"
-PATH_USER = "/user"
+PATH_USER = "/users"
+
 
 # Engine sizes
-ENGINE_XS = "XS"
-ENGINE_S = "S"
-ENGINE_M = "M"
-ENGINE_L = "L"
-ENGINE_XL = "XL"
+@unique
+class EngineSize(str, Enum):
+    XS = "XS"
+    S = "S"
+    M = "M"
+    L = "L"
+    XL = "XL"
+
 
 # Database modes
-MODE_OPEN = "OPEN"
-MODE_CREATE = "CREATE"
-MODE_CREATE_OVERWRITE = "CREATE_OVERWRITE"
-MODE_OPEN_OR_CREATE = "OPEN_OR_CREATE"
-MODE_CLONE = "CLONE"
-MODE_CLONE_OVERWRITE = "CLONE_OVERWRITE"
+@unique
+class Mode(str, Enum):
+    OPEN = "OPEN"
+    CREATE = "CREATE"
+    CREATE_OVERWRITE = "CREATE_OVERWRITE"
+    OPEN_OR_CREATE = "OPEN_OR_CREATE"
+    CLONE = "CLONE"
+    CLONE_OVERWRITE = "CLONE_OVERWRITE"
+
 
 __all__ = [
     "Context",
-    "ENGINE_L",
-    "ENGINE_M",
-    "ENGINE_S",
-    "ENGINE_XL",
-    "ENGINE_XS",
-    "MODE_CLONE",
-    "MODE_CLONE_OVERWRITE",
-    "MODE_CREATE",
-    "MODE_CREATE_OVERWRITE",
-    "MODE_OPEN",
-    "MODE_OPEN_OR_CREATE",
-    "PATH_DATABASE",
-    "PATH_ENGINE",
-    "PATH_TRANSACTION",
-    "PATH_USER",
+    "EngineSize",
+    "Mode",
     "create_database",
     "create_engine",
     "create_user",
@@ -110,11 +105,11 @@ def _list_collection(ctx, path: str, key=None, **kwargs):
     return rsp[key] if key else rsp
 
 
-def create_engine(ctx: Context, engine: str, size: str):
+def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     data = {
         "region": ctx.region,
         "name": engine,
-        "size": str(size)}
+        "size": size.value}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data)
     return json.loads(rsp)
@@ -125,12 +120,12 @@ def create_user(ctx: Context, user: str):
 
 
 # Derives the database open_mode based on the given arguments.
-def _create_mode(source_name: str, overwrite: bool) -> str:
+def _create_mode(source_name: str, overwrite: bool) -> Mode:
     if source_name is not None:
-        result = MODE_CLONE_OVERWRITE if overwrite else MODE_CLONE
+        result = Mode.CLONE_OVERWRITE if overwrite else Mode.CLONE
     else:
-        result = MODE_CREATE_OVERWRITE if overwrite else MODE_CREATE
-    return str(result)
+        result = Mode.CREATE_OVERWRITE if overwrite else Mode.CREATE
+    return result
 
 
 def delete_engine(ctx: Context, engine: str) -> dict:
@@ -157,7 +152,8 @@ def get_database(ctx: Context, database: str) -> dict:
 
 
 def get_user(ctx: Context, user: str) -> dict:
-    return _get_resource(ctx, PATH_USER, name=user, key="users")
+    return _get_resource(ctx, f"{PATH_USER}/{user}", name=user)
+    # return _get_resource(ctx, PATH_USER, name=user, key="users")
 
 
 def list_engines(ctx: Context, state=None) -> list:
@@ -167,8 +163,11 @@ def list_engines(ctx: Context, state=None) -> list:
     return _list_collection(ctx, PATH_ENGINE, key="computes", **kwargs)
 
 
-def list_databases(ctx: Context) -> list:
-    return _list_collection(ctx, PATH_DATABASE, key="databases")
+def list_databases(ctx: Context, state=None) -> list:
+    kwargs = {}
+    if state is not None:
+        kwargs["state"] = state
+    return _list_collection(ctx, PATH_DATABASE, key="databases", **kwargs)
 
 
 def list_users(ctx: Context) -> list:
@@ -181,7 +180,7 @@ def list_users(ctx: Context) -> list:
 
 class Transaction(object):
     def __init__(self, database: str, engine: str, abort=False,
-                 mode: str = MODE_OPEN, nowait_durable=False, readonly=False,
+                 mode: Mode = Mode.OPEN, nowait_durable=False, readonly=False,
                  source_database=None):
         self.abort = abort
         self.database = database
@@ -206,7 +205,7 @@ class Transaction(object):
         result = {
             "abort": self.abort,
             "dbname": self.database,
-            "mode": self.mode,
+            "mode": self.mode.value,
             "nowait_durable": self.nowait_durable,
             "readonly": self.readonly,
             "type": "Transaction",
@@ -225,7 +224,7 @@ class Transaction(object):
         kwargs = {
             "dbname": self.database,
             "compute_name": self.engine,
-            "open_mode": self.mode,
+            "open_mode": self.mode.value,
             "region": ctx.region}
         if self.source_database:
             kwargs["source_dbname"] = self.source_database
@@ -270,7 +269,7 @@ def _source(name: str, source: str) -> dict:
 
 # Returns full list of source objects, including source values.
 def _list_sources(ctx: Context, database: str, engine: str) -> dict:
-    tx = Transaction(database, engine, mode=MODE_OPEN)
+    tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_action())
     actions = rsp["actions"]
     assert len(actions) == 1
@@ -287,7 +286,7 @@ def create_database(ctx: Context, database: str, engine: str,
 
 
 def delete_source(ctx: Context, database: str, engine: str, source: str) -> dict:
-    tx = Transaction(database, engine, mode=MODE_OPEN, readonly=False)
+    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
     actions = [_delete_source_action(source)]
     return tx.run(ctx, *actions)
 
@@ -302,14 +301,14 @@ def get_source(ctx: Context, database: str, engine: str, name: str) -> str:
 
 
 def install_source(ctx: Context, database: str, engine: str, sources: dict) -> dict:
-    tx = Transaction(database, engine, mode=MODE_OPEN, readonly=False)
+    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
     actions = [_install_source_action(name, source)
                for name, source in sources.items()]
     return tx.run(ctx, *actions)
 
 
 def list_edb(ctx: Context, database: str, engine: str) -> list:
-    tx = Transaction(database, engine, mode=MODE_OPEN)
+    tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_edb_action())
     actions = rsp["actions"]
     assert len(actions) == 1

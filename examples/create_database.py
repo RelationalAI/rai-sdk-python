@@ -14,7 +14,8 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 def run(database: str, engine: str, overwrite: bool):
@@ -31,4 +32,7 @@ if __name__ == "__main__":
     p.add_argument("--overwrite", action="store_true",
                    help="overwrite existing database")
     args = p.parse_args()
-    run(args.database, args.engine, args.overwrite)
+    try:
+        run(args.database, args.engine, args.overwrite)
+    except HTTPError as e:
+        show.http_error(e)

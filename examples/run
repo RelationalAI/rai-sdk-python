@@ -1,13 +1,15 @@
 #!/bin/bash
 
-set -ex
+set -e
 
-ENGINE="nhd-2021-10-19-small"
+ENGINE="2021-10-26-bradlo-xs"
 
-#python3 ./list_users.py
-#python3 ./get_user.py <username>
+python3 ./list_users.py
 
-# create engine (409 if already exists)
+# grab first user-id from list
+USERID=`python3 ./list_users.py | grep -m 1 -E "\"id\":.*,$" | sed "s/^.*\"id\":[ \t]*//" | sed "s/,$//"`
+python3 ./get_user.py $USERID
+
 python3 ./create_engine.py $ENGINE --size=XS
 python3 ./list_engines.py
 python3 ./list_engines.py --state=PROVISIONED
@@ -25,7 +27,6 @@ python3 ./get_database.py sdk-test
 python3 ./run_query.py sdk-test $ENGINE "1+1"
 python3 ./show_results.py sdk-test $ENGINE
 python3 ./show_problems.py sdk-test $ENGINE
-python3 ./show_errors.py
 
 # install source
 python3 ./install_source.py sdk-test $ENGINE hello.rel

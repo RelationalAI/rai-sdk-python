@@ -14,7 +14,8 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 # Clone an existing database by creating a new database and setting the
@@ -33,4 +34,7 @@ if __name__ == "__main__":
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="name of database to clone")
     args = p.parse_args()
-    run(args.database, args.engine, args.source)
+    try:
+        run(args.database, args.engine, args.source)
+    except HTTPError as e:
+        show.http_error(e)

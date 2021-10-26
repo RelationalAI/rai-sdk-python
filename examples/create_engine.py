@@ -15,13 +15,14 @@
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
-from railib import api, config
+from railib import api, config, show
+from railib.api import EngineSize
 
 
 def run(engine: str, size: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.create_engine(ctx, engine, size)
+    rsp = api.create_engine(ctx, engine, EngineSize(size))
     print(json.dumps(rsp, indent=2))
 
 
@@ -34,6 +35,4 @@ if __name__ == "__main__":
     try:
         run(args.engine, args.size)
     except HTTPError as e:
-        if e.code == 409:
-            print(f"Compute '{args.engine}' already exists")
-        else: raise
+        show.http_error(e)

@@ -13,11 +13,12 @@
 # limitations under the License
 
 from argparse import ArgumentParser
+from urllib.request import HTTPError
 from railib import api, config, show
 
 
-# show.results can be used to "pretty print" the results of a transaction
-# to the console.
+# `show.problems` can be used to print the problems associated with a
+# transaction to the console.
 def run(database: str, engine: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
@@ -30,4 +31,7 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
-    run(args.database, args.engine)
+    try:
+        run(args.database, args.engine)
+    except HTTPError as e:
+        show.http_error(e)

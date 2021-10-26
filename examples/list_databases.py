@@ -12,16 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
-def run():
+def run(state: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
-    rsp = api.list_databases(ctx)
+    rsp = api.list_databases(ctx, state=state)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
-    run()
+    p = ArgumentParser()
+    p.add_argument("--state", type=str, default=None,
+                   help="state filter (default: none")
+    args = p.parse_args()
+    try:
+        run(args.state)
+    except HTTPError as e:
+        show.http_error(e)

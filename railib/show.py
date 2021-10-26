@@ -12,16 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Helpers for formatting query results."""
+"""Helpers for formatting errors, problems and query results."""
 
 import json
 import sys
+from urllib.request import HTTPError
 
 
 __all__ = [
+    "http_error"
     "problems"
     "results"
 ]
+
+
+def http_error(e: HTTPError) -> None:
+    rsp = json.loads(e.read())
+    print(f"status: {e.status}")
+    print(json.dumps(rsp, indent=2))
 
 
 def _show_row(row: list, end='\n'):

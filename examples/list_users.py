@@ -13,7 +13,8 @@
 # limitations under the License
 
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 def run():
@@ -24,4 +25,7 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except HTTPError as e:
+        show.http_error(e)

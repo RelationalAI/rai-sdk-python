@@ -13,7 +13,8 @@
 # limitations under the License
 
 from argparse import ArgumentParser
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 def run(database: str, engine: str, source: str):
@@ -29,4 +30,7 @@ if __name__ == "__main__":
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="source name")
     args = p.parse_args()
-    run(args.database, args.engine, args.source)
+    try:
+        run(args.database, args.engine, args.source)
+    except HTTPError as e:
+        show.http_error(e)

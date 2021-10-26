@@ -14,7 +14,8 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 def run(user: str):
@@ -26,6 +27,9 @@ def run(user: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("user", type=str, help="user name")
+    p.add_argument("id", type=str, nargs=1, help="user id")
     args = p.parse_args()
-    run(args.user)
+    try:
+        run(args.id[0])
+    except HTTPError as e:
+        show.http_error(e)

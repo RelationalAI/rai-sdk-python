@@ -14,7 +14,8 @@
 
 from argparse import ArgumentParser
 import json
-from railib import api, config
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
 def run(state: str):
@@ -29,4 +30,7 @@ if __name__ == "__main__":
     p.add_argument("--state", type=str, default=None,
                    help="state filter (default: none")
     args = p.parse_args()
-    run(args.state)
+    try:
+        run(args.state)
+    except HTTPError as e:
+        show.http_error(e)
