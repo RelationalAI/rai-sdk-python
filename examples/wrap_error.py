@@ -2,6 +2,8 @@ from urllib.request import HTTPError
 
 import json
 
+# TODO: update show.http_error?
+
 def show_error(e: HTTPError) -> None:
     r = e.read()
     if len(r) > 0:
@@ -16,5 +18,5 @@ def wrap_error(fun, *args, **kwargs):
     try:
         fun(*args, **kwargs)
     except HTTPError as e:
-        show_error(e)
+        show_error(e) # vs. show.http_error(e)?
 
