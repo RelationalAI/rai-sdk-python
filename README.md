@@ -87,7 +87,7 @@ $ python3 ./list_computes.py
 
 ## Support
 
-You can reach the RAI developer support team at [todo].
+You can reach the RAI developer support team at `support@relational.ai`
 
 ## Contributing
 

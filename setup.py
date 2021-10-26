@@ -20,13 +20,12 @@ import railib
 
 setup(
     author="RelationalAI, Inc.",
-    # author_email="tbd@relational.ai",
+    author_email="support@relational.ai",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python",
         "Programming Language :: Python :: 3"
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
