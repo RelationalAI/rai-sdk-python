@@ -92,7 +92,7 @@ You can reach the RAI developer support team at `support@relational.ai`
 ## Contributing
 
 We value feedback and contributions from our developer community. Feel free
-to submit an issue or submit a PR here.
+to submit an issue or a PR here.
 
 ## License
 
