@@ -3,16 +3,26 @@
 The RelationalAI (RAI) SDK for Python enables developers to access the RAI
 REST APIs from Python.
 
+* You can find RelationalAI Python SDK documentation at <https://docs.relational.ai/rkgms/sdk/python-sdk>
+* You can find RelationalAI product documentation at <https://docs.relational.ai>
 * You can learn more about RelationalAI at <https://relational.ai>
-* You can find RelationalAI documentation at <https://docs.relational.ai>
 
-## Requirements
+## Getting started
+
+### Requirements
 
 * Python 3.7+
 
 ### Installing the SDK
 
-You can install from sources using pip:
+Install using pip:
+
+```console
+$ [sudo] pip install rai-sdk
+
+```
+
+Install from source using pip:
 
 ```console
 $ git clone git@github.com:RelationalAI/rai-sdk-python.git
@@ -20,27 +30,15 @@ $ cd rai-sdk-python
 $ [sudo] python3 setup.py install
 ```
 
-You can install from sources in `editable` mode. Instead of `[sudo] python setup.py install` use:
+Install from source in `editable` mode.
 
 ```console
+$ git clone git@github.com:RelationalAI/rai-sdk-python.git
+$ cd rai-sdk-python
 $ [sudo] pip install -e .
 ```
 
-Or you can use the sources directly by putting the repo on your `$PYTHONPATH`
-by modifying your environment, or by running `source` on the `setenv` script.
-
-```console
-$ source ./setenv
-```
-
-If you run from sources directly, you will also have to manually install the
-SDK dependencies:
-
-```console
-$ [sudo] pip install -f requirements.txt
-```
-
-## Create a configuration file
+### Create a configuration file
 
 In order to run the examples and, you will need to create an SDK config file.
 The default location for the file is `$HOME/.rai/config` and the file should
