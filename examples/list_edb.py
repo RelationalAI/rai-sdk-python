@@ -18,7 +18,7 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, profile: str:
+def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.list_edb(ctx, database, engine)

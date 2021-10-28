@@ -16,6 +16,7 @@ from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
 
+from wrap_error import wrap_error
 
 # `show.results` can be used to print the results of a transaction to the
 #  console.
@@ -32,7 +33,4 @@ if __name__ == "__main__":
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.database, args.engine, args.profile)
-    except HTTPError as e:
-        show.http_error(e)
+    wrap_error(run, args.database, args.engine, args.profile)

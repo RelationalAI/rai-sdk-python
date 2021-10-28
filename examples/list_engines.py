@@ -14,9 +14,9 @@
 
 from argparse import ArgumentParser
 import json
-from urllib.request import HTTPError
-from railib import api, config, show
+from railib import api, config
 
+from wrap_error import wrap_error
 
 def run(state: str, profile: str):
     cfg = config.read(profile=profile)
@@ -32,7 +32,4 @@ if __name__ == "__main__":
                    help="state filter (default: none")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.state, args.profile)
-    except HTTPError as e:
-        show.http_error(e)
+    wrap_error(run, args.state, args.profile)

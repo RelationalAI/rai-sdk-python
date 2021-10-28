@@ -14,13 +14,12 @@
 
 from argparse import ArgumentParser
 import json
-from os import path
 from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, source: str):
-    cfg = config.read()
+def run(database: str, engine: str, source: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.delete_source(ctx, database, engine, source)
     print(json.dumps(rsp, indent=2))

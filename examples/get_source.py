@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-from argparse import ArgumentParser
-from urllib.request import HTTPError
-from railib import api, config, show
+"""
+Get the text for a Rel source in a specific DB
+"""
 
+from argparse import ArgumentParser
+from railib import api, config
+
+from wrap_error import wrap_error
 
 def run(database: str, engine: str, source: str, profile: str):
     cfg = config.read(profile=profile)
@@ -31,7 +35,4 @@ if __name__ == "__main__":
     p.add_argument("source", type=str, help="source name")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.database, args.engine, args.source, args.profile)
-    except HTTPError as e:
-        show.http_error(e)
+    wrap_error(run, args.database, args.engine, args.source, args.profile)

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""
+Install a Rel source file in a given database
+"""
+
 from argparse import ArgumentParser
 import json
 from os import path

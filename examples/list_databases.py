@@ -1,4 +1,4 @@
-1# Copyright 2021 RelationalAI, Inc.
+# Copyright 2021 RelationalAI, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,9 +28,7 @@ def run(state: str, profile: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("--state", type=str, default=None,
-                   help="state filter (default: none")
+                   help="state filter (default: None")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.state, args.profile)
-    except HTTPError as e:
-        show.http_error(e)
+    wrap_error(run, args.state, args.profile)

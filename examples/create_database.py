@@ -18,8 +18,8 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, overwrite: bool):
-    cfg = config.read()
+def run(database: str, engine: str, overwrite: bool, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
     print(json.dumps(rsp, indent=2))
