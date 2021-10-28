@@ -21,7 +21,7 @@ from datetime import datetime
 import hashlib
 import json
 from pprint import pprint
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
 import time
 
@@ -86,6 +86,11 @@ def _encode(data) -> str:
     if not isinstance(data, str):
         data = json.dumps(data)
     return data.encode("utf8")
+
+
+def _encode_path(path: str) -> str:
+    # double encoding as per AWS v4
+    return quote(quote(path))
 
 
 # Returns an urlencoded query string.
@@ -184,7 +189,7 @@ def _sign(ctx: Context, req: Request) -> None:
     split_result = urlsplit(req.full_url)  # was self.url
     canonical_form = "{}\n{}\n{}\n{}\n\n{}\n{}".format(
         req.method,
-        split_result.path,
+        _encode_path(split_result.path),
         split_result.query,
         "\n".join(canonical_headers),
         signed_headers,
