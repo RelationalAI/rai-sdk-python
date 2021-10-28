@@ -46,7 +46,7 @@ In order to run the examples and, you will need to create an SDK config file.
 The default location for the file is `$HOME/.rai/config` and the file should
 include the following:
 
-Sample configurtion using OAuth client credentials:
+Sample configuration using OAuth client credentials:
 
 ```conf
 [default]
@@ -59,7 +59,7 @@ client_credentials_url = <account login URL>  #optional
 # default: https://login.relationalai.com/oauth/token
 ```
 
-Sample configurtion using API access key credentials (deprecated):
+Sample configuration using API access key credentials (deprecated):
 
 ```conf
 [default]
