@@ -17,8 +17,8 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, command: str):
-    cfg = config.read()
+def run(database: str, engine: str, command: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.query(ctx, database, engine, command)
     show.results(rsp)
@@ -29,8 +29,9 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("command", type=str, help="rel source string")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.command)
+        run(args.database, args.engine, args.command, args.profile)
     except HTTPError as e:
         show.http_error(e)

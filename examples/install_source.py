@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""
+Install a Rel source file in a given database
+"""
+
 from argparse import ArgumentParser
 import json
 from os import path
@@ -24,11 +28,11 @@ def _sansext(fname: str) -> str:
     return path.splitext(path.basename(fname))[0]
 
 
-def run(database: str, engine: str, fname: str):
+def run(database: str, engine: str, fname: str, profile: str):
     sources = {}
     with open(fname) as fp:
         sources[_sansext(fname)] = fp.read()  # source name => source
-    cfg = config.read()
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.install_source(ctx, database, engine, sources)
     print(json.dumps(rsp, indent=2))
@@ -39,8 +43,9 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("file", type=str, help="source file")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.file)
+        run(args.database, args.engine, args.file, args.profile)
     except HTTPError as e:
         show.http_error(e)

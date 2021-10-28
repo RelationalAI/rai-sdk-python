@@ -14,14 +14,16 @@
 
 from argparse import ArgumentParser
 import json
-from urllib.request import HTTPError
-from railib import api, config, show
+from railib import api, config
 
+from wrap_error import wrap_error
 
-def run(state: str):
-    cfg = config.read()
+@wrap_error
+def run(state: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.list_engines(ctx, state=state)
+    print(f"There are {len(rsp)} items in the response")
     print(json.dumps(rsp, indent=2))
 
 
@@ -29,8 +31,6 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("--state", type=str, default=None,
                    help="state filter (default: none")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.state)
-    except HTTPError as e:
-        show.http_error(e)
+    run(args.state, args.profile)

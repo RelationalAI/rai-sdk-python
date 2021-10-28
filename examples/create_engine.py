@@ -30,9 +30,10 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("--size", type=str, default="XS",
-                   help="engine size (default: XS)")
+                   help="compute size (default: XS)")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.engine, args.size)
+        run(args.engine, args.size, args.profile)
     except HTTPError as e:
         show.http_error(e)

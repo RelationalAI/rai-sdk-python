@@ -27,9 +27,10 @@ def run(engine: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("engine", type=str, help="engine name")
+    p.add_argument("compute", type=str, help="engine name")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.engine)
+        run(args.engine, args.profile)
     except HTTPError as e:
         show.http_error(e)
