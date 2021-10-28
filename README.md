@@ -46,7 +46,20 @@ In order to run the examples and, you will need to create an SDK config file.
 The default location for the file is `$HOME/.rai/config` and the file should
 include the following:
 
-Sample configuration for access key credentials:
+Sample configurtion using OAuth client credentials:
+
+```conf
+[default]
+host = azure.relationalai.com
+port = <api-port>      # optional, default: 443
+scheme = <scheme>      # optional, default: https
+client_id = <your client_id>
+client_secret = <your client secret>
+client_credentials_url = <account login URL>  #optional
+# default: https://login.relationalai.com/oauth/token
+```
+
+Sample configurtion using API access key credentials (deprecated):
 
 ```conf
 [default]
@@ -59,19 +72,6 @@ private_key_filename = <name of file containing private key>
 
 Note, the SDK expects to find the private key file in the same folder as the
 config file.
-
-Sample configuration for client credentials:
-
-```conf
-[default]
-host = azure.relationalai.com
-port = <api-port>      # optional, default: 443
-scheme = <scheme>      # optional, default: https
-client_id = <your client_id>
-client_secret = <your client secret>
-client_credentials_url = <your tenant api url to get the access token>   #optional
-# default: https://login.relationalai.com/oauth/token
-```
 
 You can copy `config.spec` from the root of this repo and modify as needed.
 
