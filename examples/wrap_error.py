@@ -1,6 +1,7 @@
 from urllib.request import HTTPError
 
 import json
+import functools
 
 # TODO: update show.http_error?
 
@@ -16,10 +17,11 @@ def show_error(e: HTTPError) -> None:
         print("There is no descriptive error message, got:", e)
 
 
-def wrap_error(fun, *args, **kwargs):
-    try:
-        fun(*args, **kwargs)
-    except HTTPError as e:
-        show.http_error(e)
-        # show_error(e)
-
+def wrap_error(fun):
+    @functools.wraps(fun)
+    def wrapped(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except HTTPError as e:
+            show.http_error(e)
+    return wrapped

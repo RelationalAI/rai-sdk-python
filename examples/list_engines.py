@@ -18,6 +18,7 @@ from railib import api, config
 
 from wrap_error import wrap_error
 
+@wrap_error
 def run(state: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
@@ -32,4 +33,4 @@ if __name__ == "__main__":
                    help="state filter (default: none")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    wrap_error(run, args.state, args.profile)
+    run(args.state, args.profile)

@@ -20,6 +20,7 @@ from railib import api, config
 
 from wrap_error import wrap_error
 
+@wrap_error
 def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
@@ -33,4 +34,4 @@ if __name__ == "__main__":
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    wrap_error(run, args.database, args.engine, args.profile)
+    run(args.database, args.engine, args.profile)
