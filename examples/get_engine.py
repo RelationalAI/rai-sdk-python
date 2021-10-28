@@ -18,7 +18,7 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(engine: str):
+def run(engine: str, profile: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
     rsp = api.get_engine(ctx, engine)
@@ -27,9 +27,10 @@ def run(engine: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
     try:
-        run(args.engine)
+        run(args.engine, args.profile)
     except HTTPError as e:
         show.http_error(e)

@@ -18,8 +18,8 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, overwrite: bool):
-    cfg = config.read()
+def run(database: str, engine: str, overwrite: bool, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
     print(json.dumps(rsp, indent=2))
@@ -31,8 +31,9 @@ if __name__ == "__main__":
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("--overwrite", action="store_true",
                    help="overwrite existing database")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.overwrite)
+        run(args.database, args.engine, args.overwrite, args.profile)
     except HTTPError as e:
         show.http_error(e)

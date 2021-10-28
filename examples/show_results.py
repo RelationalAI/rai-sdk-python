@@ -16,11 +16,14 @@ from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
 
+from wrap_error import wrap_error
 
 # `show.results` can be used to print the results of a transaction to the
 #  console.
-def run(database: str, engine: str):
-    cfg = config.read()
+
+@wrap_error
+def run(database: str, engine: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.query(ctx, database, engine, "def output = 'a'; 'b'; 'c'")
     show.results(rsp)
@@ -30,8 +33,6 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.database, args.engine)
-    except HTTPError as e:
-        show.http_error(e)
+    run(args.database, args.engine, args.profile)

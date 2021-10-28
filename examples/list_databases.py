@@ -14,12 +14,13 @@
 
 from argparse import ArgumentParser
 import json
-from urllib.request import HTTPError
-from railib import api, config, show
+from railib import api, config
 
+from wrap_error import wrap_error
 
-def run(state: str):
-    cfg = config.read()
+@wrap_error
+def run(state: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.list_databases(ctx, state=state)
     print(json.dumps(rsp, indent=2))
@@ -28,9 +29,7 @@ def run(state: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("--state", type=str, default=None,
-                   help="state filter (default: none")
+                   help="state filter (default: None")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.state)
-    except HTTPError as e:
-        show.http_error(e)
+    run(args.state, args.profile)

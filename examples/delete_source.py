@@ -14,13 +14,12 @@
 
 from argparse import ArgumentParser
 import json
-from os import path
 from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, source: str):
-    cfg = config.read()
+def run(database: str, engine: str, source: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.delete_source(ctx, database, engine, source)
     print(json.dumps(rsp, indent=2))
@@ -31,8 +30,9 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="source name")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.source)
+        run(args.database, args.engine, args.source, args.profile)
     except HTTPError as e:
         show.http_error(e)
