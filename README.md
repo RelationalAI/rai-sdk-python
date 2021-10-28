@@ -46,7 +46,7 @@ In order to run the examples and, you will need to create an SDK config file.
 The default location for the file is `$HOME/.rai/config` and the file should
 include the following:
 
-Sample configurtion for access key credentials:
+Sample configuration for access key credentials:
 
 ```conf
 [default]
@@ -54,13 +54,13 @@ host = azure.relationalai.com
 port = <api-port>      # optional, default: 443
 scheme = <scheme>      # optional, default: https
 access_key = <your public access key>
-private_key_filname = <name of file containing private key>
+private_key_filename = <name of file containing private key>
 ```
 
 Note, the SDK expects to find the private key file in the same folder as the
 config file.
 
-Sample configurtion for client credentials:
+Sample configuration for client credentials:
 
 ```conf
 [default]
