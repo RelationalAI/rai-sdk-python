@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""show.results` can be used to print the results of a transaction to the
+console."""
+
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
+from show_error import show_error
 
-from wrap_error import wrap_error
 
-# `show.results` can be used to print the results of a transaction to the
-#  console.
-
-@wrap_error
+@show_error
 def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
@@ -33,6 +33,7 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     args = p.parse_args()
     run(args.database, args.engine, args.profile)

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""Fetch details of the given engine."""
+
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
@@ -27,7 +29,8 @@ def run(engine: str, profile: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
     try:

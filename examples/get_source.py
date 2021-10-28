@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""
-Get the text for a Rel source in a specific DB
-"""
+"""Fetch the text for a Rel source from a specific database"""
 
 from argparse import ArgumentParser
 from railib import api, config
+from show_error import show_error
 
-from wrap_error import wrap_error
 
-@wrap_error
+@show_error
 def run(database: str, engine: str, source: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
@@ -34,6 +32,7 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="source name")
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     args = p.parse_args()
     run(args.database, args.engine, args.source, args.profile)

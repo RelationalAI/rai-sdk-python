@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""List the sources installed in a particular database"""
+"""List the sources installed in the given database"""
 
 from argparse import ArgumentParser
 import json
 from railib import api, config
+from show_error import show_error
 
-from wrap_error import wrap_error
 
-@wrap_error
+@show_error
 def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)

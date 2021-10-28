@@ -12,28 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Delete an engine."""
+"""A decorator for printing HTTP errors and error payload details to the
+console."""
 
-from argparse import ArgumentParser
-import json
+import functools
 from urllib.request import HTTPError
-from railib import api, config, show
+from railib import show
 
 
-def run(engine: str):
-    cfg = config.read()
-    ctx = api.Context(**cfg)
-    rsp = api.delete_engine(ctx, engine)
-    print(json.dumps(rsp, indent=2))
-
-
-if __name__ == "__main__":
-    p = ArgumentParser()
-    p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
-    args = p.parse_args()
-    try:
-        run(args.engine, args.profile)
-    except HTTPError as e:
-        show.http_error(e)
+def show_error(fun):
+    @functools.wraps(fun)
+    def wrapped(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except HTTPError as e:
+            show.http_error(e)
+    return wrapped

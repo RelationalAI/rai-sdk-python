@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""List all engines."""
+
 from argparse import ArgumentParser
 import json
 from railib import api, config
+from show_error import show_error
 
-from wrap_error import wrap_error
 
-@wrap_error
+@show_error
 def run(state: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
@@ -31,6 +33,7 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("--state", type=str, default=None,
                    help="state filter (default: none")
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     args = p.parse_args()
     run(args.state, args.profile)

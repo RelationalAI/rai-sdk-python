@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""List all users."""
+
 import json
 from urllib.request import HTTPError
 from railib import api, config, show

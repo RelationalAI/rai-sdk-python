@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""Create a new database, optionally overwriting an existing database."""
+
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
@@ -31,7 +33,8 @@ if __name__ == "__main__":
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("--overwrite", action="store_true",
                    help="overwrite existing database")
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     args = p.parse_args()
     try:
         run(args.database, args.engine, args.overwrite, args.profile)

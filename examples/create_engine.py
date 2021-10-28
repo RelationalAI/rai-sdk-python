@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""Create an engine with an optional size."""
+
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
@@ -30,8 +32,9 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("--size", type=str, default="XS",
-                   help="compute size (default: XS)")
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+                   help="engine size (default: XS)")
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     args = p.parse_args()
     try:
         run(args.engine, args.size, args.profile)

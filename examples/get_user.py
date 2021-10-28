@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""Fetch details for the given user."""
+
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
@@ -27,7 +29,8 @@ def run(user: str, profile: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     p.add_argument("id", type=str, nargs=1, help="user id")
     args = p.parse_args()
     try:
