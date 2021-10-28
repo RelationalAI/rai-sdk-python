@@ -28,8 +28,9 @@ __all__ = [
 
 def http_error(e: HTTPError) -> None:
     rsp = json.loads(e.read())
-    print(f"status: {e.status}")
-    print(json.dumps(rsp, indent=2))
+    if rsp:
+        print(f"status: {e.status}")
+        print(json.dumps(rsp, indent=2))
 
 
 def _show_row(row: list, end='\n'):
