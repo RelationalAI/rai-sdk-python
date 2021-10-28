@@ -89,13 +89,8 @@ def _encode(data) -> str:
 
 
 def _encode_path(path: str) -> str:
-    slash = "/"
-
-    def double_encode(segment: str) -> str:
-        return quote(quote(segment, safe=''), safe='')
-
-    encoded = slash.join(map(double_encode, path.split(slash)))
-    return encoded if encoded else slash
+    # double encoding as per AWS v4
+    return quote(quote(path))
 
 
 # Returns an urlencoded query string.
