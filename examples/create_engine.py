@@ -19,8 +19,8 @@ from railib import api, config, show
 from railib.api import EngineSize
 
 
-def run(engine: str, size: str):
-    cfg = config.read()
+def run(engine: str, size: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_engine(ctx, engine, EngineSize(size))
     print(json.dumps(rsp, indent=2))

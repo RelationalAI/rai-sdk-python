@@ -19,11 +19,11 @@ from railib import api, config
 from wrap_error import wrap_error
 
 @wrap_error
-def run(database: str, engine: str, source: str):
+def run(database: str, engine: str, source: str, profile: str):
     """Clone an existing database by creating a new database and setting the
        optional api.create_database `source` argument to the name of
        the database you want to clone."""
-    cfg = config.read()
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_database(
         ctx, database, engine, source=source, overwrite=True)
