@@ -67,7 +67,7 @@ host = azure.relationalai.com
 port = <api-port>      # optional, default: 443
 scheme = <scheme>      # optional, default: https
 access_key = <your public access key>
-private_key_filename = <name of file containing private key>
+private_key_filname = <name of file containing private key>
 ```
 
 Note, the SDK expects to find the private key file in the same folder as the
