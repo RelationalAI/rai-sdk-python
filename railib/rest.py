@@ -21,7 +21,7 @@ from datetime import datetime
 import hashlib
 import json
 from pprint import pprint
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
 import time
 
@@ -86,6 +86,16 @@ def _encode(data) -> str:
     if not isinstance(data, str):
         data = json.dumps(data)
     return data.encode("utf8")
+
+
+def _encode_path(path: str) -> str:
+    slash = "/"
+
+    def double_encode(segment: str) -> str:
+        return quote(quote(segment, safe=''), safe='')
+
+    encoded = slash.join(map(double_encode, path.split(slash)))
+    return encoded if encoded else slash
 
 
 # Returns an urlencoded query string.
@@ -184,7 +194,7 @@ def _sign(ctx: Context, req: Request) -> None:
     split_result = urlsplit(req.full_url)  # was self.url
     canonical_form = "{}\n{}\n{}\n{}\n\n{}\n{}".format(
         req.method,
-        split_result.path,
+        _encode_path(split_result.path),
         split_result.query,
         "\n".join(canonical_headers),
         signed_headers,
