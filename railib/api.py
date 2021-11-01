@@ -249,8 +249,7 @@ def _list_edb_action():
     return {"type": "ListEdbAction"}
 
 
-def _query_action(source: str, name="query", inputs: list = None,
-                  outputs: list = None) -> dict:
+def _query_action(source: str, inputs: list = None, outputs: list = None) -> dict:
     return {
         "type": "QueryAction",
         "source": _source("query", source),
