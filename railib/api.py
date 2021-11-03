@@ -136,7 +136,9 @@ def delete_engine(ctx: Context, engine: str) -> dict:
 
 
 def delete_database(ctx: Context, database: str) -> dict:
-    raise Exception("not implemented")
+    url = _mkurl(ctx, f"{PATH_DATABASE}/{database}")
+    rsp = rest.delete(ctx, url, None)
+    return json.loads(rsp)
 
 
 def delete_user(ctx: Context, user: str) -> dict:
