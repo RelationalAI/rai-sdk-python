@@ -14,6 +14,7 @@
 
 """Operation level interface to the RelationalAI REST API."""
 
+import io
 from enum import Enum, unique
 import json
 
@@ -177,7 +178,6 @@ def list_users(ctx: Context) -> list:
 #
 # Transaction endpoint
 #
-
 class Transaction(object):
     def __init__(self, database: str, engine: str, abort=False,
                  mode: Mode = Mode.OPEN, nowait_durable=False, readonly=False,
@@ -249,13 +249,41 @@ def _list_edb_action():
     return {"type": "ListEdbAction"}
 
 
-def _query_action(source: str, inputs: list = None, outputs: list = None) -> dict:
+# Return rel key correponding to the given name and list of keys.
+def _rel_key(name: str, keys: list) -> dict:
+    return {
+        "type": "RelKey",
+        "name": name,
+        "keys": keys,
+        "values": []}
+
+
+# Return the rel typename corresponding to the type of the given value.
+def _rel_typename(v):
+    if isinstance(v, str):
+        return "RAI_VariableSizeStrings.VariableSizeString"
+    raise TypeError("unsupported input type: {v.__class__.__name__")  # todo
+
+
+# Return a qeury action input corresponding to the given name, value pair.
+def _query_action_input(name: str, value) -> dict:
+    return {
+        "columns": [[value]],
+        "rel_key": _rel_key(name, [_rel_typename(value)]),
+        "type": "Relation"
+    }
+
+
+# `inputs`: map of parameter name to input value
+def _query_action(source: str, inputs: dict = None, outputs: list = None) -> dict:
+    inputs = inputs or {}
+    inputs = [_query_action_input(k, v) for k, v in inputs.items()]
     return {
         "type": "QueryAction",
         "source": _source("query", source),
         "persist": [],
-        "inputs": inputs or [],    # required?
-        "outputs": outputs or []}  # required?
+        "inputs": inputs,
+        "outputs": outputs or []}
 
 
 def _source(name: str, source: str) -> dict:
@@ -320,6 +348,85 @@ def list_edb(ctx: Context, database: str, engine: str) -> list:
 def list_sources(ctx: Context, database: str, engine: str) -> list:
     sources = _list_sources(ctx, database, engine)
     return [source["name"] for source in sources]
+
+
+# Generate a rel literal relation for the given dict.
+def _gen_literal_dict(items: dict) -> str:
+    result = []
+    for k, v in items:
+        result.append(f"{_gen_literal(k)},{_gen_literal(v)}")
+    return '{' + ';'.join(result) + '}'
+
+
+# Generate a rel literal for the given list.
+def _gen_literal_list(items: list) -> str:
+    result = []
+    for item in items:
+        result.append(_gen_literal(item))
+    return '{' + ','.join(result) + '}'
+
+
+# Genearte a rel literal for the given string.
+def _gen_literal_str(v: str) -> str:
+    v = str(v)
+    v = v.replace("'", "\\'")
+    return f"'{v}'"
+
+
+# Genrate a rel literal for the given value.
+def _gen_literal(v) -> str:
+    if isinstance(v, bool):
+        return str(v).lower()
+    if isinstance(v, str):
+        return _gen_literal_str(v)
+    if isinstance(v, dict):
+        return _gen_literal_dict(v)
+    if isinstance(v, list):
+        return _gen_literal_list(v)
+    return repr(v)
+
+
+_syntax_options = [
+    "header",
+    "header_row",
+    "delim",
+    "quotechar",
+    "escapechar"]
+
+
+# Generate list of config syntax options for `load_csv`.
+def _gen_syntax_config(syntax: dict = {}) -> list:
+    result = []
+    for k in _syntax_options:
+        v = syntax.get(k, None)
+        if v is not None:
+            result.append(f"def config:syntax:{k}={_gen_literal(v)}")
+    return result
+
+
+# `syntax`:
+#   * header: a map from col number to name (base 1)
+#   * header_row: row number of header, 0 means no header (default: 1)
+#   * delim: default: ,
+#   * quotechar: default: "
+#   * escapechar: default: \
+#
+# Schema: a map from col name to rel type name, eg:
+#   {'a': "int", 'b': "string"}
+def load_csv(ctx: Context, database: str, engine: str, relation: str, data,
+             syntax: dict = {}):
+    if isinstance(data, str):
+        pass  # ok
+    elif isinstance(data, io.TextIO):
+        data = data.read()
+    else:
+        raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
+    command = _gen_syntax_config(syntax)
+    command.append("def config:data = data")
+    command.append(f"def insert:{relation} = load_csv[config]")
+    command = '\n'.join(command)
+    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
+    return tx.run(ctx, _query_action(command, inputs={'data': data}))
 
 
 def query(ctx: Context, database: str, engine: str, command: str, readonly: bool = True) -> dict:

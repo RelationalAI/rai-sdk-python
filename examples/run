@@ -2,7 +2,7 @@
 
 set -e
 
-ENGINE="2021-10-26-bradlo-xs"
+ENGINE="2021-10-29-bradlo-s"
 
 python3 ./list_users.py
 
@@ -46,3 +46,12 @@ python3 ./list_edb.py sdk-test $ENGINE
 python3 ./list_sources.py sdk-test $ENGINE
 python3 ./delete_source.py sdk-test $ENGINE hello
 python3 ./list_sources.py sdk-test $ENGINE
+
+# load_csv
+python3 ./load_csv.py bradlo-test $ENGINE sample.csv
+python3 ./run_query.py bradlo-test $ENGINE sample
+python3 ./load_csv.py bradlo-test $ENGINE sample_no_header.csv --header-row=0
+python3 ./run_query.py bradlo-test $ENGINE sample_no_header
+python3 ./load_csv.py bradlo-test $ENGINE sample_alt_syntax.csv --delim="|" --quotechar="'"
+python3 ./run_query.py bradlo-test $ENGINE sample_alt_syntax
+

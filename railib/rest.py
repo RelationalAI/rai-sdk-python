@@ -115,7 +115,7 @@ def _print_request(req: Request, level=0):
             for k, v in req.headers.items():
                 print(f"{k}: {v}")
             if req.data:
-                pprint(json.loads(req.data.decode("utf8")))
+                print(json.dumps(json.loads(req.data.decode("utf8")), indent=2))
 
 
 # Returns the current access token if valid, otherwise requests new token.
