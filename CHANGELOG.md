@@ -6,6 +6,10 @@
 * Add api.load_json
 * Add inputs arg to api.query
 
+## v0.6.1
+
+* Automate publishing to PyPi
+
 ## v0.6.0
 
 * Renamed `compute` to `engine`
