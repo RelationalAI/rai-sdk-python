@@ -67,6 +67,7 @@ __all__ = [
     "list_engines",
     "list_sources",
     "list_users",
+    "load_csv",
     "query",
 ]
 
