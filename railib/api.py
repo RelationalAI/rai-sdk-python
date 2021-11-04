@@ -273,8 +273,7 @@ def _query_action_input(name: str, value) -> dict:
     return {
         "columns": [[value]],
         "rel_key": _rel_key(name, [_rel_typename(value)]),
-        "type": "Relation"
-    }
+        "type": "Relation"}
 
 
 # `inputs`: map of parameter name to input value
@@ -428,13 +427,14 @@ def load_csv(ctx: Context, database: str, engine: str, relation: str, data,
     command.append("def config:data = data")
     command.append(f"def insert:{relation} = load_csv[config]")
     command = '\n'.join(command)
-    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    return tx.run(ctx, _query_action(command, inputs={'data': data}))
+    return query(ctx, database, engine, command,
+                 inputs={'data': data}, readonly=False)
 
 
-def query(ctx: Context, database: str, engine: str, command: str, readonly: bool = True) -> dict:
+def query(ctx: Context, database: str, engine: str, command: str,
+          inputs: dict = None, readonly: bool = True) -> dict:
     tx = Transaction(database, engine, readonly=readonly)
-    return tx.run(ctx, _query_action(command))
+    return tx.run(ctx, _query_action(command, inputs=inputs))
 
 
 create_compute = create_engine  # deprecated, use create_engine
