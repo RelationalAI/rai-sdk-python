@@ -3,6 +3,7 @@
 ## v0.6.2
 
 * Add api.load_csv
+* Add api.load_json
 * Add inputs arg to api.query
 
 ## v0.6.0

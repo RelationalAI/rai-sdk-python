@@ -397,12 +397,12 @@ _syntax_options = [
 
 
 # Generate list of config syntax options for `load_csv`.
-def _gen_syntax_config(syntax: dict = {}) -> list:
-    result = []
+def _gen_syntax_config(syntax: dict = {}) -> str:
+    result = ""
     for k in _syntax_options:
         v = syntax.get(k, None)
         if v is not None:
-            result.append(f"def config:syntax:{k}={_gen_literal(v)}")
+            result += f"def config:syntax:{k}={_gen_literal(v)}\n"
     return result
 
 
@@ -416,19 +416,31 @@ def _gen_syntax_config(syntax: dict = {}) -> list:
 # Schema: a map from col name to rel type name, eg:
 #   {'a': "int", 'b': "string"}
 def load_csv(ctx: Context, database: str, engine: str, relation: str, data,
-             syntax: dict = {}):
+             syntax: dict = {}) -> dict:
     if isinstance(data, str):
         pass  # ok
     elif isinstance(data, io.TextIO):
         data = data.read()
     else:
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
+    inputs = {'data': data}
     command = _gen_syntax_config(syntax)
-    command.append("def config:data = data")
-    command.append(f"def insert:{relation} = load_csv[config]")
-    command = '\n'.join(command)
-    return query(ctx, database, engine, command,
-                 inputs={'data': data}, readonly=False)
+    command += ("def config:data = data\n"
+                "def insert:%s = load_csv[config]" % relation)
+    return query(ctx, database, engine, command, inputs=inputs, readonly=False)
+
+
+def load_json(ctx: Context, database: str, engine: str, relation: str, data) -> dict:
+    if isinstance(data, str):
+        pass  # ok
+    elif isinstance(data, io.TextIO):
+        data = data.read()
+    else:
+        raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
+    inputs = {'data': data}
+    command = ("def config:data = data\n"
+               "def insert:%s = load_json[config]" % relation)
+    return query(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
 def query(ctx: Context, database: str, engine: str, command: str,
