@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.2
+
+* Add api.load_csv
+
 ## v0.6.0
 
 * Renamed `compute` to `engine`
