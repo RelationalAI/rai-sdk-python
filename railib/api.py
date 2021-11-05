@@ -63,7 +63,7 @@ __all__ = [
     "get_source",
     "get_user",
     "list_databases",
-    "list_edb",
+    "list_edbs",
     "list_engines",
     "list_sources",
     "list_users",
@@ -336,7 +336,7 @@ def install_source(ctx: Context, database: str, engine: str, sources: dict) -> d
     return tx.run(ctx, *actions)
 
 
-def list_edb(ctx: Context, database: str, engine: str) -> list:
+def list_edbs(ctx: Context, database: str, engine: str) -> list:
     tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_edb_action())
     actions = rsp["actions"]
@@ -453,3 +453,4 @@ create_compute = create_engine  # deprecated, use create_engine
 delete_compute = delete_engine  # deprecated, use delete_engine
 get_compute = get_engine        # deprecated, use get_engine
 list_computes = list_engines    # deprecated, use list_engines
+list_edb = list_edbs            # deprecated, use list_edbs

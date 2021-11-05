@@ -23,7 +23,7 @@ from railib import api, config, show
 def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.list_edb(ctx, database, engine)
+    rsp = api.list_edbs(ctx, database, engine)
     print(json.dumps(rsp, indent=2))
 
 

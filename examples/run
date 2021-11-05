@@ -32,7 +32,7 @@ python3 ./show_problems.py sdk-test $ENGINE
 python3 ./install_source.py sdk-test $ENGINE hello.rel
 python3 ./list_sources.py sdk-test $ENGINE
 python3 ./get_source.py sdk-test $ENGINE hello
-python3 ./list_edb.py sdk-test $ENGINE
+python3 ./list_edbs.py sdk-test $ENGINE
 
 # clone database
 python3 ./clone_database.py sdk-test-clone $ENGINE sdk-test
@@ -40,7 +40,7 @@ python3 ./list_databases.py
 python3 ./get_database.py sdk-test-clone
 python3 ./list_sources.py sdk-test $ENGINE
 python3 ./get_source.py sdk-test $ENGINE hello
-python3 ./list_edb.py sdk-test $ENGINE
+python3 ./list_edbs.py sdk-test $ENGINE
 
 # delete source
 python3 ./list_sources.py sdk-test $ENGINE
