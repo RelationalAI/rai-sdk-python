@@ -1,5 +1,7 @@
 # Changelog
 
+* Rename api.list_edb to api.list_edbs
+
 ## v0.6.2
 
 * Add api.load_csv
