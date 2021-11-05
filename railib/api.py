@@ -415,11 +415,11 @@ def _gen_syntax_config(syntax: dict = {}) -> str:
 #
 # Schema: a map from col name to rel type name, eg:
 #   {'a': "int", 'b': "string"}
-def load_csv(ctx: Context, database: str, engine: str, relation: str, data,
-             syntax: dict = {}) -> dict:
+def load_csv(ctx: Context, database: str, engine: str, relation: str,
+             data: str or io.TextIOBase, syntax: dict = {}) -> dict:
     if isinstance(data, str):
         pass  # ok
-    elif isinstance(data, io.TextIO):
+    elif isinstance(data, io.TextIOBase):
         data = data.read()
     else:
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
@@ -430,10 +430,11 @@ def load_csv(ctx: Context, database: str, engine: str, relation: str, data,
     return query(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
-def load_json(ctx: Context, database: str, engine: str, relation: str, data) -> dict:
+def load_json(ctx: Context, database: str, engine: str, relation: str,
+              data: str or io.TextIOBase) -> dict:
     if isinstance(data, str):
         pass  # ok
-    elif isinstance(data, io.TextIO):
+    elif isinstance(data, io.TextIOBase):
         data = data.read()
     else:
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")

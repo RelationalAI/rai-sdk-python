@@ -1,30 +1,31 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 ENGINE="2021-10-29-bradlo-s"
 
+# users
 python3 ./list_users.py
-
-# grab first user-id from list
 USERID=`python3 ./list_users.py | grep -m 1 -E "\"id\":.*,$" | sed "s/^.*\"id\":[ \t]*//" | sed "s/,$//"`
 python3 ./get_user.py $USERID
 
+# engines
 python3 ./create_engine.py $ENGINE --size=XS
 python3 ./list_engines.py
 python3 ./list_engines.py --state=PROVISIONED
 python3 ./get_engine.py $ENGINE
 
-#python3 ./get_database.py sdk-test
-# should return a 404
-
-# create database
+# databases
 python3 ./create_database.py sdk-test $ENGINE --overwrite
 python3 ./list_databases.py
 python3 ./get_database.py sdk-test
+python3 ./list_sources.py sdk_test $ENGINE
+python3 ./list_edbs.py sdk_test $ENGINE
 
-# show results, problems and errors
-python3 ./run_query.py sdk-test $ENGINE "1+1"
+# run query
+QUERY="x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+python3 ./run_query.py sdk-test $ENGINE "$QUERY"
+python3 ./run_query.py sdk-test $ENGINE "$QUERY" --readonly
 python3 ./show_results.py sdk-test $ENGINE
 python3 ./show_problems.py sdk-test $ENGINE
 
@@ -46,6 +47,7 @@ python3 ./list_edbs.py sdk-test $ENGINE
 python3 ./list_sources.py sdk-test $ENGINE
 python3 ./delete_source.py sdk-test $ENGINE hello
 python3 ./list_sources.py sdk-test $ENGINE
+python3 ./list_edbs.py sdk-test $ENGINE
 
 # load_csv
 python3 ./load_csv.py bradlo-test $ENGINE sample.csv -r sample_csv
