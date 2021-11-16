@@ -20,8 +20,8 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(engine: str):
-    cfg = config.read()
+def run(engine: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.delete_engine(ctx, engine)
     print(json.dumps(rsp, indent=2))
