@@ -27,7 +27,7 @@ def run(database: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("id", type=str, nargs=1, help="database id")
+    p.add_argument("id", type=str, nargs=1, help="database name")
     args = p.parse_args()
     try:
         run(args.id[0])
