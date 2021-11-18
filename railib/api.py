@@ -138,8 +138,9 @@ def delete_engine(ctx: Context, engine: str) -> dict:
 
 
 def delete_database(ctx: Context, database: str) -> dict:
-    url = _mkurl(ctx, f"{PATH_DATABASE}/{database}")
-    rsp = rest.delete(ctx, url, None)
+    data = {"name": database}
+    url = _mkurl(ctx, PATH_DATABASE)
+    rsp = rest.delete(ctx, url, data)
     return json.loads(rsp)
 
 
@@ -148,7 +149,7 @@ def delete_user(ctx: Context, user: str) -> dict:
 
 
 def get_engine(ctx: Context, engine: str) -> dict:
-    return _get_resource(ctx, PATH_ENGINE, name=engine, key="computes")
+    return _get_resource(ctx, PATH_ENGINE, name=engine, deleted_on="", key="computes")
 
 
 def get_database(ctx: Context, database: str) -> dict:
