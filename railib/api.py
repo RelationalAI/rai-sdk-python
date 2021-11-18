@@ -210,11 +210,8 @@ def delete_database(ctx: Context, database: str) -> dict:
     return json.loads(rsp)
 
 
-def disable_user(ctx: Context, user: str) -> dict:
-    data = {"status": "INACTIVE"}
-    url = _mkurl(ctx, f"{PATH_USER}/{user}")
-    rsp = rest.patch(ctx, url, data)
-    return json.loads(rsp)
+def delete_user(ctx: Context, user: str) -> dict:
+    raise Exception("not implemented")
 
 
 def delete_oauth_client(ctx: Context, id: str) -> dict:
