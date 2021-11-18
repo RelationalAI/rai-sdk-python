@@ -67,7 +67,7 @@ __all__ = [
     "delete_database",
     "delete_engine",
     "delete_source",
-    "delete_user",
+    "disable_user",
     "get_database",
     "get_engine",
     "get_source",
@@ -160,8 +160,11 @@ def delete_database(ctx: Context, database: str) -> dict:
     return json.loads(rsp)
 
 
-def delete_user(ctx: Context, user: str) -> dict:
-    raise Exception("not implemented")
+def disable_user(ctx: Context, user: str) -> dict:
+    data = {"status": "INACTIVE"}
+    url = _mkurl(ctx, f"{PATH_USER}/{user}")
+    rsp = rest.patch(ctx, url, data)
+    return json.loads(rsp)
 
 
 def get_engine(ctx: Context, engine: str) -> dict:
