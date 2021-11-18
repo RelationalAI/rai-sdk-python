@@ -51,9 +51,9 @@ class Context(object):
         self.service = "transaction"
 
 
-# Answers if the given list of strings contains a case insensitive match
+# Answers if the keys of the passed dict contain a case insensitive match
 # for the given term.
-def _contains_insensitive(items: list, term: str) -> bool:
+def _contains_insensitive(items: dict, term: str) -> bool:
     term = term.casefold()
     for item in items:
         item = item.casefold()
@@ -63,7 +63,7 @@ def _contains_insensitive(items: list, term: str) -> bool:
 
 
 # Fill in any missing headers.
-def _default_headers(url: str, headers: dict = None) -> None:
+def _default_headers(url: str, headers: dict = None) -> dict:
     headers = headers or {}
     if not _contains_insensitive(headers, "accept"):
         headers["Accept"] = "application/json"
@@ -80,7 +80,7 @@ def _default_user_agent() -> str:
     return f"rai-sdk-python/{__version__}"
 
 
-def _encode(data) -> str:
+def _encode(data) -> bytes:
     if not data:
         return data
     if not isinstance(data, str):
@@ -250,3 +250,7 @@ def put(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
 
 def post(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
     return request(ctx, "POST", url, headers=headers, data=data, **kwargs)
+
+
+def patch(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
+    return request(ctx, "PATCH", url, headers=headers, data=data, **kwargs)
