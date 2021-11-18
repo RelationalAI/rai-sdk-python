@@ -51,9 +51,9 @@ class Context(object):
         self.service = "transaction"
 
 
-# Answers if the given list of strings contains a case insensitive match
+# Answers if the keys of the passed dict contain a case insensitive match
 # for the given term.
-def _contains_insensitive(items: list, term: str) -> bool:
+def _contains_insensitive(items: dict, term: str) -> bool:
     term = term.casefold()
     for item in items:
         item = item.casefold()
@@ -65,13 +65,13 @@ def _contains_insensitive(items: list, term: str) -> bool:
 # Fill in any missing headers.
 def _default_headers(url: str, headers: dict = None) -> dict:
     headers = headers or {}
-    if not _contains_insensitive([*headers], "accept"):
+    if not _contains_insensitive(headers, "accept"):
         headers["Accept"] = "application/json"
-    if not _contains_insensitive([*headers], "content-type"):
+    if not _contains_insensitive(headers, "content-type"):
         headers["Content-Type"] = "application/json"
-    if not _contains_insensitive([*headers], "host"):
+    if not _contains_insensitive(headers, "host"):
         headers["Host"] = _get_host(url)
-    if not _contains_insensitive([*headers], "user-agent"):
+    if not _contains_insensitive(headers, "user-agent"):
         headers["User-Agent"] = _default_user_agent()
     return headers
 
