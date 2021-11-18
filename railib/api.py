@@ -217,6 +217,12 @@ def disable_user(ctx: Context, user: str) -> dict:
     return json.loads(rsp)
 
 
+def delete_oauth_client(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
+    rsp = rest.delete(ctx, url, None)
+    return json.loads(rsp)
+
+
 def get_engine(ctx: Context, engine: str) -> dict:
     return _get_resource(ctx, PATH_ENGINE, name=engine, deleted_on="", key="computes")
 
