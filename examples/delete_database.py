@@ -27,9 +27,9 @@ def run(database: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("id", type=str, nargs=1, help="database name")
+    p.add_argument("name", type=str, nargs=1, help="database name")
     args = p.parse_args()
     try:
-        run(args.id[0])
+        run(args.name)
     except HTTPError as e:
         show.http_error(e)
