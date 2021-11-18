@@ -18,6 +18,8 @@ import io
 from enum import Enum, unique
 import json
 
+from typing import List
+
 from . import rest
 
 PATH_ENGINE = "/compute"
@@ -47,10 +49,18 @@ class Mode(str, Enum):
     CLONE_OVERWRITE = "CLONE_OVERWRITE"
 
 
+# User roles
+@unique
+class Role(str, Enum):
+    USER = "user"
+    ADMIN = "admin"
+
+
 __all__ = [
     "Context",
     "EngineSize",
     "Mode",
+    "Role",
     "create_database",
     "create_engine",
     "create_user",
@@ -117,8 +127,14 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     return json.loads(rsp)
 
 
-def create_user(ctx: Context, user: str):
-    raise Exception("not implemented")
+def create_user(ctx: Context, user: str, roles: List[Role] = None):
+    rs = roles or [Role.USER]
+    data = {
+        "email": user,
+        "roles": [r.value for r in rs]}
+    url = _mkurl(ctx, PATH_USER)
+    rsp = rest.post(ctx, url, data)
+    return json.loads(rsp)
 
 
 # Derives the database open_mode based on the given arguments.
