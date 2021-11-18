@@ -230,6 +230,10 @@ def get_user(ctx: Context, user: str) -> dict:
     # return _get_resource(ctx, PATH_USER, name=user, key="users")
 
 
+def get_oauth_client(ctx: Context, id: str) -> dict:
+    return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client")
+
+
 def list_engines(ctx: Context, state=None) -> list:
     kwargs = {}
     if state is not None:
@@ -246,6 +250,10 @@ def list_databases(ctx: Context, state=None) -> list:
 
 def list_users(ctx: Context) -> list:
     return _list_collection(ctx, PATH_USER, key="users")
+
+
+def list_oauth_clients(ctx: Context) -> list:
+    return _list_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
 
 
 #
