@@ -63,15 +63,15 @@ def _contains_insensitive(items: list, term: str) -> bool:
 
 
 # Fill in any missing headers.
-def _default_headers(url: str, headers: dict = None) -> dict:
+def _default_headers(url: str, headers: dict = None) -> None:
     headers = headers or {}
-    if not _contains_insensitive([*headers], "accept"):
+    if not _contains_insensitive(headers, "accept"):
         headers["Accept"] = "application/json"
-    if not _contains_insensitive([*headers], "content-type"):
+    if not _contains_insensitive(headers, "content-type"):
         headers["Content-Type"] = "application/json"
-    if not _contains_insensitive([*headers], "host"):
+    if not _contains_insensitive(headers, "host"):
         headers["Host"] = _get_host(url)
-    if not _contains_insensitive([*headers], "user-agent"):
+    if not _contains_insensitive(headers, "user-agent"):
         headers["User-Agent"] = _default_user_agent()
     return headers
 
@@ -80,7 +80,7 @@ def _default_user_agent() -> str:
     return f"rai-sdk-python/{__version__}"
 
 
-def _encode(data) -> bytes:
+def _encode(data) -> str:
     if not data:
         return data
     if not isinstance(data, str):
@@ -250,7 +250,3 @@ def put(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
 
 def post(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
     return request(ctx, "POST", url, headers=headers, data=data, **kwargs)
-
-
-def patch(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
-    return request(ctx, "PATCH", url, headers=headers, data=data, **kwargs)
