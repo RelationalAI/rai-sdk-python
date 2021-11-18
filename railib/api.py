@@ -26,6 +26,7 @@ PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
 PATH_TRANSACTION = "/transaction"
 PATH_USER = "/users"
+PATH_OAUTH_CLIENT = "/oauth-clients"
 
 
 # Engine sizes
@@ -56,27 +57,70 @@ class Role(str, Enum):
     ADMIN = "admin"
 
 
+# User/OAuth-client permissions
+@unique
+class Permission(str, Enum):
+    # computes
+    CREATE_COMPUTE = "create:compute"
+    DELETE_COMPUTE = "delete:compute"
+    LIST_COMPUTES = "list:compute"
+    READ_COMPUTE = "read:compute"
+    # databases
+    LIST_DATABASES = "list:database"
+    UPDATE_DATABASE = "update:database"
+    DELETE_DATABASE = "delete:database"
+    # transactions
+    RUN_TRANSACTION = "run:transaction"
+    # credits
+    READ_CREDITS_USAGE = "read:credits_usage"
+    # oauth clients
+    CREATE_OAUTH_CLIENT = "create:oauth_client"
+    READ_OAUTH_CLIENT = "read:oauth_client"
+    LIST_OAUTH_CLIENTS = "list:oauth_client"
+    UPDATE_OAUTH_CLIENT = "update:oauth_client"
+    DELETE_OAUTH_CLIENT = "delete:oauth_client"
+    ROTATE_OAUTH_CLIENT_SECRET = "rotate:oauth_client_secret"
+    # users
+    CREATE_USER = "create:user"
+    LIST_USERS = "list:user"
+    READ_USER = "read:user"
+    UPDATE_USER = "update:user"
+    # roles
+    LIST_ROLES = "list:role"
+    READ_ROLE = "read:role"
+    # permissions
+    LIST_PERMISSIONS = "list:permission"
+    # access keys
+    CREATE_ACCESS_KEY = "create:accesskey"
+    LIST_ACCESS_KEYS = "list:accesskey"
+
+
 __all__ = [
     "Context",
     "EngineSize",
     "Mode",
     "Role",
+    "Permission",
     "create_database",
     "create_engine",
     "create_user",
+    "create_oauth_client",
     "delete_database",
     "delete_engine",
     "delete_source",
-    "disable_user",
+    "delete_user",
+    "delete_oauth_client",
     "get_database",
     "get_engine",
     "get_source",
     "get_user",
+    "get_oauth_client",
     "list_databases",
     "list_edbs",
     "list_engines",
     "list_sources",
     "list_users",
+    "list_oauth_clients",
     "load_csv",
     "query",
 ]
@@ -137,6 +181,16 @@ def create_user(ctx: Context, user: str, roles: List[Role] = None):
     return json.loads(rsp)
 
 
+def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] = None):
+    ps = permissions or []
+    data = {
+        "name": name,
+        "permissions": ps}
+    url = _mkurl(ctx, PATH_OAUTH_CLIENT)
+    rsp = rest.post(ctx, url, data)
+    return json.loads(rsp)
+
+
 # Derives the database open_mode based on the given arguments.
 def _create_mode(source_name: str, overwrite: bool) -> Mode:
     if source_name is not None:
@@ -160,10 +214,13 @@ def delete_database(ctx: Context, database: str) -> dict:
     return json.loads(rsp)
 
 
-def disable_user(ctx: Context, user: str) -> dict:
-    data = {"status": "INACTIVE"}
-    url = _mkurl(ctx, f"{PATH_USER}/{user}")
-    rsp = rest.patch(ctx, url, data)
+def delete_user(ctx: Context, user: str) -> dict:
+    raise Exception("not implemented")
+
+
+def delete_oauth_client(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
+    rsp = rest.delete(ctx, url, None)
     return json.loads(rsp)
 
 
@@ -178,6 +235,10 @@ def get_database(ctx: Context, database: str) -> dict:
 def get_user(ctx: Context, user: str) -> dict:
     return _get_resource(ctx, f"{PATH_USER}/{user}", name=user)
     # return _get_resource(ctx, PATH_USER, name=user, key="users")
+
+
+def get_oauth_client(ctx: Context, id: str) -> dict:
+    return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client")
 
 
 def list_engines(ctx: Context, state=None) -> list:
@@ -196,6 +257,10 @@ def list_databases(ctx: Context, state=None) -> list:
 
 def list_users(ctx: Context) -> list:
     return _list_collection(ctx, PATH_USER, key="users")
+
+
+def list_oauth_clients(ctx: Context) -> list:
+    return _list_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
 
 
 #
