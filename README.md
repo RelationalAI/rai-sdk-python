@@ -80,7 +80,7 @@ run from the command line, eg:
 
 ```console
 $ cd examples
-$ python3 ./list_computes.py
+$ python3 ./list_engines.py
 ```
 
 ## Support
