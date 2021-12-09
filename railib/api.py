@@ -357,8 +357,13 @@ class TransactionAsync(object):
     def run(self, ctx: Context) -> dict:
         data = self.data
 
+        # query parameters
+        kwargs = {
+            "dbname": self.database,
+            "compute_name": self.engine}
+
         url = _mkurl(ctx, PATH_ASYNC_TRANSACTION)
-        rsp = rest.post(ctx, url, data)
+        rsp = rest.post(ctx, url, data, **kwargs)
         return json.loads(rsp)
 
 
