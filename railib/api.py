@@ -341,9 +341,9 @@ class TransactionAsync(object):
         inputs = self.inputs or {}
         inputs = [_query_action_input(k, v) for k, v in inputs.items()]
         result = {
-            "db_name": self.database,
+            "dbname": self.database,
             "nowait_durable": self.nowait_durable,
-            "read_only": self.readonly
+            "readonly": self.readonly
         }
 
         if self.engine is not None:
