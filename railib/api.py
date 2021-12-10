@@ -341,13 +341,13 @@ class TransactionAsync(object):
         inputs = self.inputs or {}
         inputs = [_query_action_input(k, v) for k, v in inputs.items()]
         result = {
-            "dbname": self.database,
+            "db_name": self.database,
             "nowait_durable": self.nowait_durable,
-            "readonly": self.readonly
+            "read_only": self.readonly
         }
 
         if self.engine is not None:
-            result["computeName"] = self.engine
+            result["compute_name"] = self.engine
 
         result["query"] = self.command
         result["inputs"] = inputs
@@ -357,13 +357,8 @@ class TransactionAsync(object):
     def run(self, ctx: Context) -> dict:
         data = self.data
 
-        # query parameters
-        kwargs = {
-            "dbname": self.database,
-            "compute_name": self.engine}
-
         url = _mkurl(ctx, PATH_ASYNC_TRANSACTION)
-        rsp = rest.post(ctx, url, data, **kwargs)
+        rsp = rest.post(ctx, url, data)
         return json.loads(rsp)
 
 
