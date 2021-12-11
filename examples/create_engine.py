@@ -16,15 +16,26 @@
 
 from argparse import ArgumentParser
 import json
+import time
 from urllib.request import HTTPError
 from railib import api, config, show
 from railib.api import EngineSize
+
+
+# Answers if the given state is a terminal state.
+def is_term_state(state: str) -> bool:
+    return state == "PROVISIONED" or ("FAILED" in state)
 
 
 def run(engine: str, size: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_engine(ctx, engine, EngineSize(size))
+    while True:  # wait for request to reach terminal state
+        time.sleep(3)
+        rsp = api.get_engine(ctx, engine)
+        if is_term_state(rsp["state"]):
+            break
     print(json.dumps(rsp, indent=2))
 
 

@@ -1,5 +1,7 @@
 # Changelog
 
+## v0.6.3
+
 * Rename api.list_edb to api.list_edbs
 * Support create/list/get/delete oauth clients
 * Support create/disable users

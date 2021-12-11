@@ -300,7 +300,7 @@ class Transaction(object):
             "nowait_durable": self.nowait_durable,
             "readonly": self.readonly,
             "type": "Transaction",
-            "version": 0  # 25
+            "version": 0
         }
         if self.engine is not None:
             result["computeName"] = self.engine

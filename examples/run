@@ -2,12 +2,14 @@
 
 set -ex
 
-ENGINE="2021-10-29-bradlo-s"
+ENGINE=sdk-test-xs
+DATABASE=sdk-test
+DATABASE_CLONE=$DATABASE-clone
 
-# users
-python3 ./list_users.py
-USERID=`python3 ./list_users.py | grep -m 1 -E "\"id\":.*,$" | sed "s/^.*\"id\":[ \t]*//" | sed "s/,$//"`
-python3 ./get_user.py $USERID
+# setup
+python3 ./delete_database.py $DATABASE_CLONE
+python3 ./delete_database.py $DATABASE
+python3 ./delete_engine.py $ENGINE
 
 # engines
 python3 ./create_engine.py $ENGINE --size=XS
@@ -16,48 +18,61 @@ python3 ./list_engines.py --state=PROVISIONED
 python3 ./get_engine.py $ENGINE
 
 # databases
-python3 ./create_database.py sdk-test $ENGINE --overwrite
+python3 ./create_database.py $DATABASE $ENGINE --overwrite
 python3 ./list_databases.py
-python3 ./get_database.py sdk-test
-python3 ./list_sources.py sdk_test $ENGINE
-python3 ./list_edbs.py sdk_test $ENGINE
+python3 ./list_databases.py --state=CREATED
+python3 ./get_database.py $DATABASE
+python3 ./list_sources.py $DATABASE $ENGINE
+python3 ./list_edbs.py $DATABASE $ENGINE
 
 # run query
 QUERY="x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-python3 ./run_query.py sdk-test $ENGINE "$QUERY"
-python3 ./run_query.py sdk-test $ENGINE "$QUERY" --readonly
-python3 ./show_results.py sdk-test $ENGINE
-python3 ./show_problems.py sdk-test $ENGINE
+python3 ./run_query.py $DATABASE $ENGINE "$QUERY"
+python3 ./run_query.py $DATABASE $ENGINE "$QUERY" --readonly
+python3 ./show_results.py $DATABASE $ENGINE
+python3 ./show_problems.py $DATABASE $ENGINE
 
 # install source
-python3 ./install_source.py sdk-test $ENGINE hello.rel
-python3 ./list_sources.py sdk-test $ENGINE
-python3 ./get_source.py sdk-test $ENGINE hello
-python3 ./list_edbs.py sdk-test $ENGINE
-
-# clone database
-python3 ./clone_database.py sdk-test-clone $ENGINE sdk-test
-python3 ./list_databases.py
-python3 ./get_database.py sdk-test-clone
-python3 ./list_sources.py sdk-test $ENGINE
-python3 ./get_source.py sdk-test $ENGINE hello
-python3 ./list_edbs.py sdk-test $ENGINE
-
-# delete source
-python3 ./list_sources.py sdk-test $ENGINE
-python3 ./delete_source.py sdk-test $ENGINE hello
-python3 ./list_sources.py sdk-test $ENGINE
-python3 ./list_edbs.py sdk-test $ENGINE
+python3 ./install_source.py $DATABASE $ENGINE hello.rel
+python3 ./list_sources.py $DATABASE $ENGINE
+python3 ./get_source.py $DATABASE $ENGINE hello
+python3 ./list_edbs.py $DATABASE $ENGINE
 
 # load_csv
-python3 ./load_csv.py bradlo-test $ENGINE sample.csv -r sample_csv
-python3 ./run_query.py bradlo-test $ENGINE sample_csv
-python3 ./load_csv.py bradlo-test $ENGINE sample_no_header.csv --header-row=0 -r sample_csv_no_header
-python3 ./run_query.py bradlo-test $ENGINE sample_csv_no_header
-python3 ./load_csv.py bradlo-test $ENGINE sample_alt_syntax.csv --delim="|" --quotechar="'" -r sample_csv_alt_syntax
-python3 ./run_query.py bradlo-test $ENGINE sample_csv_alt_syntax
+python3 ./load_csv.py $DATABASE $ENGINE sample.csv -r sample_csv
+python3 ./run_query.py $DATABASE $ENGINE sample_csv
+python3 ./load_csv.py $DATABASE $ENGINE sample_no_header.csv --header-row=0 -r sample_no_header_csv
+python3 ./run_query.py $DATABASE $ENGINE sample_no_header_csv
+python3 ./load_csv.py $DATABASE $ENGINE sample_alt_syntax.csv --delim="|" --quotechar="'" -r sample_alt_syntax_csv
+python3 ./run_query.py $DATABASE $ENGINE sample_alt_syntax_csv
+python3 ./list_edbs.py $DATABASE $ENGINE
 
 # load_json
-python3 ./load_json.py bradlo-test $ENGINE sample.json -r sample_json
-python3 ./run_query.py bradlo-test $ENGINE sample_json
+python3 ./load_json.py $DATABASE $ENGINE sample.json -r sample_json
+python3 ./run_query.py $DATABASE $ENGINE sample_json
+python3 ./list_edbs.py $DATABASE $ENGINE
 
+# clone database
+python3 ./clone_database.py $DATABASE_CLONE $ENGINE $DATABASE
+python3 ./list_databases.py
+python3 ./list_databases.py --state=CREATED
+python3 ./get_database.py $DATABASE_CLONE
+python3 ./list_sources.py $DATABASE_CLONE $ENGINE
+python3 ./list_edbs.py $DATABASE_CLONE $ENGINE
+python3 ./get_source.py $DATABASE_CLONE $ENGINE hello
+
+# delete source
+python3 ./list_sources.py $DATABASE $ENGINE
+python3 ./delete_source.py $DATABASE $ENGINE hello
+python3 ./list_sources.py $DATABASE $ENGINE
+python3 ./list_edbs.py $DATABASE $ENGINE
+
+# users
+python3 ./list_users.py
+USERID=`python3 ./list_users.py | grep -m 1 -E "\"id\":.*,$" | sed "s/^.*\"id\":[ \t]*//" | sed "s/,$//"`
+python3 ./get_user.py $USERID
+
+# cleanup
+python3 ./delete_database.py $DATABASE_CLONE
+python3 ./delete_database.py $DATABASE
+python3 ./delete_engine.py $ENGINE
