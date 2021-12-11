@@ -22,7 +22,7 @@ python3 ./create_database.py $DATABASE $ENGINE --overwrite
 python3 ./list_databases.py
 python3 ./list_databases.py --state=CREATED
 python3 ./get_database.py $DATABASE
-python3 ./list_sources.py $DATABASE $ENGINE
+python3 ./list_models.py $DATABASE $ENGINE
 python3 ./list_edbs.py $DATABASE $ENGINE
 
 # run query
@@ -32,10 +32,10 @@ python3 ./run_query.py $DATABASE $ENGINE "$QUERY" --readonly
 python3 ./show_results.py $DATABASE $ENGINE
 python3 ./show_problems.py $DATABASE $ENGINE
 
-# install source
-python3 ./install_source.py $DATABASE $ENGINE hello.rel
-python3 ./list_sources.py $DATABASE $ENGINE
-python3 ./get_source.py $DATABASE $ENGINE hello
+# install model
+python3 ./install_model.py $DATABASE $ENGINE hello.rel
+python3 ./list_models.py $DATABASE $ENGINE
+python3 ./get_model.py $DATABASE $ENGINE hello
 python3 ./list_edbs.py $DATABASE $ENGINE
 
 # load_csv
@@ -57,15 +57,21 @@ python3 ./clone_database.py $DATABASE_CLONE $ENGINE $DATABASE
 python3 ./list_databases.py
 python3 ./list_databases.py --state=CREATED
 python3 ./get_database.py $DATABASE_CLONE
-python3 ./list_sources.py $DATABASE_CLONE $ENGINE
+python3 ./list_models.py $DATABASE_CLONE $ENGINE
 python3 ./list_edbs.py $DATABASE_CLONE $ENGINE
-python3 ./get_source.py $DATABASE_CLONE $ENGINE hello
+python3 ./get_model.py $DATABASE_CLONE $ENGINE hello
 
-# delete source
-python3 ./list_sources.py $DATABASE $ENGINE
-python3 ./delete_source.py $DATABASE $ENGINE hello
-python3 ./list_sources.py $DATABASE $ENGINE
+# delete model
+python3 ./list_models.py $DATABASE $ENGINE
+python3 ./delete_model.py $DATABASE $ENGINE hello
+python3 ./list_models.py $DATABASE $ENGINE
 python3 ./list_edbs.py $DATABASE $ENGINE
+
+# oauth-clients
+CLIENTID=`python3 ./create_oauth_client.py sdk-test | jq -r '.id'`
+python3 ./list_oauth_clients.py
+python3 ./get_oauth_client.py $CLIENTID
+python3 ./delete_oauth_client.py $CLIENTID
 
 # users
 python3 ./list_users.py

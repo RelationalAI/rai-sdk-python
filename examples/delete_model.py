@@ -12,27 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Fetch the text for a Rel source from a specific database"""
+"""Delete the given Rel model from the given database."""
 
 from argparse import ArgumentParser
-from railib import api, config
-from show_error import show_error
+import json
+from urllib.request import HTTPError
+from railib import api, config, show
 
 
-@show_error
-def run(database: str, engine: str, source: str, profile: str):
+def run(database: str, engine: str, model: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_source(ctx, database, engine, source)
-    print(rsp)
+    rsp = api.delete_model(ctx, database, engine, model)
+    print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("source", type=str, help="source name")
+    p.add_argument("model", type=str, help="model name")
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.engine, args.source, args.profile)
+    try:
+        run(args.database, args.engine, args.model, args.profile)
+    except HTTPError as e:
+        show.http_error(e)
