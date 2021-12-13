@@ -1,5 +1,11 @@
 # Changelog
 
+## main
+
+* Additional user APIs and examples:
+    - api.update_user
+    - api.enable_user
+
 ## v0.6.3
 
 * Rename `source` to `model`

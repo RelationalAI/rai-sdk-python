@@ -74,9 +74,19 @@ python3 ./get_oauth_client.py $CLIENTID
 python3 ./delete_oauth_client.py $CLIENTID
 
 # users
+EMAIL=sdktest@relational.ai
 python3 ./list_users.py
-USERID=`python3 ./list_users.py | grep -m 1 -E "\"id\":.*,$" | sed "s/^.*\"id\":[ \t]*//" | sed "s/,$//"`
-python3 ./get_user.py $USERID
+python3 ./create_user.py $EMAIL
+python3 ./get_userid.py $EMAIL
+USERID=`python3 ./get_userid.py $EMAIL`
+python3 get_user.py $USERID
+python3 disable_user.py $USERID
+python3 enable_user.py $USERID
+python3 update_user.py $USERID --status=INACTIVE
+python3 update_user.py $USERID --status=ACTIVE
+python3 update_user.py $USERID --roles=admin --roles=user
+python3 update_user.py $USERID --status=INACTIVE --roles=user
+python3 update_user.py $USERID
 
 # cleanup
 python3 ./delete_database.py $DATABASE_CLONE

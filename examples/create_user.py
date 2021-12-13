@@ -14,31 +14,30 @@
 
 """Create a user with an (optional) role."""
 
-import json
 from argparse import ArgumentParser
+import json
 from typing import List
 from urllib.request import HTTPError
-
 from railib import api, config, show
-from railib.api import Role
 
 
-def run(user: str, roles: List[str], profile: str):
+def run(user: str, roles: List[api.Role], profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_user(ctx, user, [Role(r) for r in roles])
+    rsp = api.create_user(ctx, user, roles)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("user", type=str, help="user email")
-    p.add_argument("--roles", nargs='*', default=["user"],
+    p.add_argument("email", type=str, help="user email")
+    p.add_argument("--roles", action='append', default=None,
                    help='user roles ("user" (default) or "admin")')
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.user, args.roles, args.profile)
+        roles = [api.Role(r) for r in args.roles] if args.roles else None
+        run(args.email, roles, args.profile)
     except HTTPError as e:
         show.http_error(e)
