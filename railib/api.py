@@ -109,6 +109,7 @@ __all__ = [
     "delete_engine",
     "delete_model",
     "disable_user",
+    "enable_user",
     "delete_oauth_client",
     "get_database",
     "get_engine",
@@ -122,6 +123,7 @@ __all__ = [
     "list_users",
     "list_oauth_clients",
     "load_csv",
+    "update_user",
     "query",
 ]
 
@@ -171,10 +173,10 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     return json.loads(rsp)
 
 
-def create_user(ctx: Context, user: str, roles: List[Role] = None):
+def create_user(ctx: Context, email: str, roles: List[Role] = None):
     rs = roles or [Role.USER]
     data = {
-        "email": user,
+        "email": email,
         "roles": [r.value for r in rs]}
     url = _mkurl(ctx, PATH_USER)
     rsp = rest.post(ctx, url, data)
@@ -214,17 +216,18 @@ def delete_database(ctx: Context, database: str) -> dict:
     return json.loads(rsp)
 
 
-def disable_user(ctx: Context, user: str) -> dict:
-    data = {"status": "INACTIVE"}
-    url = _mkurl(ctx, f"{PATH_USER}/{user}")
-    rsp = rest.patch(ctx, url, data)
-    return json.loads(rsp)
+def disable_user(ctx: Context, userid: str) -> dict:
+    return update_user(ctx, userid, status="INACTIVE")
 
 
 def delete_oauth_client(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
     rsp = rest.delete(ctx, url, None)
     return json.loads(rsp)
+
+
+def enable_user(ctx: Context, userid: str) -> dict:
+    return update_user(ctx, userid, status="ACTIVE")
 
 
 def get_engine(ctx: Context, engine: str) -> dict:
@@ -235,8 +238,8 @@ def get_database(ctx: Context, database: str) -> dict:
     return _get_resource(ctx, PATH_DATABASE, name=database, key="databases")
 
 
-def get_user(ctx: Context, user: str) -> dict:
-    return _get_resource(ctx, f"{PATH_USER}/{user}", name=user)
+def get_user(ctx: Context, userid: str) -> dict:
+    return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
 
 
 def get_oauth_client(ctx: Context, id: str) -> dict:
@@ -263,6 +266,17 @@ def list_users(ctx: Context) -> list:
 
 def list_oauth_clients(ctx: Context) -> list:
     return _list_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
+
+
+def update_user(ctx: Context, userid: str, status: str = None, roles=None):
+    data = {}
+    if status is not None:
+        data["status"] = status
+    if roles is not None:
+        data["roles"] = roles
+    url = _mkurl(ctx, f"{PATH_USER}/{userid}")
+    rsp = rest.patch(ctx, url, data)
+    return json.loads(rsp)
 
 
 #

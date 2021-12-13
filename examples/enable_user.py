@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Fetch details for the given user."""
+"""Enable the given user."""
 
 from argparse import ArgumentParser
 import json
@@ -23,7 +23,7 @@ from railib import api, config, show
 def run(userid: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_user(ctx, userid)
+    rsp = api.enable_user(ctx, userid)
     print(json.dumps(rsp, indent=2))
 
 

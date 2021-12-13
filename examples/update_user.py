@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Fetch details for the given user."""
+"""Update the given user."""
 
 from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
+from typing import List
 from railib import api, config, show
 
 
-def run(userid: str, profile: str):
+def run(userid: str, profile: str, status: str, roles: List[api.Role]):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_user(ctx, userid)
+    rsp = api.update_user(ctx, userid, status=status, roles=roles)
     print(json.dumps(rsp, indent=2))
 
 
@@ -31,9 +32,14 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
+    p.add_argument("--status", type=str, default=None,
+                   help="updated user status")
+    p.add_argument("--roles", action='append', default=None,
+                   help="updated user roles")
     p.add_argument("userid", type=str, nargs=1, help="user id")
     args = p.parse_args()
     try:
-        run(args.userid[0], args.profile)
+        roles = [api.Role(r) for r in args.roles] if args.roles else None
+        run(args.userid[0], args.profile, args.status, roles)
     except HTTPError as e:
         show.http_error(e)
