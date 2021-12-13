@@ -17,10 +17,10 @@
 import io
 from enum import Enum, unique
 import json
-
 from typing import List
 
 from . import rest
+from .results import Results
 
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
@@ -532,9 +532,10 @@ def load_json(ctx: Context, database: str, engine: str, relation: str,
 
 
 def query(ctx: Context, database: str, engine: str, command: str,
-          inputs: dict = None, readonly: bool = True) -> dict:
+          inputs: dict = None, readonly: bool = True) -> Results:
     tx = Transaction(database, engine, readonly=readonly)
-    return tx.run(ctx, _query_action(command, inputs=inputs))
+    rsp = tx.run(ctx, _query_action(command, inputs=inputs))
+    return Results(rsp)
 
 
 create_compute = create_engine  # deprecated, use create_engine

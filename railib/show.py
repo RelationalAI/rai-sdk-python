@@ -39,9 +39,9 @@ def _show_row(row: list, end='\n'):
     print(row, end=end)
 
 
-# Print query response outputs as rel relations.
-def _show_rel(rsp: dict) -> None:
-    if rsp["aborted"]:
+# Print query results as individual physical relations.
+def _show_physical(rsp: dict) -> None:
+    if rsp.get("aborted", False):
         print("aborted")
         return
     outputs = rsp["output"]
@@ -99,7 +99,7 @@ def results(rsp: dict, format="physical") -> None:
     if format == "wire":
         json.dump(rsp, sys.stdout, indent=2)
     elif format == "physical":
-        _show_rel(rsp)
+        _show_physical(rsp)
         problems(rsp)
     else:
         raise Exception(f"unknown format: '{format}'")
