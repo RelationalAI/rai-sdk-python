@@ -25,7 +25,7 @@ from . import rest
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
 PATH_TRANSACTION = "/transaction"
-PATH_ASYNC_TRANSACTION = "/transactions"
+PATH_TRANSACTIONS = "/transactions"
 PATH_USER = "/users"
 PATH_OAUTH_CLIENT = "/oauth-clients"
 
@@ -345,19 +345,15 @@ class TransactionAsync(object):
             "nowait_durable": self.nowait_durable,
             "readonly": self.readonly
         }
-
         if self.engine is not None:
             result["compute_name"] = self.engine
-
         result["query"] = self.command
         result["inputs"] = inputs
-
         return result
 
     def run(self, ctx: Context) -> dict:
         data = self.data
-
-        url = _mkurl(ctx, PATH_ASYNC_TRANSACTION)
+        url = _mkurl(ctx, PATH_TRANSACTIONS)
         rsp = rest.post(ctx, url, data)
         return json.loads(rsp)
 

@@ -41,10 +41,10 @@ def _show_row(row: list, end='\n'):
 
 # Print query response outputs as rel relations.
 def _show_rel(rsp: dict) -> None:
-    if "aborted" in rsp and rsp["aborted"]:
+    if rsp.get("aborted", False):
         print("aborted")
         return
-    if "output" in rsp:
+    if rsp.get("output", False):
         outputs = rsp["output"]
         if len(outputs) == 0:
             print("false")
@@ -71,7 +71,7 @@ def _show_rel(rsp: dict) -> None:
                 _show_row(row, end='')
             print()
             count += 1
-    if "status" in rsp:
+    if rsp.get("status", False):
         print(rsp["status"])
 
 
