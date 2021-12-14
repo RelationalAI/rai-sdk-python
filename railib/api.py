@@ -172,10 +172,10 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
 
 
 def create_user(ctx: Context, user: str, roles: List[Role] = None):
-    rs = roles or [Role.USER]
+    rs = roles or []
     data = {
         "email": user,
-        "roles": [r.value for r in rs]}
+        "roles": rs}
     url = _mkurl(ctx, PATH_USER)
     rsp = rest.post(ctx, url, data)
     return json.loads(rsp)

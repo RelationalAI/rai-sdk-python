@@ -26,14 +26,15 @@ from railib.api import Role
 def run(user: str, roles: List[str], profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_user(ctx, user, [Role(r) for r in roles])
+    roles = [Role(r) for r in roles] if roles else None
+    rsp = api.create_user(ctx, user, roles)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("user", type=str, help="user email")
-    p.add_argument("--roles", nargs='*', default=["user"],
+    p.add_argument("--roles", nargs='*',
                    help='user roles ("user" (default) or "admin")')
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
