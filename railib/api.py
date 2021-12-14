@@ -346,7 +346,7 @@ class TransactionAsync(object):
             "readonly": self.readonly
         }
         if self.engine is not None:
-            result["compute_name"] = self.engine
+            result["engine_name"] = self.engine
         result["query"] = self.command
         result["inputs"] = inputs
         return result
