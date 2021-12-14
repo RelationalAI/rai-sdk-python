@@ -174,7 +174,7 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
 
 
 def create_user(ctx: Context, email: str, roles: List[Role] = None):
-    rs = roles or [Role.USER]
+    rs = roles or []
     data = {
         "email": email,
         "roles": [r.value for r in rs]}
