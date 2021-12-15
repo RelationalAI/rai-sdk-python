@@ -41,35 +41,38 @@ def _show_row(row: list, end='\n'):
 
 # Print query response outputs as rel relations.
 def _show_rel(rsp: dict) -> None:
-    if rsp["aborted"]:
+    if rsp.get("aborted", False):
         print("aborted")
         return
-    outputs = rsp["output"]
-    if len(outputs) == 0:
-        print("false")
-        return
-    count = 0
-    for output in outputs:
-        cols = output["columns"]
-        rkey = output["rel_key"]
-        name = rkey["name"]
-        keys = rkey["keys"]
-        if name == "abort" and len(cols) == 0:
-            continue  # ignore constraint results
-        if count > 0:
+    if rsp.get("output", False):
+        outputs = rsp["output"]
+        if len(outputs) == 0:
+            print("false")
+            return
+        count = 0
+        for output in outputs:
+            cols = output["columns"]
+            rkey = output["rel_key"]
+            name = rkey["name"]
+            keys = rkey["keys"]
+            if name == "abort" and len(cols) == 0:
+                continue  # ignore constraint results
+            if count > 0:
+                print()
+            sig = '*'.join(keys)
+            print(f"// {name} ({sig})")
+            rows = list(zip(*cols))
+            if len(rows) == 0:
+                print("true")
+                continue
+            for i, row in enumerate(rows):
+                if i > 0:
+                    print(";")
+                _show_row(row, end='')
             print()
-        sig = '*'.join(keys)
-        print(f"// {name} ({sig})")
-        rows = list(zip(*cols))
-        if len(rows) == 0:
-            print("true")
-            continue
-        for i, row in enumerate(rows):
-            if i > 0:
-                print(";")
-            _show_row(row, end='')
-        print()
-        count += 1
+            count += 1
+    if rsp.get("status", False):
+        print(rsp["status"])
 
 
 # Print the problems in the given response dict.

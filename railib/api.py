@@ -25,6 +25,7 @@ from . import rest
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
 PATH_TRANSACTION = "/transaction"
+PATH_TRANSACTIONS = "/transactions"
 PATH_USER = "/users"
 PATH_OAUTH_CLIENT = "/oauth-clients"
 
@@ -336,6 +337,39 @@ class Transaction(object):
         rsp = rest.post(ctx, url, data, **kwargs)
         return json.loads(rsp)
 
+#
+# /transactions endpoint
+#
+class TransactionAsync(object):
+    def __init__(self, database: str, engine: str, command: str, nowait_durable=False, readonly=False, inputs: dict = None):
+        self.database = database
+        self.engine = engine
+        self.command = command
+        self.nowait_durable = nowait_durable
+        self.readonly = readonly
+        self.inputs = inputs
+
+    @property
+    def data(self):
+        inputs = self.inputs or {}
+        inputs = [_query_action_input(k, v) for k, v in inputs.items()]
+        result = {
+            "dbname": self.database,
+            "nowait_durable": self.nowait_durable,
+            "readonly": self.readonly
+        }
+        if self.engine is not None:
+            result["engine_name"] = self.engine
+        result["query"] = self.command
+        result["inputs"] = inputs
+        return result
+
+    def run(self, ctx: Context) -> dict:
+        data = self.data
+        url = _mkurl(ctx, PATH_TRANSACTIONS)
+        rsp = rest.post(ctx, url, data)
+        return json.loads(rsp)
+
 
 def _delete_model_action(name: str) -> dict:
     return {"type": "ModifyWorkspaceAction", "delete_source": [name]}
@@ -549,6 +583,11 @@ def query(ctx: Context, database: str, engine: str, command: str,
           inputs: dict = None, readonly: bool = True) -> dict:
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
+
+def query_async(ctx: Context, database: str, engine: str, command: str,
+          readonly: bool = True, inputs: dict = None) -> dict:
+    tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
+    return tx.run(ctx)
 
 
 create_compute = create_engine  # deprecated, use create_engine
