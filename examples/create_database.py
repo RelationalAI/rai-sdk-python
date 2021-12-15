@@ -12,42 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Create a new database, optionally overwriting an existing database."""
+"""Create a new database."""
 
 from argparse import ArgumentParser
 import json
-import time
 from urllib.request import HTTPError
 from railib import api, config, show
 
 
-# Answers if the given state is a terminal state.
-def is_term_state(state: str) -> bool:
-    return state == "CREATED" or ("FAILED" in state)
-
-
-def run(database: str, engine: str, overwrite: bool, profile: str):
+def run(database: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
-    while True:  # wait for request to reach terminal state
-        time.sleep(3)
-        rsp = api.get_database(ctx, database)
-        if is_term_state(rsp["state"]):
-            break
+    rsp = api.create_database(ctx, database)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("--overwrite", action="store_true",
-                   help="overwrite existing database")
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.overwrite, args.profile)
+        run(args.database, args.profile)
     except HTTPError as e:
         show.http_error(e)

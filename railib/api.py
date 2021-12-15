@@ -15,9 +15,8 @@
 """Operation level interface to the RelationalAI REST API."""
 
 import io
-from enum import Enum, unique
 import json
-
+from enum import Enum, unique
 from typing import List
 
 from . import rest
@@ -442,11 +441,13 @@ def _list_models(ctx: Context, database: str, engine: str) -> dict:
     return models
 
 
-def create_database(ctx: Context, database: str, engine: str,
-                    source: str = None, overwrite=False) -> dict:
-    mode = _create_mode(source, overwrite)
-    tx = Transaction(database, engine, mode=mode, source_database=source)
-    return tx.run(ctx)
+def create_database(ctx: Context, database: str, source: str = None) -> dict:
+    data = {
+        "name": database,
+        "source_name": source}
+    url = _mkurl(ctx, PATH_DATABASE)
+    rsp = rest.put(ctx, url, data)
+    return json.loads(rsp)
 
 
 def delete_model(ctx: Context, database: str, engine: str, model: str) -> dict:
