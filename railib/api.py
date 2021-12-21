@@ -22,6 +22,8 @@ from typing import List
 
 from . import rest
 
+from requests_toolbelt import MultipartDecoder
+
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
 PATH_TRANSACTION = "/transaction"
@@ -146,7 +148,7 @@ def _mkurl(ctx: Context, path: str) -> str:
 def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
     url = _mkurl(ctx, path)
     rsp = rest.get(ctx, url, **kwargs)
-    rsp = json.loads(rsp)
+    rsp = json.loads(rsp.read())
     if key:
         rsp = rsp[key]
     if rsp and isinstance(rsp, list):
@@ -158,7 +160,7 @@ def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
 # Retrieve a generic collection of resources.
 def _list_collection(ctx, path: str, key=None, **kwargs):
     rsp = rest.get(ctx, _mkurl(ctx, path), **kwargs)
-    rsp = json.loads(rsp)
+    rsp = json.loads(rsp.read())
     return rsp[key] if key else rsp
 
 
@@ -169,7 +171,7 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
         "size": size.value}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def create_user(ctx: Context, user: str, roles: List[Role] = None):
@@ -179,7 +181,7 @@ def create_user(ctx: Context, user: str, roles: List[Role] = None):
         "roles": [r.value for r in rs]}
     url = _mkurl(ctx, PATH_USER)
     rsp = rest.post(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] = None):
@@ -189,7 +191,7 @@ def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] =
         "permissions": ps}
     url = _mkurl(ctx, PATH_OAUTH_CLIENT)
     rsp = rest.post(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 # Derives the database open_mode based on the given arguments.
@@ -205,27 +207,27 @@ def delete_engine(ctx: Context, engine: str) -> dict:
     data = {"name": engine}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.delete(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def delete_database(ctx: Context, database: str) -> dict:
     data = {"name": database}
     url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.delete(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def disable_user(ctx: Context, user: str) -> dict:
     data = {"status": "INACTIVE"}
     url = _mkurl(ctx, f"{PATH_USER}/{user}")
     rsp = rest.patch(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def delete_oauth_client(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
     rsp = rest.delete(ctx, url, None)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def get_engine(ctx: Context, engine: str) -> dict:
@@ -322,7 +324,7 @@ class Transaction(object):
             kwargs["source_dbname"] = self.source_database
         url = _mkurl(ctx, PATH_TRANSACTION)
         rsp = rest.post(ctx, url, data, **kwargs)
-        return json.loads(rsp)
+        return json.loads(rsp.read())
 
 #
 # /transactions endpoint
@@ -355,7 +357,9 @@ class TransactionAsync(object):
         data = self.data
         url = _mkurl(ctx, PATH_TRANSACTIONS)
         rsp = rest.post(ctx, url, data)
-        return json.loads(rsp)
+        content_type = rsp.headers.get('content-type', None)
+        content = rsp.read()
+        return MultipartDecoder(content, content_type).parts
 
 
 def _delete_source_action(name: str) -> dict:

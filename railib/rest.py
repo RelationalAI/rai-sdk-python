@@ -232,8 +232,7 @@ def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs
     req = Request(method=method, url=url, headers=headers, data=data)
     req = _authenticate(ctx, req)
     _print_request(req)
-    with urlopen(req) as rsp:
-        return rsp.read()
+    return urlopen(req)
 
 
 def delete(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
