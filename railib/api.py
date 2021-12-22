@@ -227,6 +227,12 @@ def delete_oauth_client(ctx: Context, id: str) -> dict:
     return json.loads(rsp)
 
 
+def delete_user(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_USER}/{id}")
+    rsp = rest.delete(ctx, url, None)
+    return json.loads(rsp)
+
+
 def enable_user(ctx: Context, userid: str) -> dict:
     return update_user(ctx, userid, status="ACTIVE")
 
