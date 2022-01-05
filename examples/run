@@ -18,7 +18,7 @@ python3 ./list_engines.py --state=PROVISIONED
 python3 ./get_engine.py $ENGINE
 
 # databases
-python3 ./create_database.py $DATABASE $ENGINE --overwrite
+python3 ./create_database.py $DATABASE
 python3 ./list_databases.py
 python3 ./list_databases.py --state=CREATED
 python3 ./get_database.py $DATABASE
@@ -53,7 +53,7 @@ python3 ./run_query.py $DATABASE $ENGINE sample_json
 python3 ./list_edbs.py $DATABASE $ENGINE
 
 # clone database
-python3 ./clone_database.py $DATABASE_CLONE $ENGINE $DATABASE
+python3 ./clone_database.py $DATABASE_CLONE $DATABASE
 python3 ./list_databases.py
 python3 ./list_databases.py --state=CREATED
 python3 ./get_database.py $DATABASE_CLONE
