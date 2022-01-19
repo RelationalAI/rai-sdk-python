@@ -244,6 +244,8 @@ def get_engine(ctx: Context, engine: str) -> dict:
 def get_database(ctx: Context, database: str) -> dict:
     return _get_resource(ctx, PATH_DATABASE, name=database, key="databases")
 
+def get_transaction(ctx: Context, txn_id: str) -> dict:
+    return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{txn_id}")
 
 def get_user(ctx: Context, userid: str) -> dict:
     return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
