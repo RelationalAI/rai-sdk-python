@@ -15,27 +15,14 @@ import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
-import pyarrow as pa
+
 
 def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.query_async(ctx, database, engine, command, readonly=readonly)
-    result = []
-    content_type_json = b'application/json'
-    content_type_arrow_stream = b'application/vnd.apache.arrow.stream'
-    for part in rsp:
-        header_content_type = part.headers[b'content-type']
-        if header_content_type == content_type_json:
-            result.append(json.loads(bytes(part.content)))
-        elif header_content_type == content_type_arrow_stream:
-            with pa.ipc.open_stream(part.content) as reader:
-                schema = reader.schema
-                batches = [batch for batch in reader]
-                table = pa.Table.from_batches(batches=batches, schema=schema)
-                result.append(table.to_pydict())
 
-    show.results(result, "wire")
+    show.results(rsp, "multipart")
 
 
 if __name__ == "__main__":
