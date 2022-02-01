@@ -21,7 +21,6 @@ def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.query_async(ctx, database, engine, command, readonly=readonly)
-
     show.results(rsp, "multipart")
 
 
