@@ -15,14 +15,10 @@
 """Operation level interface to the RelationalAI REST API."""
 
 import io
-from enum import Enum, unique
 import json
-
+from enum import Enum, unique
 from typing import List
-
 from . import rest
-
-from requests_toolbelt import MultipartDecoder
 
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
@@ -162,6 +158,24 @@ def _list_collection(ctx, path: str, key=None, **kwargs):
     rsp = rest.get(ctx, _mkurl(ctx, path), **kwargs)
     rsp = json.loads(rsp.read())
     return rsp[key] if key else rsp
+
+#
+# Finds and returns the multipart form-data boundary
+# Boundary is something like,
+# Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb
+#
+
+
+def _get_multipart_data_boundary(content_type):
+    if content_type:
+        values = content_type.split(";")
+        if len(values) > 1:
+            values = values[1].split("=")
+            if len(values) > 1:
+                values[1] = values[1].encode("utf-8")
+                # one part is separated from the other like, --boundary=bla
+                return b''.join((b'--', values[1]))
+    return None
 
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
@@ -326,11 +340,13 @@ class Transaction(object):
         rsp = rest.post(ctx, url, data, **kwargs)
         return json.loads(rsp.read())
 
+
 #
 # /transactions endpoint
 #
 class TransactionAsync(object):
-    def __init__(self, database: str, engine: str, command: str, nowait_durable=False, readonly=False, inputs: dict = None):
+    def __init__(self, database: str, engine: str, command: str, nowait_durable=False, readonly=False,
+                 inputs: dict = None):
         self.database = database
         self.engine = engine
         self.command = command
@@ -353,13 +369,32 @@ class TransactionAsync(object):
         result["inputs"] = inputs
         return result
 
-    def run(self, ctx: Context) -> dict:
+    def run(self, ctx: Context) -> []:
         data = self.data
         url = _mkurl(ctx, PATH_TRANSACTIONS)
         rsp = rest.post(ctx, url, data)
         content_type = rsp.headers.get('content-type', None)
         content = rsp.read()
-        return MultipartDecoder(content, content_type).parts
+        if ("form-data" in content_type) and (b'\r\n\r\n' in content):
+            boundary = _get_multipart_data_boundary(content_type)
+            result = []
+            if boundary:
+                parts = content.split(b''.join((b'\r\n', boundary)))
+                for x in range(0, len(parts) - 1):
+                    part = parts[x]
+                    # fix the first part, it may contain the boundary
+                    if x == 0:
+                        first_part_parts = part.split(boundary)
+                        part = first_part_parts[len(first_part_parts) - 1]
+                    # skip the part which contains the following
+                    if b'--\r\n' in part:
+                        continue
+                    # append the part
+                    result.append(part)
+
+                return result
+
+        raise Exception("Not a valid multipart response")
 
 
 def _delete_source_action(name: str) -> dict:
@@ -418,7 +453,7 @@ def _source(name: str, source: str) -> dict:
     return {
         "type": "Source",
         "name": name,
-        "path": "",       # todo: check if required?
+        "path": "",  # todo: check if required?
         "value": source}
 
 
@@ -575,14 +610,15 @@ def query(ctx: Context, database: str, engine: str, command: str,
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
 
+
 def query_async(ctx: Context, database: str, engine: str, command: str,
-          readonly: bool = True, inputs: dict = None) -> dict:
+                readonly: bool = True, inputs: dict = None) -> dict:
     tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
     return tx.run(ctx)
 
 
 create_compute = create_engine  # deprecated, use create_engine
 delete_compute = delete_engine  # deprecated, use delete_engine
-get_compute = get_engine        # deprecated, use get_engine
-list_computes = list_engines    # deprecated, use list_engines
-list_edb = list_edbs            # deprecated, use list_edbs
+get_compute = get_engine  # deprecated, use get_engine
+list_computes = list_engines  # deprecated, use list_engines
+list_edb = list_edbs  # deprecated, use list_edbs

@@ -17,7 +17,7 @@
 import json
 import sys
 from urllib.request import HTTPError
-
+import pyarrow as pa
 
 __all__ = [
     "http_error"
@@ -75,6 +75,30 @@ def _show_rel(rsp: dict) -> None:
         print(rsp["status"])
 
 
+def _show_multipart(rsp):
+    result = []
+    content_type_json = b'application/json'
+    content_type_arrow_stream = b'application/octet-stream'
+    for part in rsp:
+        # split the part
+        # part body and headers are separated with CRLFCRLF
+        values = part.split(b'\r\n\r\n')
+        # last part is the content/body
+        part_value = values[len(values) - 1]
+        # content is json, decode the part content as json
+        if content_type_json in part:
+            result.append(json.loads(part_value))
+        # if the part has arrow stream, then decode the arrow stream
+        # the results are in a form of a tuple/table
+        elif content_type_arrow_stream in part:
+            with pa.ipc.open_stream(part_value) as reader:
+                schema = reader.schema
+                batches = [batch for batch in reader]
+                table = pa.Table.from_batches(batches=batches, schema=schema)
+                result.append(table.to_pydict())
+    json.dump(result, sys.stdout, indent=2)
+
+
 # Print the problems in the given response dict.
 def problems(rsp: dict) -> None:
     if rsp is None:
@@ -104,5 +128,7 @@ def results(rsp: dict, format="physical") -> None:
     elif format == "physical":
         _show_rel(rsp)
         problems(rsp)
+    elif format == "multipart":
+        _show_multipart(rsp)
     else:
         raise Exception(f"unknown format: '{format}'")
