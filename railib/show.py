@@ -82,9 +82,9 @@ def _show_multipart(rsp):
     for part in rsp:
         # split the part
         # part body and headers are separated with CRLFCRLF
-        values = part.split(b'\r\n\r\n')
+        strings = part.split(b'\r\n\r\n')
         # last part is the content/body
-        part_value = values[len(values) - 1]
+        part_value = strings[len(strings) - 1]
         # content is json, decode the part content as json
         if content_type_json in part:
             result.append(json.loads(part_value))
@@ -96,6 +96,7 @@ def _show_multipart(rsp):
                 batches = [batch for batch in reader]
                 table = pa.Table.from_batches(batches=batches, schema=schema)
                 result.append(table.to_pydict())
+
     json.dump(result, sys.stdout, indent=2)
 
 

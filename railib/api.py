@@ -167,14 +167,13 @@ def _list_collection(ctx, path: str, key=None, **kwargs):
 
 
 def _get_multipart_data_boundary(content_type):
-    if content_type:
-        values = content_type.split(";")
-        if len(values) > 1:
-            values = values[1].split("=")
-            if len(values) > 1:
-                values[1] = values[1].encode("utf-8")
-                # one part is separated from the other like, --boundary=bla
-                return b''.join((b'--', values[1]))
+    if (";" in content_type) and ("=" in content_type):
+        strings = content_type.split(";")
+        strings = strings[len(strings) - 1].split("=")
+        boundary = strings[len(strings) - 1].encode("utf-8")
+        # one part is separated from the other like, --boundary=bla
+        return b''.join((b'--', boundary))
+
     return None
 
 
