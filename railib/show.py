@@ -78,7 +78,7 @@ def _show_rel(rsp: dict) -> None:
 def _show_multipart(rsp):
     result = []
     content_type_json = b'application/json'
-    content_type_arrow_stream = b'application/octet-stream'
+    content_type_arrow_stream = b'application/vnd.apache.arrow.stream'
     for part in rsp:
         # split the part
         # part body and headers are separated with CRLFCRLF
