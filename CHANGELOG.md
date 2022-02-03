@@ -1,9 +1,18 @@
 # Changelog
 
+## main
+
+* Additional user APIs and examples:
+    - api.update_user
+    - api.enable_user
+
+## v0.6.3
+
+* Rename `source` to `model`
 * Rename api.list_edb to api.list_edbs
-* Support create/list/get/delete oauth clients
-* Support create/disable users
-* Support delete databases by name
+* Implement create/list/get/delete oauth clients
+* Implement create/disable users
+* Implement delete database by name
 
 ## v0.6.2
 

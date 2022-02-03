@@ -12,39 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Delete an engine."""
+"""List the models installed in the given database"""
 
 from argparse import ArgumentParser
 import json
-import time
-from urllib.request import HTTPError
-from railib import api, config, show
+from railib import api, config
+from show_error import show_error
 
 
-# Answers if the given state is a terminal state.
-def is_term_state(state: str) -> bool:
-    return state == "DELETED" or ("FAILED" in state)
-
-
-def run(engine: str, profile: str):
+@show_error
+def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.delete_engine(ctx, engine)
-    while True:  # wait for request to reach terminal state
-        time.sleep(3)
-        rsp = api.get_engine(ctx, engine)
-        if not rsp or is_term_state(rsp["state"]):
-            break
+    rsp = api.list_models(ctx, database, engine)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
+    p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.engine, args.profile)
-    except HTTPError as e:
-        show.http_error(e)
+    run(args.database, args.engine, args.profile)

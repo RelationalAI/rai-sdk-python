@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -ex
+
+# upload to production repo
+twine upload --skip-existing dist/*

@@ -106,21 +106,23 @@ __all__ = [
     "create_oauth_client",
     "delete_database",
     "delete_engine",
-    "delete_source",
+    "delete_model",
     "disable_user",
+    "enable_user",
     "delete_oauth_client",
     "get_database",
     "get_engine",
-    "get_source",
+    "get_model",
     "get_user",
     "get_oauth_client",
     "list_databases",
     "list_edbs",
     "list_engines",
-    "list_sources",
+    "list_models",
     "list_users",
     "list_oauth_clients",
     "load_csv",
+    "update_user",
     "query",
 ]
 
@@ -187,10 +189,10 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     return json.loads(rsp.read())
 
 
-def create_user(ctx: Context, user: str, roles: List[Role] = None):
-    rs = roles or [Role.USER]
+def create_user(ctx: Context, email: str, roles: List[Role] = None):
+    rs = roles or []
     data = {
-        "email": user,
+        "email": email,
         "roles": [r.value for r in rs]}
     url = _mkurl(ctx, PATH_USER)
     rsp = rest.post(ctx, url, data)
@@ -204,12 +206,12 @@ def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] =
         "permissions": ps}
     url = _mkurl(ctx, PATH_OAUTH_CLIENT)
     rsp = rest.post(ctx, url, data)
-    return json.loads(rsp.read())
+    return json.loads(rsp)["client"]
 
 
 # Derives the database open_mode based on the given arguments.
-def _create_mode(source_name: str, overwrite: bool) -> Mode:
-    if source_name is not None:
+def _create_mode(source_database: str, overwrite: bool) -> Mode:
+    if source_database is not None:
         result = Mode.CLONE_OVERWRITE if overwrite else Mode.CLONE
     else:
         result = Mode.CREATE_OVERWRITE if overwrite else Mode.CREATE
@@ -230,17 +232,24 @@ def delete_database(ctx: Context, database: str) -> dict:
     return json.loads(rsp.read())
 
 
-def disable_user(ctx: Context, user: str) -> dict:
-    data = {"status": "INACTIVE"}
-    url = _mkurl(ctx, f"{PATH_USER}/{user}")
-    rsp = rest.patch(ctx, url, data)
-    return json.loads(rsp.read())
+def disable_user(ctx: Context, userid: str) -> dict:
+    return update_user(ctx, userid, status="INACTIVE")
 
 
 def delete_oauth_client(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
     rsp = rest.delete(ctx, url, None)
     return json.loads(rsp.read())
+
+
+def delete_user(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_USER}/{id}")
+    rsp = rest.delete(ctx, url, None)
+    return json.loads(rsp)
+
+
+def enable_user(ctx: Context, userid: str) -> dict:
+    return update_user(ctx, userid, status="ACTIVE")
 
 
 def get_engine(ctx: Context, engine: str) -> dict:
@@ -251,9 +260,8 @@ def get_database(ctx: Context, database: str) -> dict:
     return _get_resource(ctx, PATH_DATABASE, name=database, key="databases")
 
 
-def get_user(ctx: Context, user: str) -> dict:
-    return _get_resource(ctx, f"{PATH_USER}/{user}", name=user)
-    # return _get_resource(ctx, PATH_USER, name=user, key="users")
+def get_user(ctx: Context, userid: str) -> dict:
+    return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
 
 
 def get_oauth_client(ctx: Context, id: str) -> dict:
@@ -280,6 +288,17 @@ def list_users(ctx: Context) -> list:
 
 def list_oauth_clients(ctx: Context) -> list:
     return _list_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
+
+
+def update_user(ctx: Context, userid: str, status: str = None, roles=None):
+    data = {}
+    if status is not None:
+        data["status"] = status
+    if roles is not None:
+        data["roles"] = roles
+    url = _mkurl(ctx, f"{PATH_USER}/{userid}")
+    rsp = rest.patch(ctx, url, data)
+    return json.loads(rsp)
 
 
 #
@@ -316,7 +335,7 @@ class Transaction(object):
             "nowait_durable": self.nowait_durable,
             "readonly": self.readonly,
             "type": "Transaction",
-            "version": 0  # 25
+            "version": 0
         }
         if self.engine is not None:
             result["computeName"] = self.engine
@@ -396,12 +415,12 @@ class TransactionAsync(object):
         raise Exception("Not a valid multipart response")
 
 
-def _delete_source_action(name: str) -> dict:
+def _delete_model_action(name: str) -> dict:
     return {"type": "ModifyWorkspaceAction", "delete_source": [name]}
 
 
-def _install_source_action(name: str, source: str) -> dict:
-    return {"type": "InstallAction", "sources": [_source(name, source)]}
+def _install_model_action(name: str, model: str) -> dict:
+    return {"type": "InstallAction", "sources": [_model(name, model)]}
 
 
 def _list_action():
@@ -437,34 +456,34 @@ def _query_action_input(name: str, value) -> dict:
 
 
 # `inputs`: map of parameter name to input value
-def _query_action(source: str, inputs: dict = None, outputs: list = None) -> dict:
+def _query_action(model: str, inputs: dict = None, outputs: list = None) -> dict:
     inputs = inputs or {}
     inputs = [_query_action_input(k, v) for k, v in inputs.items()]
     return {
         "type": "QueryAction",
-        "source": _source("query", source),
+        "source": _model("query", model),
         "persist": [],
         "inputs": inputs,
         "outputs": outputs or []}
 
 
-def _source(name: str, source: str) -> dict:
+def _model(name: str, model: str) -> dict:
     return {
         "type": "Source",
         "name": name,
-        "path": "",  # todo: check if required?
-        "value": source}
+        "path": "",       # todo: check if required?
+        "value": model}
 
 
-# Returns full list of source objects, including source values.
-def _list_sources(ctx: Context, database: str, engine: str) -> dict:
+# Returns full list of models.
+def _list_models(ctx: Context, database: str, engine: str) -> dict:
     tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_action())
     actions = rsp["actions"]
     assert len(actions) == 1
     action = actions[0]
-    sources = action["result"]["sources"]
-    return sources
+    models = action["result"]["sources"]
+    return models
 
 
 def create_database(ctx: Context, database: str, engine: str,
@@ -474,25 +493,25 @@ def create_database(ctx: Context, database: str, engine: str,
     return tx.run(ctx)
 
 
-def delete_source(ctx: Context, database: str, engine: str, source: str) -> dict:
+def delete_model(ctx: Context, database: str, engine: str, model: str) -> dict:
     tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    actions = [_delete_source_action(source)]
+    actions = [_delete_model_action(model)]
     return tx.run(ctx, *actions)
 
 
-# Returns the source value for the named source.
-def get_source(ctx: Context, database: str, engine: str, name: str) -> str:
-    sources = _list_sources(ctx, database, engine)
-    for source in sources:
-        if source["name"] == name:
-            return source["value"]
-    raise Exception(f"source '{name}' not found")
+# Returns the named model
+def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
+    models = _list_models(ctx, database, engine)
+    for model in models:
+        if model["name"] == name:
+            return model["value"]
+    raise Exception(f"model '{name}' not found")
 
 
-def install_source(ctx: Context, database: str, engine: str, sources: dict) -> dict:
+def install_model(ctx: Context, database: str, engine: str, models: dict) -> dict:
     tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    actions = [_install_source_action(name, source)
-               for name, source in sources.items()]
+    actions = [_install_model_action(name, model)
+               for name, model in models.items()]
     return tx.run(ctx, *actions)
 
 
@@ -506,10 +525,10 @@ def list_edbs(ctx: Context, database: str, engine: str) -> list:
     return rels
 
 
-# Returns a list of source names installed in the given database.
-def list_sources(ctx: Context, database: str, engine: str) -> list:
-    sources = _list_sources(ctx, database, engine)
-    return [source["name"] for source in sources]
+# Returns a list of models installed in the given database.
+def list_models(ctx: Context, database: str, engine: str) -> list:
+    models = _list_models(ctx, database, engine)
+    return [model["name"] for model in models]
 
 
 # Generate a rel literal relation for the given dict.
@@ -618,6 +637,9 @@ def query_async(ctx: Context, database: str, engine: str, command: str,
 
 create_compute = create_engine  # deprecated, use create_engine
 delete_compute = delete_engine  # deprecated, use delete_engine
-get_compute = get_engine  # deprecated, use get_engine
-list_computes = list_engines  # deprecated, use list_engines
-list_edb = list_edbs  # deprecated, use list_edbs
+get_compute = get_engine        # deprecated, use get_engine
+list_computes = list_engines    # deprecated, use list_engines
+list_edb = list_edbs            # deprecated, use list_edbs
+delete_source = delete_model    # deprecated, use delete_model
+get_source = get_model          # deprecated, use get_model
+list_sources = list_models      # deprecated, use list_models

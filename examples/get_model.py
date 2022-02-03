@@ -12,42 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Create a new database, optionally overwriting an existing database."""
+"""Fetch the given Rel model from the given database"""
 
 from argparse import ArgumentParser
-import json
-import time
-from urllib.request import HTTPError
-from railib import api, config, show
+from railib import api, config
+from show_error import show_error
 
 
-# Answers if the given state is a terminal state.
-def is_term_state(state: str) -> bool:
-    return state == "CREATED" or ("FAILED" in state)
-
-
-def run(database: str, engine: str, overwrite: bool, profile: str):
+@show_error
+def run(database: str, engine: str, model: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
-    while True:  # wait for request to reach terminal state
-        time.sleep(3)
-        rsp = api.get_database(ctx, database)
-        if is_term_state(rsp["state"]):
-            break
-    print(json.dumps(rsp, indent=2))
+    rsp = api.get_model(ctx, database, engine, model)
+    print(rsp)
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("--overwrite", action="store_true",
-                   help="overwrite existing database")
+    p.add_argument("model", type=str, help="model name")
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
     args = p.parse_args()
-    try:
-        run(args.database, args.engine, args.overwrite, args.profile)
-    except HTTPError as e:
-        show.http_error(e)
+    run(args.database, args.engine, args.model, args.profile)

@@ -12,42 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Create a new database, optionally overwriting an existing database."""
+"""Update the given user."""
 
 from argparse import ArgumentParser
 import json
-import time
 from urllib.request import HTTPError
+from typing import List
 from railib import api, config, show
 
 
-# Answers if the given state is a terminal state.
-def is_term_state(state: str) -> bool:
-    return state == "CREATED" or ("FAILED" in state)
-
-
-def run(database: str, engine: str, overwrite: bool, profile: str):
+def run(userid: str, profile: str, status: str, roles: List[api.Role]):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
-    while True:  # wait for request to reach terminal state
-        time.sleep(3)
-        rsp = api.get_database(ctx, database)
-        if is_term_state(rsp["state"]):
-            break
+    rsp = api.update_user(ctx, userid, status=status, roles=roles)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("database", type=str, help="database name")
-    p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("--overwrite", action="store_true",
-                   help="overwrite existing database")
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
+    p.add_argument("--status", type=str, default=None,
+                   help="updated user status")
+    p.add_argument("--roles", action='append', default=None,
+                   help="updated user roles")
+    p.add_argument("userid", type=str, nargs=1, help="user id")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.overwrite, args.profile)
+        roles = [api.Role(r) for r in args.roles] if args.roles else None
+        run(args.userid[0], args.profile, args.status, roles)
     except HTTPError as e:
         show.http_error(e)

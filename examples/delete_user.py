@@ -12,30 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Delete the given Rel source from the given database."""
+"""Delete a user."""
 
-from argparse import ArgumentParser
 import json
+from argparse import ArgumentParser
 from urllib.request import HTTPError
+
 from railib import api, config, show
 
 
-def run(database: str, engine: str, source: str, profile: str):
+def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.delete_source(ctx, database, engine, source)
+    rsp = api.delete_user(ctx, id)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("database", type=str, help="database name")
-    p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("source", type=str, help="source name")
+    p.add_argument("id", type=str, help="user id")
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.source, args.profile)
+        run(args.id, args.profile)
     except HTTPError as e:
         show.http_error(e)

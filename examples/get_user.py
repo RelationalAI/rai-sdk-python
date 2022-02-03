@@ -20,10 +20,10 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(user: str, profile: str):
+def run(userid: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_user(ctx, user)
+    rsp = api.get_user(ctx, userid)
     print(json.dumps(rsp, indent=2))
 
 
@@ -31,9 +31,9 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
-    p.add_argument("id", type=str, nargs=1, help="user id")
+    p.add_argument("userid", type=str, nargs=1, help="user id")
     args = p.parse_args()
     try:
-        run(args.id[0], args.profile)
+        run(args.userid[0], args.profile)
     except HTTPError as e:
         show.http_error(e)
