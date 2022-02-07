@@ -24,7 +24,7 @@ from railib import api, config, show
 def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.delete_async_transaction(ctx, id)
+    rsp = api.delete_transaction(ctx, id)
     print(json.dumps(rsp, indent=2))
 
 

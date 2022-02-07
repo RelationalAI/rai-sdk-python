@@ -23,7 +23,7 @@ from railib import api, config, show
 def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_async_transaction(ctx, id)
+    rsp = api.get_transaction(ctx, id)
     print(json.dumps(rsp, indent=2))
 
 
