@@ -492,7 +492,7 @@ def create_database(ctx: Context, database: str, source: str = None) -> dict:
         "source_name": source}
     url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.put(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def delete_model(ctx: Context, database: str, engine: str, model: str) -> dict:
