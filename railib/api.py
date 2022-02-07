@@ -70,8 +70,6 @@ class Permission(str, Enum):
     DELETE_DATABASE = "delete:database"
     # transactions
     RUN_TRANSACTION = "run:transaction"
-    READ_TRANSACTION = "read:transaction"
-    DELETE_TRANSACTION = "delete:transaction"
     # credits
     READ_CREDITS_USAGE = "read:credits_usage"
     # oauth clients
@@ -107,14 +105,12 @@ __all__ = [
     "create_user",
     "create_oauth_client",
     "delete_database",
-    "delete_async_transaction",
     "delete_engine",
     "delete_model",
     "disable_user",
     "enable_user",
     "delete_oauth_client",
     "get_database",
-    "get_async_transaction",
     "get_engine",
     "get_model",
     "get_user",
@@ -236,12 +232,6 @@ def delete_database(ctx: Context, database: str) -> dict:
     return json.loads(rsp.read())
 
 
-def delete_async_transaction(ctx: Context, id: str) -> dict:
-    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}")
-    rsp = rest.delete(ctx, url, None)
-    return json.loads(rsp.read())
-
-
 def disable_user(ctx: Context, userid: str) -> dict:
     return update_user(ctx, userid, status="INACTIVE")
 
@@ -268,10 +258,6 @@ def get_engine(ctx: Context, engine: str) -> dict:
 
 def get_database(ctx: Context, database: str) -> dict:
     return _get_resource(ctx, PATH_DATABASE, name=database, key="databases")
-
-
-def get_async_transaction(ctx: Context, id: str) -> dict:
-    return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction")
 
 
 def get_user(ctx: Context, userid: str) -> dict:
