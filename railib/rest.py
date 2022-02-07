@@ -235,21 +235,21 @@ def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs
     return urlopen(req)
 
 
-def delete(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
+def delete(ctx: Context, url: str, data, headers={}, **kwargs):
     return request(ctx, "DELETE", url, headers=headers, data=data, **kwargs)
 
 
-def get(ctx: Context, url: str, headers={}, **kwargs) -> str:
+def get(ctx: Context, url: str, headers={}, **kwargs):
     return request(ctx, "GET", url, headers=headers, **kwargs)
 
 
-def put(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
+def put(ctx: Context, url: str, data, headers={}, **kwargs):
     return request(ctx, "PUT", url, headers=headers, data=data, **kwargs)
 
 
-def post(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
+def post(ctx: Context, url: str, data, headers={}, **kwargs):
     return request(ctx, "POST", url, headers=headers, data=data, **kwargs)
 
 
-def patch(ctx: Context, url: str, data, headers={}, **kwargs) -> str:
+def patch(ctx: Context, url: str, data, headers={}, **kwargs):
     return request(ctx, "PATCH", url, headers=headers, data=data, **kwargs)

@@ -632,7 +632,7 @@ def query(ctx: Context, database: str, engine: str, command: str,
 
 
 def query_async(ctx: Context, database: str, engine: str, command: str,
-                readonly: bool = True, inputs: dict = None) -> dict:
+                readonly: bool = True, inputs: dict = None) -> list:
     tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
     return tx.run(ctx)
 
