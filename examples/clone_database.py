@@ -23,20 +23,18 @@ from show_error import show_error
 
 
 @show_error
-def run(database: str, engine: str, source: str, profile: str):
+def run(database: str, source: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_database(
-        ctx, database, engine, source=source, overwrite=True)
+    rsp = api.create_database(ctx, database, source=source)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("engine", type=str, help="engine name")
     p.add_argument("source", type=str, help="name of database to clone")
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
     args = p.parse_args()
-    run(args.database, args.engine, args.source, args.profile)
+    run(args.database, args.source, args.profile)
