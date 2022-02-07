@@ -18,7 +18,6 @@ import io
 import json
 from enum import Enum, unique
 from typing import List
-
 from . import rest
 
 PATH_ENGINE = "/compute"
@@ -147,7 +146,7 @@ def _mkurl(ctx: Context, path: str) -> str:
 def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
     url = _mkurl(ctx, path)
     rsp = rest.get(ctx, url, **kwargs)
-    rsp = json.loads(rsp)
+    rsp = json.loads(rsp.read())
     if key:
         rsp = rsp[key]
     if rsp and isinstance(rsp, list):
@@ -159,8 +158,25 @@ def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
 # Retrieve a generic collection of resources.
 def _list_collection(ctx, path: str, key=None, **kwargs):
     rsp = rest.get(ctx, _mkurl(ctx, path), **kwargs)
-    rsp = json.loads(rsp)
+    rsp = json.loads(rsp.read())
     return rsp[key] if key else rsp
+
+#
+# Finds and returns the multipart form-data boundary
+# Boundary is something like,
+# Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb
+#
+
+
+def _get_multipart_data_boundary(content_type):
+    if (";" in content_type) and ("=" in content_type):
+        strings = content_type.split(";")
+        strings = strings[len(strings) - 1].split("=")
+        boundary = strings[len(strings) - 1].encode("utf-8")
+        # one part is separated from the other like, --boundary=bla
+        return b''.join((b'--', boundary))
+
+    return None
 
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
@@ -170,7 +186,7 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
         "size": size.value}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def create_user(ctx: Context, email: str, roles: List[Role] = None):
@@ -180,7 +196,7 @@ def create_user(ctx: Context, email: str, roles: List[Role] = None):
         "roles": [r.value for r in rs]}
     url = _mkurl(ctx, PATH_USER)
     rsp = rest.post(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] = None):
@@ -206,14 +222,14 @@ def delete_engine(ctx: Context, engine: str) -> dict:
     data = {"name": engine}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.delete(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def delete_database(ctx: Context, database: str) -> dict:
     data = {"name": database}
     url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.delete(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def disable_user(ctx: Context, userid: str) -> dict:
@@ -222,6 +238,12 @@ def disable_user(ctx: Context, userid: str) -> dict:
 
 def delete_oauth_client(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
+    rsp = rest.delete(ctx, url, None)
+    return json.loads(rsp.read())
+
+
+def delete_user(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_USER}/{id}")
     rsp = rest.delete(ctx, url, None)
     return json.loads(rsp)
 
@@ -334,13 +356,15 @@ class Transaction(object):
             kwargs["source_dbname"] = self.source_database
         url = _mkurl(ctx, PATH_TRANSACTION)
         rsp = rest.post(ctx, url, data, **kwargs)
-        return json.loads(rsp)
+        return json.loads(rsp.read())
+
 
 #
 # /transactions endpoint
 #
 class TransactionAsync(object):
-    def __init__(self, database: str, engine: str, command: str, nowait_durable=False, readonly=False, inputs: dict = None):
+    def __init__(self, database: str, engine: str, command: str, nowait_durable=False, readonly=False,
+                 inputs: dict = None):
         self.database = database
         self.engine = engine
         self.command = command
@@ -363,11 +387,32 @@ class TransactionAsync(object):
         result["inputs"] = inputs
         return result
 
-    def run(self, ctx: Context) -> dict:
+    def run(self, ctx: Context) -> []:
         data = self.data
         url = _mkurl(ctx, PATH_TRANSACTIONS)
         rsp = rest.post(ctx, url, data)
-        return json.loads(rsp)
+        content_type = rsp.headers.get('content-type', None)
+        content = rsp.read()
+        if ("form-data" in content_type) and (b'\r\n\r\n' in content):
+            boundary = _get_multipart_data_boundary(content_type)
+            result = []
+            if boundary:
+                parts = content.split(b''.join((b'\r\n', boundary)))
+                for x in range(0, len(parts) - 1):
+                    part = parts[x]
+                    # fix the first part, it may contain the boundary
+                    if x == 0:
+                        first_part_parts = part.split(boundary)
+                        part = first_part_parts[len(first_part_parts) - 1]
+                    # skip the part which contains the following
+                    if b'--\r\n' in part:
+                        continue
+                    # append the part
+                    result.append(part)
+
+                return result
+
+        raise Exception("Not a valid multipart response")
 
 
 def _delete_model_action(name: str) -> dict:
@@ -585,8 +630,9 @@ def query(ctx: Context, database: str, engine: str, command: str,
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
 
+
 def query_async(ctx: Context, database: str, engine: str, command: str,
-          readonly: bool = True, inputs: dict = None) -> dict:
+                readonly: bool = True, inputs: dict = None) -> dict:
     tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
     return tx.run(ctx)
 
