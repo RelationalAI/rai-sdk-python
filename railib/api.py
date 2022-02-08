@@ -210,7 +210,7 @@ def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] =
         "permissions": ps}
     url = _mkurl(ctx, PATH_OAUTH_CLIENT)
     rsp = rest.post(ctx, url, data)
-    return json.loads(rsp)["client"]
+    return json.loads(rsp.read())["client"]
 
 
 # Derives the database open_mode based on the given arguments.
@@ -255,7 +255,7 @@ def delete_oauth_client(ctx: Context, id: str) -> dict:
 def delete_user(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_USER}/{id}")
     rsp = rest.delete(ctx, url, None)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 def enable_user(ctx: Context, userid: str) -> dict:
@@ -312,7 +312,7 @@ def update_user(ctx: Context, userid: str, status: str = None, roles=None):
         data["roles"] = roles
     url = _mkurl(ctx, f"{PATH_USER}/{userid}")
     rsp = rest.patch(ctx, url, data)
-    return json.loads(rsp)
+    return json.loads(rsp.read())
 
 
 #
@@ -646,7 +646,7 @@ def query(ctx: Context, database: str, engine: str, command: str,
 
 
 def query_async(ctx: Context, database: str, engine: str, command: str,
-                readonly: bool = True, inputs: dict = None) -> dict:
+                readonly: bool = True, inputs: dict = None) -> list:
     tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
     return tx.run(ctx)
 
