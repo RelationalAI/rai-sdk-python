@@ -161,13 +161,10 @@ def _list_collection(ctx, path: str, key=None, **kwargs):
     rsp = json.loads(rsp.read())
     return rsp[key] if key else rsp
 
-#
+
 # Finds and returns the multipart form-data boundary
 # Boundary is something like,
-# Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb
-#
-
-
+# "Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb"
 def _get_multipart_data_boundary(content_type):
     if (";" in content_type) and ("=" in content_type):
         strings = content_type.split(";")
