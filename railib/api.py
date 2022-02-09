@@ -107,18 +107,18 @@ __all__ = [
     "create_user",
     "create_oauth_client",
     "delete_database",
-    "delete_transaction",
     "delete_engine",
     "delete_model",
+    "delete_transaction",
     "disable_user",
     "enable_user",
     "delete_oauth_client",
     "get_database",
-    "get_transaction",
     "get_engine",
     "get_model",
-    "get_user",
     "get_oauth_client",
+    "get_transaction",
+    "get_user",
     "list_databases",
     "list_edbs",
     "list_engines",
@@ -129,8 +129,6 @@ __all__ = [
     "update_user",
     "query",
 ]
-
-
 # Context contains the state required to make rAI API calls.
 class Context(rest.Context):
     def __init__(self, host: str = None, port: str = None, scheme: str = None,
