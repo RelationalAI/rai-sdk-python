@@ -129,6 +129,8 @@ __all__ = [
     "update_user",
     "query",
 ]
+
+
 # Context contains the state required to make rAI API calls.
 class Context(rest.Context):
     def __init__(self, host: str = None, port: str = None, scheme: str = None,
@@ -220,16 +222,16 @@ def _create_mode(source_database: str, overwrite: bool) -> Mode:
     return result
 
 
-def delete_engine(ctx: Context, engine: str) -> dict:
-    data = {"name": engine}
-    url = _mkurl(ctx, PATH_ENGINE)
+def delete_database(ctx: Context, database: str) -> dict:
+    data = {"name": database}
+    url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.delete(ctx, url, data)
     return json.loads(rsp.read())
 
 
-def delete_database(ctx: Context, database: str) -> dict:
-    data = {"name": database}
-    url = _mkurl(ctx, PATH_DATABASE)
+def delete_engine(ctx: Context, engine: str) -> dict:
+    data = {"name": engine}
+    url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.delete(ctx, url, data)
     return json.loads(rsp.read())
 
@@ -240,18 +242,18 @@ def delete_transaction(ctx: Context, id: str) -> dict:
     return json.loads(rsp.read())
 
 
+def delete_user(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_USER}/{id}")
+    rsp = rest.delete(ctx, url, None)
+    return json.loads(rsp.read())
+
+
 def disable_user(ctx: Context, userid: str) -> dict:
     return update_user(ctx, userid, status="INACTIVE")
 
 
 def delete_oauth_client(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
-    rsp = rest.delete(ctx, url, None)
-    return json.loads(rsp.read())
-
-
-def delete_user(ctx: Context, id: str) -> dict:
-    url = _mkurl(ctx, f"{PATH_USER}/{id}")
     rsp = rest.delete(ctx, url, None)
     return json.loads(rsp.read())
 
@@ -268,16 +270,16 @@ def get_database(ctx: Context, database: str) -> dict:
     return _get_resource(ctx, PATH_DATABASE, name=database, key="databases")
 
 
+def get_oauth_client(ctx: Context, id: str) -> dict:
+    return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client")
+
+
 def get_transaction(ctx: Context, id: str) -> dict:
     return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction")
 
 
 def get_user(ctx: Context, userid: str) -> dict:
     return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
-
-
-def get_oauth_client(ctx: Context, id: str) -> dict:
-    return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client")
 
 
 def list_engines(ctx: Context, state=None) -> list:
