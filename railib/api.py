@@ -70,6 +70,8 @@ class Permission(str, Enum):
     DELETE_DATABASE = "delete:database"
     # transactions
     RUN_TRANSACTION = "run:transaction"
+    READ_TRANSACTION = "read:transaction"
+    DELETE_TRANSACTION = "delete:transaction"
     # credits
     READ_CREDITS_USAGE = "read:credits_usage"
     # oauth clients
@@ -107,14 +109,16 @@ __all__ = [
     "delete_database",
     "delete_engine",
     "delete_model",
+    "delete_transaction",
     "disable_user",
     "enable_user",
     "delete_oauth_client",
     "get_database",
     "get_engine",
     "get_model",
-    "get_user",
     "get_oauth_client",
+    "get_transaction",
+    "get_user",
     "list_databases",
     "list_edbs",
     "list_engines",
@@ -215,6 +219,13 @@ def _create_mode(source_database: str, overwrite: bool) -> Mode:
     return result
 
 
+def delete_database(ctx: Context, database: str) -> dict:
+    data = {"name": database}
+    url = _mkurl(ctx, PATH_DATABASE)
+    rsp = rest.delete(ctx, url, data)
+    return json.loads(rsp.read())
+
+
 def delete_engine(ctx: Context, engine: str) -> dict:
     data = {"name": engine}
     url = _mkurl(ctx, PATH_ENGINE)
@@ -222,10 +233,15 @@ def delete_engine(ctx: Context, engine: str) -> dict:
     return json.loads(rsp.read())
 
 
-def delete_database(ctx: Context, database: str) -> dict:
-    data = {"name": database}
-    url = _mkurl(ctx, PATH_DATABASE)
-    rsp = rest.delete(ctx, url, data)
+def delete_transaction(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}")
+    rsp = rest.delete(ctx, url, None)
+    return json.loads(rsp.read())
+
+
+def delete_user(ctx: Context, id: str) -> dict:
+    url = _mkurl(ctx, f"{PATH_USER}/{id}")
+    rsp = rest.delete(ctx, url, None)
     return json.loads(rsp.read())
 
 
@@ -235,12 +251,6 @@ def disable_user(ctx: Context, userid: str) -> dict:
 
 def delete_oauth_client(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
-    rsp = rest.delete(ctx, url, None)
-    return json.loads(rsp.read())
-
-
-def delete_user(ctx: Context, id: str) -> dict:
-    url = _mkurl(ctx, f"{PATH_USER}/{id}")
     rsp = rest.delete(ctx, url, None)
     return json.loads(rsp.read())
 
@@ -257,12 +267,16 @@ def get_database(ctx: Context, database: str) -> dict:
     return _get_resource(ctx, PATH_DATABASE, name=database, key="databases")
 
 
-def get_user(ctx: Context, userid: str) -> dict:
-    return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
-
-
 def get_oauth_client(ctx: Context, id: str) -> dict:
     return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client")
+
+
+def get_transaction(ctx: Context, id: str) -> dict:
+    return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction")
+
+
+def get_user(ctx: Context, userid: str) -> dict:
+    return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
 
 
 def list_engines(ctx: Context, state=None) -> list:
