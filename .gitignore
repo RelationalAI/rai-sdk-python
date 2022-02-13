@@ -6,3 +6,5 @@ __pycache__
 build/
 dist/
 rai_sdk.egg-info/
+todo.txt
+examples/run.out

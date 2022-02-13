@@ -86,7 +86,6 @@ python3 update_user.py $USERID --status=INACTIVE
 python3 update_user.py $USERID --status=ACTIVE
 python3 update_user.py $USERID --roles=admin --roles=user
 python3 update_user.py $USERID --status=INACTIVE --roles=user
-python3 update_user.py $USERID
 
 # cleanup
 python3 ./delete_database.py $DATABASE_CLONE

@@ -21,7 +21,7 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-# Answers if the given state is a terminal state.
+# Answers if the given value represents a terminal state.
 def is_term_state(state: str) -> bool:
     return state == "DELETED" or ("FAILED" in state)
 
@@ -30,7 +30,7 @@ def run(engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.delete_engine(ctx, engine)
-    while True:  # wait for request to reach terminal state
+    while True:  # wait for terminal state
         time.sleep(3)
         rsp = api.get_engine(ctx, engine)
         if not rsp or is_term_state(rsp["state"]):

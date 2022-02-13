@@ -384,7 +384,6 @@ def _query_action(model: str, inputs: dict = None, outputs: list = None) -> dict
     return {
         "type": "QueryAction",
         "source": _model("query", model),
-        "persist": [],
         "inputs": inputs,
         "outputs": outputs or []}
 

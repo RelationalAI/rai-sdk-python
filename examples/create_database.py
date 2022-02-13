@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Create a new database, optionally overwriting an existing database."""
+"""Create a database, optionally overwriting an existing database."""
 
 from argparse import ArgumentParser
 import json
@@ -21,7 +21,7 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-# Answers if the given state is a terminal state.
+# Answers if the given value represents a terminal state.
 def is_term_state(state: str) -> bool:
     return state == "CREATED" or ("FAILED" in state)
 
@@ -30,7 +30,7 @@ def run(database: str, engine: str, overwrite: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.create_database(ctx, database, engine, overwrite=overwrite)
-    while True:  # wait for request to reach terminal state
+    while True:  # wait for terminal state
         time.sleep(3)
         rsp = api.get_database(ctx, database)
         if is_term_state(rsp["state"]):

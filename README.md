@@ -19,7 +19,6 @@ Install using pip:
 
 ```console
 $ [sudo] pip install rai-sdk
-
 ```
 
 Install from source using pip:
@@ -40,7 +39,7 @@ $ [sudo] pip install -e .
 
 ### Create a configuration file
 
-In order to run the examples and, you will need to create an SDK config file.
+In order to run the examples you will need to create an SDK config file.
 The default location for the file is `$HOME/.rai/config` and the file should
 include the following:
 
@@ -81,8 +80,8 @@ You can copy `config.spec` from the root of this repo and modify as needed.
 
 ## Examples
 
-Each of the example files in the `./examples` folder is standalone and can be
-run from the command line, eg:
+Each of the examples in the `./examples` folder can be run from the command
+line, eg:
 
 ```console
 $ cd examples

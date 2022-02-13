@@ -26,6 +26,7 @@ def _read(fname: str) -> str:
         return fp.read()
 
 
+# Returns the file name without path and extension.
 def _sansext(fname: str) -> str:
     return path.splitext(path.basename(fname))[0]
 

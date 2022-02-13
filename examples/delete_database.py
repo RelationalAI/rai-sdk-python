@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+"""Delete a database."""
+
 from argparse import ArgumentParser
 import json
 import time
@@ -19,7 +21,7 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-# Answers if the given state is a terminal state.
+# Answers if the given value represents a terminal state.
 def is_term_state(state: str) -> bool:
     return state == "DELETED" or ("FAILED" in state)
 
@@ -28,11 +30,6 @@ def run(database: str):
     cfg = config.read()
     ctx = api.Context(**cfg)
     rsp = api.delete_database(ctx, database)
-    while True:  # wait for request to reach terminal state
-        time.sleep(3)
-        rsp = api.get_database(ctx, database)
-        if not rsp or is_term_state(rsp["state"]):
-            break
     print(json.dumps(rsp, indent=2))
 
 

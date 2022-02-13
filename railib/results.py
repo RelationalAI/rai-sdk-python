@@ -99,7 +99,7 @@ class Results(dict):
             self._relations = [Relation(item) for item in self["output"]]
         return self._relations
 
-    @ property
+    @property
     def problems(self):
         return self.get("problems", [])  # todo: accessor for problems
 
