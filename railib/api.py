@@ -17,7 +17,7 @@
 import io
 import json
 from enum import Enum, unique
-from typing import List
+from typing import List, Union
 from . import rest
 
 PATH_ENGINE = "/compute"
@@ -167,18 +167,30 @@ def _list_collection(ctx, path: str, key=None, **kwargs):
     return rsp[key] if key else rsp
 
 
-# Finds and returns the multipart form-data boundary
-# Boundary is something like,
-# "Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb"
-def _get_multipart_data_boundary(content_type):
-    if (";" in content_type) and ("=" in content_type):
-        strings = content_type.split(";")
-        strings = strings[len(strings) - 1].split("=")
-        boundary = strings[len(strings) - 1].encode("utf-8")
-        # one part is separated from the other like, --boundary=bla
-        return b''.join((b'--', boundary))
+# Parses "multipart/form-data" responses. It returns the parts in a list.
+def _parse_multipart(content_type: str, content: bytes) -> list:
+    result = []
+    boundary = _extract_multipart_boundary(content_type)
+    parts = content.split(b'\r\n' + boundary)
+    for i, part in enumerate(parts):
+        # fix the first part, it may contain the boundary
+        if i == 0:
+            part = part.split(boundary)[-1]
+        # skip the part which contains the following
+        if b'--\r\n' in part:
+            continue
+        # append the part
+        result.append(part)
+    return result
 
-    return None
+
+# Finds and returns the multipart form-data boundary.
+# Example:
+#   "Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb"
+def _extract_multipart_boundary(content_type: str) -> bytes:
+    if "boundary=" not in content_type:
+        raise Exception("no multipart boundary")
+    return b'--' + content_type.split("boundary=")[-1].encode("utf-8")
 
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
@@ -400,7 +412,8 @@ class TransactionAsync(object):
         result = {
             "dbname": self.database,
             "nowait_durable": self.nowait_durable,
-            "readonly": self.readonly
+            "readonly": self.readonly,
+            # "sync_mode": "async"
         }
         if self.engine is not None:
             result["engine_name"] = self.engine
@@ -408,32 +421,19 @@ class TransactionAsync(object):
         result["inputs"] = inputs
         return result
 
-    def run(self, ctx: Context) -> []:
+    def run(self, ctx: Context) -> Union[dict, list]:
         data = self.data
         url = _mkurl(ctx, PATH_TRANSACTIONS)
         rsp = rest.post(ctx, url, data)
         content_type = rsp.headers.get('content-type', None)
         content = rsp.read()
-        if ("form-data" in content_type) and (b'\r\n\r\n' in content):
-            boundary = _get_multipart_data_boundary(content_type)
-            result = []
-            if boundary:
-                parts = content.split(b''.join((b'\r\n', boundary)))
-                for x in range(0, len(parts) - 1):
-                    part = parts[x]
-                    # fix the first part, it may contain the boundary
-                    if x == 0:
-                        first_part_parts = part.split(boundary)
-                        part = first_part_parts[len(first_part_parts) - 1]
-                    # skip the part which contains the following
-                    if b'--\r\n' in part:
-                        continue
-                    # append the part
-                    result.append(part)
-
-                return result
-
-        raise Exception("Not a valid multipart response")
+        # async mode
+        if content_type.lower() == "application/json":
+            return json.loads(content)
+        # sync mode
+        if "multipart/form-data" in content_type.lower():
+            return _parse_multipart(content_type, content)
+        raise Exception("invalid response type")
 
 
 def _delete_model_action(name: str) -> dict:
@@ -653,7 +653,7 @@ def query(ctx: Context, database: str, engine: str, command: str,
 
 
 def query_async(ctx: Context, database: str, engine: str, command: str,
-                readonly: bool = True, inputs: dict = None) -> list:
+                readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
     tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
     return tx.run(ctx)
 
