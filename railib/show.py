@@ -16,12 +16,13 @@
 
 import json
 import sys
+from typing import Union
 from urllib.request import HTTPError
 import pyarrow as pa
 
 __all__ = [
-    "http_error"
-    "problems"
+    "http_error",
+    "problems",
     "results"
 ]
 
@@ -75,11 +76,11 @@ def _show_rel(rsp: dict) -> None:
         print(rsp["status"])
 
 
-def _show_multipart(rsp):
+def _show_multipart(parts: list):
     result = []
     content_type_json = b'application/json'
     content_type_arrow_stream = b'application/vnd.apache.arrow.stream'
-    for part in rsp:
+    for part in parts:
         # split the part
         # part body and headers are separated with CRLFCRLF
         strings = part.split(b'\r\n\r\n')
@@ -121,7 +122,7 @@ def problems(rsp: dict) -> None:
 
 
 # Print the results contained in the given response dict.
-def results(rsp: dict, format="physical") -> None:
+def results(rsp: Union[dict, list], format="physical") -> None:
     if rsp is None:
         return
     if format == "wire":
