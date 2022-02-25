@@ -118,6 +118,7 @@ __all__ = [
     "get_model",
     "get_oauth_client",
     "get_transaction",
+    "get_transaction_results",
     "get_user",
     "list_databases",
     "list_edbs",
@@ -273,6 +274,15 @@ def get_oauth_client(ctx: Context, id: str) -> dict:
 
 def get_transaction(ctx: Context, id: str) -> dict:
     return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction")
+
+
+def get_transaction_results(ctx: Context, id: str) -> list:
+    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
+    rsp = rest.get(ctx, url)
+    content_type = rsp.headers.get('content-type', "")
+    if "multipart/form-data" not in content_type:
+        raise Exception("invalid response type")
+    return _parse_multipart(content_type, rsp.read())
 
 
 def get_user(ctx: Context, userid: str) -> dict:
