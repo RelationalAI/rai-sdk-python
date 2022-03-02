@@ -131,7 +131,7 @@ def _request_access_token(ctx: Context, url: str) -> AccessToken:
     creds = ctx.credentials
     assert type(creds) == ClientCredentials
     # ensure the audience contains the protocol scheme
-    audience = f"https://{_get_host(url)}"
+    audience = ctx.auth0_audience or f"https://{_get_host(url)}"
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
