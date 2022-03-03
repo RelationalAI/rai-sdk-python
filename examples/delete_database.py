@@ -18,8 +18,8 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str):
-    cfg = config.read()
+def run(database: str, profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.delete_database(ctx, database)
     print(json.dumps(rsp, indent=2))
@@ -28,8 +28,9 @@ def run(database: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("name", type=str, help="database name")
+    p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
     args = p.parse_args()
     try:
-        run(args.name)
+        run(args.name, args.profile)
     except HTTPError as e:
         show.http_error(e)
