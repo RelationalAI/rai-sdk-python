@@ -413,7 +413,7 @@ class TransactionAsync(object):
             "dbname": self.database,
             "nowait_durable": self.nowait_durable,
             "readonly": self.readonly,
-            # "sync_mode": "async"
+             "sync_mode": "async"
         }
         if self.engine is not None:
             result["engine_name"] = self.engine
