@@ -118,7 +118,6 @@ __all__ = [
     "get_model",
     "get_oauth_client",
     "get_transaction",
-    "get_transaction_metadata",
     "get_transaction_results",
     "get_user",
     "list_databases",
@@ -287,10 +286,6 @@ def get_oauth_client(ctx: Context, id: str) -> dict:
 
 def get_transaction(ctx: Context, id: str) -> dict:
     return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction")
-
-
-def get_transaction_metadata(ctx: Context, id: str) -> dict:
-    return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
 
 
 def get_transaction_results(ctx: Context, id: str) -> list:
