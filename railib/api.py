@@ -155,9 +155,6 @@ def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
     rsp = json.loads(rsp.read())
     if key:
         rsp = rsp[key]
-    if rsp and isinstance(rsp, list):
-        assert len(rsp) == 1
-        return rsp[0]
     return rsp
 
 
