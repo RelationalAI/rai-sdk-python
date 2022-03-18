@@ -155,6 +155,9 @@ def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
     rsp = json.loads(rsp.read())
     if key:
         rsp = rsp[key]
+    if rsp and isinstance(rsp, list):
+        assert len(rsp) == 1
+        return rsp[0]
     return rsp
 
 
@@ -287,8 +290,10 @@ def get_transaction(ctx: Context, id: str) -> dict:
 
 
 def get_transaction_metadata(ctx: Context, id: str) -> dict:
-    return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
-
+    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
+    rsp = rest.get(ctx, url)
+    rsp = json.loads(rsp.read())
+    return rsp
 
 def get_transaction_results(ctx: Context, id: str) -> list:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
