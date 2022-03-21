@@ -50,6 +50,7 @@ python3 ./list_edbs.py $DATABASE $ENGINE
 # load_json
 python3 ./load_json.py $DATABASE $ENGINE sample.json -r sample_json
 python3 ./run_query.py $DATABASE $ENGINE sample_json
+python3 ./show_json.py $DATABASE $ENGINE sample_json
 python3 ./list_edbs.py $DATABASE $ENGINE
 
 # clone database
