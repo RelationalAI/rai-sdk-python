@@ -14,14 +14,14 @@
 
 from argparse import ArgumentParser
 from urllib.request import HTTPError
-from railib import api, config, utilites
+from railib import api, config, utilities
 
 
 def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.query(ctx, database, engine, command, readonly=readonly)
-    json = utilites.to_json(rsp['output'])
+    json = utilities.to_json(rsp['output'])
     print(json)
 
 
