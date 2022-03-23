@@ -162,7 +162,7 @@ def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
 
 
 # Retrieve a generic collection of resources.
-def _list_collection(ctx, path: str, key=None, **kwargs):
+def _get_collection(ctx, path: str, key=None, **kwargs):
     rsp = rest.get(ctx, _mkurl(ctx, path), **kwargs)
     rsp = json.loads(rsp.read())
     return rsp[key] if key else rsp
@@ -290,10 +290,7 @@ def get_transaction(ctx: Context, id: str) -> dict:
 
 
 def get_transaction_metadata(ctx: Context, id: str) -> dict:
-    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
-    rsp = rest.get(ctx, url)
-    rsp = json.loads(rsp.read())
-    return rsp
+    return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
 
 def get_transaction_results(ctx: Context, id: str) -> list:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
@@ -312,22 +309,22 @@ def list_engines(ctx: Context, state=None) -> list:
     kwargs = {}
     if state is not None:
         kwargs["state"] = state
-    return _list_collection(ctx, PATH_ENGINE, key="computes", **kwargs)
+    return _get_collection(ctx, PATH_ENGINE, key="computes", **kwargs)
 
 
 def list_databases(ctx: Context, state=None) -> list:
     kwargs = {}
     if state is not None:
         kwargs["state"] = state
-    return _list_collection(ctx, PATH_DATABASE, key="databases", **kwargs)
+    return _get_collection(ctx, PATH_DATABASE, key="databases", **kwargs)
 
 
 def list_users(ctx: Context) -> list:
-    return _list_collection(ctx, PATH_USER, key="users")
+    return _get_collection(ctx, PATH_USER, key="users")
 
 
 def list_oauth_clients(ctx: Context) -> list:
-    return _list_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
+    return _get_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
 
 
 def update_user(ctx: Context, userid: str, status: str = None, roles=None):
