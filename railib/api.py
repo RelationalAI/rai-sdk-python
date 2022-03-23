@@ -292,6 +292,7 @@ def get_transaction(ctx: Context, id: str) -> dict:
 def get_transaction_metadata(ctx: Context, id: str) -> dict:
     return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
 
+
 def get_transaction_results(ctx: Context, id: str) -> list:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
     rsp = rest.get(ctx, url)
