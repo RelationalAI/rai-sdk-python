@@ -687,12 +687,11 @@ def is_txn_term_state(state: str) -> bool:
 
 def query(ctx: Context, database: str, engine: str, command: str,
           inputs: dict = None, readonly: bool = True) -> list:
-    rsp = []
     async_result = query_async(ctx, database, engine, command, readonly=readonly)
     if isinstance(async_result, list):  # in case of if short-path, return results directly, no need to poll for state
-        rsp.append(async_result)
-        return rsp
+        return async_result
 
+    rsp = []
     while True:
         time.sleep(3)
         txn = get_transaction(ctx, async_result["id"])
