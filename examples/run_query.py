@@ -12,35 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-import time
-import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
-
-# Answers if the given transaction state is a terminal state.
-def is_term_state(state: str) -> bool:
-    return state == "COMPLETED" or state == "ABORTED"
 
 
 def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.query_async(ctx, database, engine, command, readonly=readonly)
-    if isinstance(rsp, list):  # in case of if short-path, return results directly, no need to poll for state
-        show.results(rsp, format = "multipart")
-        return
-
-    while True:
-        time.sleep(3)
-        txnid = rsp["id"]
-        rsp = api.get_transaction(ctx, txnid)
-        if is_term_state(rsp["state"]):
-            rsp = api.get_transaction_metadata(ctx, txnid)
-            show.results(rsp, format = "wire")
-            rsp = api.get_transaction_results(ctx, txnid)
-            show.results(rsp, format = "multipart")
-            break
+    rsp = api.query(ctx, database, engine, command, readonly=readonly)
+    for item in rsp:
+        show.results(item, "wire")
 
 
 if __name__ == "__main__":

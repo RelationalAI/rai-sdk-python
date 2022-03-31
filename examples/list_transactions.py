@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Fetch results for the given transaction."""
+"""Fetch a list of transactions."""
 
 import json
 from argparse import ArgumentParser
@@ -20,15 +20,10 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(id: str, profile: str):
+def run(profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_transaction_results(ctx, id)
-    print("Results:")
-    print(json.dumps(rsp, indent=2))
-
-    rsp = api.get_transaction_problems(ctx, id)
-    print("\nProblems:")
+    rsp = api.list_transactions(ctx)
     print(json.dumps(rsp, indent=2))
 
 
@@ -36,9 +31,8 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
-    p.add_argument("id", type=str, help="transaction id")
     args = p.parse_args()
     try:
-        run(args.id, args.profile)
+        run(args.profile)
     except HTTPError as e:
         show.http_error(e)
