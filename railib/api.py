@@ -325,6 +325,12 @@ def get_transaction_results(ctx: Context, id: str) -> list:
         raise Exception("invalid response type")
     return _parse_multipart(content_type, rsp.read())
 
+# When problems are part of the results relations, this function should be deprecated, get_transaction_results should be called instead
+def get_transaction_results_and_problems(ctx: Context, id: str) -> list:
+    rsp = []
+    rsp.append(get_transaction_problems(ctx, id))
+    rsp.append(get_transaction_results(ctx, id))
+    return rsp
 
 def get_user(ctx: Context, userid: str) -> dict:
     return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
@@ -701,7 +707,7 @@ def query(ctx: Context, database: str, engine: str, command: str,
             metadata = get_transaction_metadata(ctx, txninfo["id"])
             rsp.append(metadata)
             
-            results = get_transaction_results(ctx, txninfo["id"])
+            results = get_transaction_results_and_problems(ctx, txninfo["id"])
             rsp.append(results)
             break
 
