@@ -14,6 +14,7 @@
 
 """Fetch results for the given transaction."""
 
+import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
@@ -23,7 +24,7 @@ def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.get_transaction_results(ctx, id)
-    show.results(rsp, "multipart")
+    print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":

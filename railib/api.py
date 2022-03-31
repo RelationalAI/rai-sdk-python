@@ -16,6 +16,7 @@
 
 import io
 import json
+import pyarrow as pa
 from enum import Enum, unique
 from typing import List, Union
 from . import rest
@@ -171,17 +172,31 @@ def _get_collection(ctx, path: str, key=None, **kwargs):
 # Parses "multipart/form-data" responses. It returns the parts in a list.
 def _parse_multipart(content_type: str, content: bytes) -> list:
     result = []
+    content_type_json = b'application/json'
+    content_type_arrow = b'application/vnd.apache.arrow.stream'
     boundary = _extract_multipart_boundary(content_type)
+
     parts = content.split(b'\r\n' + boundary)
     for i, part in enumerate(parts):
         # fix the first part, it may contain the boundary
         if i == 0:
             part = part.split(boundary)[-1]
-        # skip the part which contains the following
+        # Skip "--\r\n"
         if b'--\r\n' in part:
             continue
-        # append the part
-        result.append(part)
+        # Part body and headers are separated with CRLFCRLF. Get the body.
+        part_value = part.split(b'\r\n\r\n')[-1]
+        if content_type_json in part:
+            result.append(json.loads(part_value))
+        # if the part has arrow stream, then decode the arrow stream
+        # the results are in a form of a tuple/table
+        elif content_type_arrow in part:
+            with pa.ipc.open_stream(part_value) as reader:
+                schema = reader.schema
+                batches = [batch for batch in reader]
+                table = pa.Table.from_batches(batches=batches, schema=schema)
+                result.append(table.to_pydict())
+
     return result
 
 
