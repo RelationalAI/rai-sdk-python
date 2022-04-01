@@ -696,13 +696,10 @@ def query(ctx: Context, database: str, engine: str, command: str,
         time.sleep(3)
         txn = get_transaction(ctx, async_result["id"])
         if is_txn_term_state(txn["state"]):
-            rsp.append({
-                "id" : txn["id"],
-                "results_format_version": txn.get("results_format_version", None), # Currently we don't return the results version
-                "state" : txn["state"]
-            })
+            rsp.append(txn)
             rsp.append(get_transaction_metadata(ctx, txn["id"]))
-            rsp.append(get_transaction_results_and_problems(ctx, txn["id"]))
+            rsp.append(get_transaction_problems(ctx, txn["id"]))
+            rsp.append(get_transaction_results(ctx, txn["id"]))
             break
 
     return rsp
