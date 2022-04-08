@@ -294,7 +294,7 @@ def get_transaction_metadata(ctx: Context, id: str) -> dict:
 
 
 def list_transactions(ctx: Context) -> list:
-    return _list_collection(ctx, PATH_TRANSACTIONS, key="transactions")
+    return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions")
 
 
 def get_transaction_problems(ctx: Context, id: str) -> dict:
