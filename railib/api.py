@@ -130,6 +130,7 @@ __all__ = [
     "load_csv",
     "update_user",
     "query",
+    "query_async",
 ]
 
 
