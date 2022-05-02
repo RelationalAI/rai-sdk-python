@@ -15,19 +15,23 @@
 """List all users."""
 
 import json
+from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run():
-    cfg = config.read()
+def run(profile: str):
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.list_users(ctx)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
+    p = ArgumentParser()
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    args = p.parse_args()
     try:
-        run()
+        run(args.profile)
     except HTTPError as e:
         show.http_error(e)
