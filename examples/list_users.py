@@ -28,10 +28,10 @@ def run(profile: str):
 
 
 if __name__ == "__main__":
+    p = ArgumentParser()
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    args = p.parse_args()
     try:
-        p = ArgumentParser()
-        p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
-        args = p.parse_args()
         run(args.profile)
     except HTTPError as e:
         show.http_error(e)
