@@ -348,9 +348,6 @@ def update_user(ctx: Context, userid: str, status: str = None, roles=None):
     return json.loads(rsp.read())
 
 
-#
-# Transaction endpoint
-#
 class Transaction(object):
     def __init__(self, database: str, engine: str, abort=False,
                  mode: Mode = Mode.OPEN, nowait_durable=False, readonly=False,
@@ -406,23 +403,15 @@ class Transaction(object):
         return json.loads(rsp.read())
 
 
-#
-# /transactions endpoint
-#
 class TransactionAsync(object):
-    def __init__(self, database: str, engine: str, command: str, nowait_durable=False, readonly=False,
-                 inputs: dict = None):
+    def __init__(self, database: str, engine: str, nowait_durable=False, readonly=False):
         self.database = database
         self.engine = engine
-        self.command = command
         self.nowait_durable = nowait_durable
         self.readonly = readonly
-        self.inputs = inputs
 
     @property
     def data(self):
-        inputs = self.inputs or {}
-        inputs = [_query_action_input(k, v) for k, v in inputs.items()]
         result = {
             "dbname": self.database,
             "nowait_durable": self.nowait_durable,
@@ -431,16 +420,18 @@ class TransactionAsync(object):
         }
         if self.engine is not None:
             result["engine_name"] = self.engine
-        result["query"] = self.command
-        result["inputs"] = inputs
         return result
 
-    def run(self, ctx: Context) -> Union[dict, list]:
+    def run(self, ctx: Context, command: str, inputs: dict = None) -> Union[dict, list]:
         data = self.data
-        url = _mkurl(ctx, PATH_TRANSACTIONS)
-        rsp = rest.post(ctx, url, data)
+        data["query"] = command
+        if not inputs is None:
+            inputs = [_query_action_input(k, v) for k, v in inputs.items()]
+            data["v1_inputs"] = inputs
+        rsp = rest.post(ctx, _mkurl(ctx, PATH_TRANSACTIONS), data)
         content_type = rsp.headers.get('content-type', None)
         content = rsp.read()
+        # todo: response model should be based on status code (200 v. 201)
         # async mode
         if content_type.lower() == "application/json":
             return json.loads(content)
@@ -668,8 +659,8 @@ def query(ctx: Context, database: str, engine: str, command: str,
 
 def query_async(ctx: Context, database: str, engine: str, command: str,
                 readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
-    tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
-    return tx.run(ctx)
+    tx = TransactionAsync(database, engine, readonly=readonly)
+    return tx.run(ctx, command, inputs=inputs)
 
 
 create_compute = create_engine  # deprecated, use create_engine
