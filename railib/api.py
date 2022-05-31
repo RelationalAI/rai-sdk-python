@@ -71,7 +71,6 @@ class Permission(str, Enum):
     # transactions
     RUN_TRANSACTION = "run:transaction"
     READ_TRANSACTION = "read:transaction"
-    DELETE_TRANSACTION = "delete:transaction"
     # credits
     READ_CREDITS_USAGE = "read:credits_usage"
     # oauth clients
@@ -109,7 +108,6 @@ __all__ = [
     "delete_database",
     "delete_engine",
     "delete_model",
-    "delete_transaction",
     "disable_user",
     "enable_user",
     "delete_oauth_client",
@@ -245,12 +243,6 @@ def delete_engine(ctx: Context, engine: str) -> dict:
     data = {"name": engine}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.delete(ctx, url, data)
-    return json.loads(rsp.read())
-
-
-def delete_transaction(ctx: Context, id: str) -> dict:
-    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}")
-    rsp = rest.delete(ctx, url, None)
     return json.loads(rsp.read())
 
 
