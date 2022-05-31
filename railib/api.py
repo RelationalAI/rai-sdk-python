@@ -118,6 +118,7 @@ __all__ = [
     "get_transaction",
     "get_transaction_metadata",
     "get_transaction_results",
+    "cancel_transaction",
     "get_user",
     "list_databases",
     "list_edbs",
@@ -301,6 +302,11 @@ def get_transaction_results(ctx: Context, id: str) -> list:
     if "multipart/form-data" not in content_type:
         raise Exception("invalid response type")
     return _parse_multipart(content_type, rsp.read())
+
+
+def cancel_transaction(ctx: Context, id: str) -> dict:
+    rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {})
+    return json.loads(rsp.read())
 
 
 def get_user(ctx: Context, userid: str) -> dict:
