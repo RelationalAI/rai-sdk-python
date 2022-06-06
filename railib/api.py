@@ -136,12 +136,12 @@ __all__ = [
 # Context contains the state required to make rAI API calls.
 class Context(rest.Context):
     def __init__(self, host: str = None, port: str = None, scheme: str = None,
-                 region: str = None, credentials=None, auth0_audience: str = None):
+                 region: str = None, credentials=None, audience: str = None):
         super().__init__(region=region, credentials=credentials)
         self.host = host
         self.port = port or "443"
         self.scheme = scheme or "https"
-        self.auth0_audience = auth0_audience
+        self.audience = audience
 
 
 # Construct a URL from the given context and path.
