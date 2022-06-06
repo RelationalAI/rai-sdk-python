@@ -12,29 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Delete a transaction."""
+"""Fetch a list of transactions."""
 
 import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
-
 from railib import api, config, show
 
 
-def run(id: str, profile: str):
+def run(profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.delete_transaction(ctx, id)
+    rsp = api.list_transactions(ctx)
     print(json.dumps(rsp, indent=2))
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("id", type=str, help="transaction id")
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.id, args.profile)
+        run(args.profile)
     except HTTPError as e:
         show.http_error(e)

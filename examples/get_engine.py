@@ -21,7 +21,7 @@ from railib import api, config, show
 
 
 def run(engine: str, profile: str):
-    cfg = config.read()
+    cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.get_engine(ctx, engine)
     print(json.dumps(rsp, indent=2))
