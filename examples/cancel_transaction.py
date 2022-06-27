@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Delete a transaction."""
 
 import json
 from argparse import ArgumentParser
@@ -24,7 +23,7 @@ from railib import api, config, show
 def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.delete_transaction(ctx, id)
+    rsp = api.cancel_transaction(ctx, id)
     print(json.dumps(rsp, indent=2))
 
 

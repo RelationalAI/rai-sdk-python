@@ -2,9 +2,9 @@
 
 set -ex
 
-ENGINE=sdk-test-xs
 DATABASE=sdk-test
 DATABASE_CLONE=$DATABASE-clone
+ENGINE=sdk-test-xs
 
 # setup
 python3 ./delete_database.py $DATABASE_CLONE
@@ -13,17 +13,20 @@ python3 ./delete_engine.py $ENGINE
 
 # engines
 python3 ./create_engine.py $ENGINE --size=XS
+python3 ./get_engine.py $ENGINE
 python3 ./list_engines.py
 python3 ./list_engines.py --state=PROVISIONED
-python3 ./get_engine.py $ENGINE
+python3 ./list_engines.py --state=NONESENSE
 
 # databases
 python3 ./create_database.py $DATABASE
+python3 ./get_database.py $DATABASE
 python3 ./list_databases.py
 python3 ./list_databases.py --state=CREATED
-python3 ./get_database.py $DATABASE
-python3 ./list_models.py $DATABASE $ENGINE
+python3 ./list_databases.py --state=NONSENSE
 python3 ./list_edbs.py $DATABASE $ENGINE
+python3 ./list_models.py $DATABASE $ENGINE
+python3 ./get_model.py $DATABASE $ENGINE stdlib
 
 # run query
 QUERY="x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
@@ -32,11 +35,12 @@ python3 ./run_query.py $DATABASE $ENGINE "$QUERY" --readonly
 python3 ./show_results.py $DATABASE $ENGINE
 python3 ./show_problems.py $DATABASE $ENGINE
 
-# install model
+# load model
 python3 ./install_model.py $DATABASE $ENGINE hello.rel
-python3 ./list_models.py $DATABASE $ENGINE
 python3 ./get_model.py $DATABASE $ENGINE hello
-python3 ./list_edbs.py $DATABASE $ENGINE
+python3 ./list_models.py $DATABASE $ENGINE
+python3 ./delete_model.py $DATABASE $ENGINE hello
+python3 ./list_models.py $DATABASE $ENGINE
 
 # load_csv
 python3 ./load_csv.py $DATABASE $ENGINE sample.csv -r sample_csv
@@ -53,12 +57,16 @@ python3 ./run_query.py $DATABASE $ENGINE sample_json
 python3 ./list_edbs.py $DATABASE $ENGINE
 
 # clone database
+python3 ./delete_database.py $DATABASE
+python3 ./create_database.py $DATABASE
+python3 ./load_json.py $DATABASE $ENGINE sample.json -r sample_json
+python3 ./install_model.py $DATABASE $ENGINE hello.rel
 python3 ./clone_database.py $DATABASE_CLONE $DATABASE
+python3 ./get_database.py $DATABASE_CLONE
 python3 ./list_databases.py
 python3 ./list_databases.py --state=CREATED
-python3 ./get_database.py $DATABASE_CLONE
-python3 ./list_models.py $DATABASE_CLONE $ENGINE
 python3 ./list_edbs.py $DATABASE_CLONE $ENGINE
+python3 ./list_models.py $DATABASE_CLONE $ENGINE
 python3 ./get_model.py $DATABASE_CLONE $ENGINE hello
 
 # delete model
@@ -86,7 +94,6 @@ python3 update_user.py $USERID --status=INACTIVE
 python3 update_user.py $USERID --status=ACTIVE
 python3 update_user.py $USERID --roles=admin --roles=user
 python3 update_user.py $USERID --status=INACTIVE --roles=user
-python3 update_user.py $USERID
 
 # cleanup
 python3 ./delete_database.py $DATABASE_CLONE
