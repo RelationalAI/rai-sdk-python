@@ -680,14 +680,18 @@ def load_json(ctx: Context, database: str, engine: str, relation: str,
                "def insert:%s = load_json[config]" % relation)
     return query(ctx, database, engine, command, inputs=inputs, readonly=False)
 
+def query(ctx: Context, database: str, engine: str, command: str,
+          inputs: dict = None, readonly: bool = True) -> dict:
+    tx = Transaction(database, engine, readonly=readonly)
+    return tx.run(ctx, _query_action(command, inputs=inputs))
 
 # Answers if the given transaction state is a terminal state.
 def is_txn_term_state(state: str) -> bool:
     return state == "COMPLETED" or state == "ABORTED"
 
-def query(ctx: Context, database: str, engine: str, command: str,
+def exec(ctx: Context, database: str, engine: str, command: str,
           inputs: dict = None, readonly: bool = True) -> list:
-    async_result = query_async(ctx, database, engine, command, readonly=readonly)
+    async_result = exec_async(ctx, database, engine, command, readonly=readonly)
     if isinstance(async_result, list):  # in case of if short-path, return results directly, no need to poll for state
         return async_result
 
@@ -705,7 +709,7 @@ def query(ctx: Context, database: str, engine: str, command: str,
     return rsp
 
 
-def query_async(ctx: Context, database: str, engine: str, command: str,
+def exec_async(ctx: Context, database: str, engine: str, command: str,
                 readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
     tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
     return tx.run(ctx)
