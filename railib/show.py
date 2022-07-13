@@ -97,11 +97,9 @@ def problems(rsp: dict) -> None:
 
 
 # Print the results contained in the given response dict.
-def results(rsp: Union[dict, list], format=None) -> None:
+def results(rsp: Union[dict, list], format="physical") -> None:
     if rsp is None:
         return
-    if format is None:
-        format = "multipart" if isinstance(rsp, list) else "wire"
     if format == "wire":
         json.dump(rsp, sys.stdout, indent=2)
     elif format == "physical":
