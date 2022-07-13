@@ -72,7 +72,6 @@ class Permission(str, Enum):
     # transactions
     RUN_TRANSACTION = "run:transaction"
     READ_TRANSACTION = "read:transaction"
-    DELETE_TRANSACTION = "delete:transaction"
     # credits
     READ_CREDITS_USAGE = "read:credits_usage"
     # oauth clients
@@ -110,7 +109,6 @@ __all__ = [
     "delete_database",
     "delete_engine",
     "delete_model",
-    "delete_transaction",
     "disable_user",
     "enable_user",
     "delete_oauth_client",
@@ -121,6 +119,7 @@ __all__ = [
     "get_transaction",
     "get_transaction_metadata",
     "get_transaction_results",
+    "cancel_transaction",
     "get_user",
     "list_databases",
     "list_edbs",
@@ -131,17 +130,19 @@ __all__ = [
     "load_csv",
     "update_user",
     "query",
+    "query_async",
 ]
 
 
 # Context contains the state required to make rAI API calls.
 class Context(rest.Context):
     def __init__(self, host: str = None, port: str = None, scheme: str = None,
-                 region: str = None, credentials=None):
+                 region: str = None, credentials=None, audience: str = None):
         super().__init__(region=region, credentials=credentials)
         self.host = host
         self.port = port or "443"
         self.scheme = scheme or "https"
+        self.audience = audience
 
 
 # Construct a URL from the given context and path.
@@ -262,12 +263,6 @@ def delete_engine(ctx: Context, engine: str) -> dict:
     return json.loads(rsp.read())
 
 
-def delete_transaction(ctx: Context, id: str) -> dict:
-    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}")
-    rsp = rest.delete(ctx, url, None)
-    return json.loads(rsp.read())
-
-
 def delete_user(ctx: Context, id: str) -> dict:
     url = _mkurl(ctx, f"{PATH_USER}/{id}")
     rsp = rest.delete(ctx, url, None)
@@ -309,7 +304,7 @@ def get_transaction_metadata(ctx: Context, id: str) -> dict:
 
 
 def list_transactions(ctx: Context) -> list:
-    return _list_collection(ctx, PATH_TRANSACTIONS, key="transactions")
+    return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions")
 
 
 def get_transaction_problems(ctx: Context, id: str) -> dict:
@@ -323,6 +318,11 @@ def get_transaction_results(ctx: Context, id: str) -> list:
     if "multipart/form-data" not in content_type:
         raise Exception("invalid response type")
     return _parse_multipart(content_type, rsp.read())
+
+
+def cancel_transaction(ctx: Context, id: str) -> dict:
+    rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {})
+    return json.loads(rsp.read())
 
 
 def get_user(ctx: Context, userid: str) -> dict:
@@ -362,9 +362,6 @@ def update_user(ctx: Context, userid: str, status: str = None, roles=None):
     return json.loads(rsp.read())
 
 
-#
-# Transaction endpoint
-#
 class Transaction(object):
     def __init__(self, database: str, engine: str, abort=False,
                  mode: Mode = Mode.OPEN, nowait_durable=False, readonly=False,
@@ -420,23 +417,15 @@ class Transaction(object):
         return json.loads(rsp.read())
 
 
-#
-# /transactions endpoint
-#
 class TransactionAsync(object):
-    def __init__(self, database: str, engine: str, command: str, nowait_durable=False, readonly=False,
-                 inputs: dict = None):
+    def __init__(self, database: str, engine: str, nowait_durable=False, readonly=False):
         self.database = database
         self.engine = engine
-        self.command = command
         self.nowait_durable = nowait_durable
         self.readonly = readonly
-        self.inputs = inputs
 
     @property
     def data(self):
-        inputs = self.inputs or {}
-        inputs = [_query_action_input(k, v) for k, v in inputs.items()]
         result = {
             "dbname": self.database,
             "nowait_durable": self.nowait_durable,
@@ -445,16 +434,18 @@ class TransactionAsync(object):
         }
         if self.engine is not None:
             result["engine_name"] = self.engine
-        result["query"] = self.command
-        result["inputs"] = inputs
         return result
 
-    def run(self, ctx: Context) -> Union[dict, list]:
+    def run(self, ctx: Context, command: str, inputs: dict = None) -> Union[dict, list]:
         data = self.data
-        url = _mkurl(ctx, PATH_TRANSACTIONS)
-        rsp = rest.post(ctx, url, data)
+        data["query"] = command
+        if not inputs is None:
+            inputs = [_query_action_input(k, v) for k, v in inputs.items()]
+            data["v1_inputs"] = inputs
+        rsp = rest.post(ctx, _mkurl(ctx, PATH_TRANSACTIONS), data)
         content_type = rsp.headers.get('content-type', None)
         content = rsp.read()
+        # todo: response model should be based on status code (200 v. 201)
         # async mode
         if content_type.lower() == "application/json":
             return json.loads(content)
@@ -682,8 +673,8 @@ def query(ctx: Context, database: str, engine: str, command: str,
 
 def query_async(ctx: Context, database: str, engine: str, command: str,
                 readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
-    tx = TransactionAsync(database, engine, command, readonly=readonly, inputs=inputs)
-    return tx.run(ctx)
+    tx = TransactionAsync(database, engine, readonly=readonly)
+    return tx.run(ctx, command, inputs=inputs)
 
 
 create_compute = create_engine  # deprecated, use create_engine

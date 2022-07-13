@@ -31,7 +31,9 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     description="The RelationalAI Software Development Kit for Python",
-    install_requires=["ed25519==1.5"],
+    install_requires=[
+        "ed25519==1.5",
+        "pyarrow>=6.0.1"],
     license="http://www.apache.org/licenses/LICENSE-2.0",
     long_description="Enables access to the RelationalAI REST APIs from Python",
     long_description_content_type="text/markdown",
