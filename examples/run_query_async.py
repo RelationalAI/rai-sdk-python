@@ -21,7 +21,7 @@ from railib import api, config, show
 def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.query_async(ctx, database, engine, command, readonly=readonly)
+    rsp = api.exec_async(ctx, database, engine, command, readonly=readonly)
     print(json.dumps(rsp, indent=2))
 
 
