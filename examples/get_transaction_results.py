@@ -25,7 +25,7 @@ def run(id: str, profile: str):
     ctx = api.Context(**cfg)
     rsp = api.get_transaction_results(ctx, id)
     print("Results:")
-    show.results(rsp, "multipart")
+    print(json.dumps(rsp, indent=2))
 
     rsp = api.get_transaction_problems(ctx, id)
     print("\nProblems:")
