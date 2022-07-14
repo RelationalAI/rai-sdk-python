@@ -23,13 +23,8 @@ from railib import api, config, show
 def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_transaction_results(ctx, id)
-    print("Results:")
-    print(json.dumps(rsp, indent=2))
-
-    rsp = api.get_transaction_problems(ctx, id)
-    print("\nProblems:")
-    print(json.dumps(rsp, indent=2))
+    rsp = api.get_transaction_results_and_problems(ctx, id)
+    show.results(rsp, "wire")
 
 
 if __name__ == "__main__":
