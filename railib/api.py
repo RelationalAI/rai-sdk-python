@@ -300,7 +300,7 @@ def get_transaction(ctx: Context, id: str) -> dict:
     return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction")
 
 
-def get_transaction_metadata(ctx: Context, id: str) -> dict:
+def get_transaction_metadata(ctx: Context, id: str) -> list:
     return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
 
 
@@ -308,7 +308,7 @@ def list_transactions(ctx: Context) -> list:
     return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions")
 
 
-def get_transaction_problems(ctx: Context, id: str) -> dict:
+def get_transaction_problems(ctx: Context, id: str) -> list:
     return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/problems")
 
 
