@@ -1,4 +1,4 @@
-# Copyright 2021 RelationalAI, Inc.
+# Copyright 2022 RelationalAI, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ from railib import api, config, show
 def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.query(ctx, database, engine, command, readonly=readonly)
-    show.results(rsp)
+    rsp = api.exec(ctx, database, engine, command, readonly=readonly)
+    show.results(rsp, "wire")
 
 
 if __name__ == "__main__":

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
@@ -21,8 +20,8 @@ from railib import api, config, show
 def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.query_async(ctx, database, engine, command, readonly=readonly)
-    print(json.dumps(rsp, indent=2))
+    rsp = api.exec_v1(ctx, database, engine, command, readonly=readonly)
+    show.results(rsp)
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@
 import io
 import json
 import pyarrow as pa
+import time
 from enum import Enum, unique
 from typing import List, Union
 from . import rest
@@ -655,7 +656,7 @@ def load_csv(ctx: Context, database: str, engine: str, relation: str,
     command = _gen_syntax_config(syntax)
     command += ("def config:data = data\n"
                 "def insert:%s = load_csv[config]" % relation)
-    return query(ctx, database, engine, command, inputs=inputs, readonly=False)
+    return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
 def load_json(ctx: Context, database: str, engine: str, relation: str,
@@ -669,16 +670,38 @@ def load_json(ctx: Context, database: str, engine: str, relation: str,
     inputs = {'data': data}
     command = ("def config:data = data\n"
                "def insert:%s = load_json[config]" % relation)
-    return query(ctx, database, engine, command, inputs=inputs, readonly=False)
+    return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
-
-def query(ctx: Context, database: str, engine: str, command: str,
+def exec_v1(ctx: Context, database: str, engine: str, command: str,
           inputs: dict = None, readonly: bool = True) -> dict:
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
 
+# Answers if the given transaction state is a terminal state.
+def is_txn_term_state(state: str) -> bool:
+    return state == "COMPLETED" or state == "ABORTED"
 
-def query_async(ctx: Context, database: str, engine: str, command: str,
+def exec(ctx: Context, database: str, engine: str, command: str,
+          inputs: dict = None, readonly: bool = True) -> list:
+    async_result = exec_async(ctx, database, engine, command, readonly=readonly)
+    if isinstance(async_result, list):  # in case of if short-path, return results directly, no need to poll for state
+        return async_result
+
+    rsp = []
+    while True:
+        time.sleep(3)
+        txn = get_transaction(ctx, async_result["id"])
+        if is_txn_term_state(txn["state"]):
+            rsp.append(txn)
+            rsp.append(get_transaction_metadata(ctx, txn["id"]))
+            rsp.append(get_transaction_problems(ctx, txn["id"]))
+            rsp.append(get_transaction_results(ctx, txn["id"]))
+            break
+
+    return rsp
+
+
+def exec_async(ctx: Context, database: str, engine: str, command: str,
                 readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
     tx = TransactionAsync(database, engine, readonly=readonly)
     return tx.run(ctx, command, inputs=inputs)
