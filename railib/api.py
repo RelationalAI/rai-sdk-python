@@ -656,7 +656,7 @@ def load_csv(ctx: Context, database: str, engine: str, relation: str,
     command = _gen_syntax_config(syntax)
     command += ("def config:data = data\n"
                 "def insert:%s = load_csv[config]" % relation)
-    return query(ctx, database, engine, command, inputs=inputs, readonly=False)
+    return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
 def load_json(ctx: Context, database: str, engine: str, relation: str,
@@ -670,9 +670,9 @@ def load_json(ctx: Context, database: str, engine: str, relation: str,
     inputs = {'data': data}
     command = ("def config:data = data\n"
                "def insert:%s = load_json[config]" % relation)
-    return query(ctx, database, engine, command, inputs=inputs, readonly=False)
+    return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
-def query(ctx: Context, database: str, engine: str, command: str,
+def exec_v1(ctx: Context, database: str, engine: str, command: str,
           inputs: dict = None, readonly: bool = True) -> dict:
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
