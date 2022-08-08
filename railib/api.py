@@ -683,7 +683,7 @@ def is_txn_term_state(state: str) -> bool:
 
 def exec(ctx: Context, database: str, engine: str, command: str,
           inputs: dict = None, readonly: bool = True) -> list:
-    async_result = exec_async(ctx, database, engine, command, readonly=readonly)
+    async_result = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
     if isinstance(async_result, list):  # in case of if short-path, return results directly, no need to poll for state
         return async_result
 
