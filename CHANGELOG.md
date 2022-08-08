@@ -5,6 +5,7 @@
 * Additional user APIs and examples:
     - api.update_user
     - api.enable_user
+    - fixed inputs for `exec_async`
 
 ## v0.6.3
 
