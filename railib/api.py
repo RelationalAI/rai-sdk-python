@@ -14,7 +14,6 @@
 
 """Operation level interface to the RelationalAI REST API."""
 
-from curses import meta
 import io
 import json
 import pyarrow as pa
