@@ -14,6 +14,7 @@
 
 """Operation level interface to the RelationalAI REST API."""
 
+from curses import meta
 import io
 import json
 import pyarrow as pa
@@ -21,6 +22,13 @@ import time
 from enum import Enum, unique
 from typing import List, Union
 from . import rest
+
+# Workaround "ModuleNotFoundError: No module named 'schema_pb2'"
+# when importing MetadataInfo from protos.generated.message_pb2.
+import sys
+sys.path.append("../protos/generated")
+
+from protos.generated.message_pb2 import MetadataInfo
 
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
@@ -177,6 +185,7 @@ def _parse_multipart(content_type: str, content: bytes) -> list:
     result = []
     content_type_json = b'application/json'
     content_type_arrow = b'application/vnd.apache.arrow.stream'
+    content_type_protobuf = b'application/x-protobuf'
     boundary = _extract_multipart_boundary(content_type)
 
     parts = content.split(b'\r\n' + boundary)
@@ -199,6 +208,11 @@ def _parse_multipart(content_type: str, content: bytes) -> list:
                 batches = [batch for batch in reader]
                 table = pa.Table.from_batches(batches=batches, schema=schema)
                 result.append(table.to_pydict())
+        # if the part has protobuf stream, the decode the protobuf stream
+        elif content_type_protobuf in part:
+            metadata = MetadataInfo()
+            metadata.ParseFromString(part_value)
+            result.append(metadata)
 
     return result
 

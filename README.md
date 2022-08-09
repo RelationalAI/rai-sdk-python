@@ -79,6 +79,12 @@ config file.
 
 You can copy `config.spec` from the root of this repo and modify as needed.
 
+## Generate python protobuf sources from protobuf specification
+
+```shell
+python -m grpc_tools.protoc -I./protos/proto --python_out=./protos/generated ./protos/proto/*.proto
+```
+
 ## Examples
 
 Each of the example files in the `./examples` folder is standalone and can be

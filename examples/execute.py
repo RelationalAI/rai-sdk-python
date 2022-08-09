@@ -21,7 +21,8 @@ def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.exec(ctx, database, engine, command, readonly=readonly)
-    show.results(rsp, "wire")
+    #show.results(rsp, "wire")
+    print(rsp)
 
 
 if __name__ == "__main__":
