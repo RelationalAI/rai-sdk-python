@@ -14,20 +14,22 @@
 
 """Operation level interface to the RelationalAI REST API."""
 
-import io
 import json
 import pyarrow as pa
 import time
+import re
 from enum import Enum, unique
 from typing import List, Union
+from requests_toolbelt import multipart
+from google.protobuf.json_format import MessageToDict
 from . import rest
 
 # Workaround "ModuleNotFoundError: No module named 'schema_pb2'"
 # when importing MetadataInfo from protos.generated.message_pb2.
 import sys
 sys.path.append("../protos/generated")
-
 from protos.generated.message_pb2 import MetadataInfo
+
 
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
@@ -153,6 +155,31 @@ class Context(rest.Context):
         self.scheme = scheme or "https"
         self.audience = audience
 
+# Transaction async response class
+class TransactionAsyncResponse:
+    def __init__(self, transaction: dict = None, metadata: MetadataInfo = None,
+                 results: pa.lib.Table = None, problems: list = None):
+        self.transaction = transaction
+        self.metadata = metadata
+        self.results = results
+        self.problems = problems
+
+    def __str__(self):
+        return str({"transaction": self.transaction, "metadata": self.metadata,
+            "results": self.results, "problems": self.problems})
+
+# Transaction async file class
+class TransactionAsyncFile:
+    def __init__(self, name: str = None, filename: str = None,
+                    content_type: str = None, content: bytes = None):
+        self.name = name
+        self.filename = filename
+        self.content_type = content_type
+        self.content = content
+
+    def __str__(self):
+        return str({"name": self.name, "filename": self.filename,
+             "content-type": self.content_type, "content": "..."})
 
 # Construct a URL from the given context and path.
 def _mkurl(ctx: Context, path: str) -> str:
@@ -178,52 +205,67 @@ def _get_collection(ctx, path: str, key=None, **kwargs):
     rsp = json.loads(rsp.read())
     return rsp[key] if key else rsp
 
-
-# Parses "multipart/form-data" responses. It returns the parts in a list.
-def _parse_multipart(content_type: str, content: bytes) -> list:
+# Parse "multipart/form-data" response
+def _parse_multipart_form(content_type: str, content: bytes) -> List[TransactionAsyncFile]:
     result = []
-    content_type_json = b'application/json'
-    content_type_arrow = b'application/vnd.apache.arrow.stream'
-    content_type_protobuf = b'application/x-protobuf'
-    boundary = _extract_multipart_boundary(content_type)
 
-    parts = content.split(b'\r\n' + boundary)
-    for i, part in enumerate(parts):
-        # fix the first part, it may contain the boundary
-        if i == 0:
-            part = part.split(boundary)[-1]
-        # Skip "--\r\n"
-        if b'--\r\n' in part:
-            continue
-        # Part body and headers are separated with CRLFCRLF. Get the body.
-        part_value = part.split(b'\r\n\r\n')[-1]
-        if content_type_json in part:
-            result.append(json.loads(part_value))
-        # if the part has arrow stream, then decode the arrow stream
-        # the results are in a form of a tuple/table
-        elif content_type_arrow in part:
-            with pa.ipc.open_stream(part_value) as reader:
-                schema = reader.schema
-                batches = [batch for batch in reader]
-                table = pa.Table.from_batches(batches=batches, schema=schema)
-                result.append(table.to_pydict())
-        # if the part has protobuf stream, the decode the protobuf stream
-        elif content_type_protobuf in part:
-            metadata = MetadataInfo()
-            metadata.ParseFromString(part_value)
-            result.append(metadata)
+    parts = multipart.decoder.MultipartDecoder(
+        content_type=content_type, content=content).parts
+
+    for part in parts:
+        txn = TransactionAsyncFile()
+        txn.content_type = part.headers[b'Content-Type'].decode()
+        txn.content = part.content
+
+        disp = part.headers[b'Content-Disposition']
+        # FIXME: can't catch name and filename count part
+        # if filename is missing from the content disposition
+        matches = re.match(b'form-data; name="(.*)"; filename="(.*)"', disp)
+        if not(matches is None):
+            txn.name = matches.group(1).decode()
+            txn.filename = matches.group(2).decode()
+
+        result.append(txn)
 
     return result
 
+# Parse TransactionAsync response
+def _parse_transaction_async_response(files: List[TransactionAsyncFile]) -> TransactionAsyncResponse:
+    txn_file = next(iter([file for file in files if file.name == "transaction"]), None)
+    metadata_file = next(iter([file for file in files if file.name == "metadata.proto"]), None)
+    problems_file = next(iter([file for file in files if file.name == "problems"]), None)
 
-# Finds and returns the multipart form-data boundary.
-# Example:
-#   "Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb"
-def _extract_multipart_boundary(content_type: str) -> bytes:
-    if "boundary=" not in content_type:
-        raise Exception("no multipart boundary")
-    return b'--' + content_type.split("boundary=")[-1].encode("utf-8")
+    if txn_file is None:
+        raise Exception("transaction part is missing")
+    if metadata_file is None:
+        raise Exception("metadata.proto part is missing")
+    if problems_file is None:
+        raise Exception("problems part is missing")
 
+    txn = json.loads(txn_file.content)
+    metadata = _parse_metadata_proto(metadata_file.content)
+    results = _parse_arrow_results(files)
+    problems = json.loads(problems_file.content)
+
+    return TransactionAsyncResponse(txn, metadata, results, problems)
+
+# Parse Metadata from protobuf
+def _parse_metadata_proto(data: bytes) -> MetadataInfo:
+    metadata = MetadataInfo()
+    metadata.ParseFromString(data)
+    return metadata
+
+# Extract arrow result from transaction async files
+def _parse_arrow_results(files: List[TransactionAsyncFile]):
+    result_file = next(iter([file for file in files if file.content_type == "application/vnd.apache.arrow.stream"]), None)
+    if result_file is None:
+        raise Exception("results part is missing")
+
+    with pa.ipc.open_stream(result_file.content) as reader:
+        schema = reader.schema
+        batches = [batch for batch in reader]
+        table = pa.Table.from_batches(batches=batches, schema=schema)
+        return table
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     data = {
@@ -330,9 +372,11 @@ def get_transaction_results(ctx: Context, id: str) -> list:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
     rsp = rest.get(ctx, url)
     content_type = rsp.headers.get('content-type', "")
-    if "multipart/form-data" not in content_type:
-        raise Exception("invalid response type")
-    return _parse_multipart(content_type, rsp.read())
+    if "multipart/form-data" in content_type:
+        parts = _parse_multipart_form(content_type, rsp.read())
+        return _parse_arrow_results(parts)
+
+    raise Exception("invalid response type")
 
 # When problems are part of the results relations, this function should be deprecated, get_transaction_results should be called instead
 def get_transaction_results_and_problems(ctx: Context, id: str) -> list:
@@ -340,6 +384,7 @@ def get_transaction_results_and_problems(ctx: Context, id: str) -> list:
     rsp.append(get_transaction_problems(ctx, id))
     rsp.append(get_transaction_results(ctx, id))
     return rsp
+
 
 def cancel_transaction(ctx: Context, id: str) -> dict:
     rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {})
@@ -472,7 +517,7 @@ class TransactionAsync(object):
             return json.loads(content)
         # sync mode
         if "multipart/form-data" in content_type.lower():
-            return _parse_multipart(content_type, content)
+            return _parse_multipart_form(content_type, content)
         raise Exception("invalid response type")
 
 
@@ -685,39 +730,50 @@ def load_json(ctx: Context, database: str, engine: str, relation: str,
                "def insert:%s = load_json[config]" % relation)
     return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
+
 def exec_v1(ctx: Context, database: str, engine: str, command: str,
-          inputs: dict = None, readonly: bool = True) -> dict:
+            inputs: dict = None, readonly: bool = True) -> dict:
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
 
 # Answers if the given transaction state is a terminal state.
+
+
 def is_txn_term_state(state: str) -> bool:
     return state == "COMPLETED" or state == "ABORTED"
 
-def exec(ctx: Context, database: str, engine: str, command: str,
-          inputs: dict = None, readonly: bool = True) -> list:
-    async_result = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
-    if isinstance(async_result, list):  # in case of if short-path, return results directly, no need to poll for state
-        return async_result
 
-    rsp = []
+def exec(ctx: Context, database: str, engine: str, command: str,
+         inputs: dict = None, readonly: bool = True) -> TransactionAsyncResponse:
+    txn = exec_async(ctx, database, engine,
+                              command, inputs=inputs, readonly=readonly)
+    # in case of if short-path, return results directly, no need to poll for state
+    if not (txn.results is None):
+        return txn
+
+    rsp = TransactionAsyncResponse()
     while True:
-        time.sleep(3)
-        txn = get_transaction(ctx, async_result["id"])
+        time.sleep(1)
+        txn = get_transaction(ctx, txn.transaction["id"])
         if is_txn_term_state(txn["state"]):
-            rsp.append(txn)
-            rsp.append(get_transaction_metadata(ctx, txn["id"]))
-            rsp.append(get_transaction_problems(ctx, txn["id"]))
-            rsp.append(get_transaction_results(ctx, txn["id"]))
+            rsp.transaction = txn
+            rsp.metadata = get_transaction_metadata(ctx, txn["id"])
+            rsp.problems = get_transaction_problems(ctx, txn["id"])
+            rsp.results = get_transaction_results(ctx, txn["id"])
             break
 
     return rsp
 
 
 def exec_async(ctx: Context, database: str, engine: str, command: str,
-                readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
+               readonly: bool = True, inputs: dict = None) -> TransactionAsyncResponse:
     tx = TransactionAsync(database, engine, readonly=readonly)
-    return tx.run(ctx, command, inputs=inputs)
+    rsp = tx.run(ctx, command, inputs=inputs)
+
+    if isinstance(rsp, dict):
+        return TransactionAsyncResponse(rsp, {}, {}, [])
+
+    return _parse_transaction_async_response(rsp)
 
 
 create_compute = create_engine  # deprecated, use create_engine

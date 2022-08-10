@@ -22,7 +22,8 @@ def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.exec_async(ctx, database, engine, command, readonly=readonly)
-    print(json.dumps(rsp, indent=2))
+    #print(json.dumps(rsp, indent=2))
+    print(rsp)
 
 
 if __name__ == "__main__":

@@ -2,3 +2,5 @@ ed25519==1.5
 grpcio-tools==1.47.0
 protobuf==3.20.1
 pyarrow==6.0.1
+requests-toolbelt==0.9.1
+
