@@ -215,13 +215,13 @@ def _parse_multipart_form(content_type: str, content: bytes) -> List[Transaction
         txn.content_type = part.headers[b'Content-Type'].decode()
         txn.content = part.content
 
-        disp = part.headers[b'Content-Disposition']
-        # FIXME: can't catch name and filename count part
-        # if filename is missing from the content disposition
-        matches = re.match(b'form-data; name="(.*)"; filename="(.*)"', disp)
-        if not(matches is None):
-            txn.name = matches.group(1).decode()
-            txn.filename = matches.group(2).decode()
+        disposition = part.headers[b'Content-Disposition']
+        name = re.match(b'.*; name="(.+?)"', disposition)
+        if not(name is None):
+            txn.name = name.group(1).decode()
+        filename = re.match(b'.*filename="(.+?)"', disposition)
+        if not(filename is None):
+            txn.filename = name.group(1).decode()
 
         result.append(txn)
 
