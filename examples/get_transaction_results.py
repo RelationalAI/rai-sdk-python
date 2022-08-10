@@ -24,8 +24,7 @@ def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.get_transaction_results_and_problems(ctx, id)
-    show.results(rsp, "wire")
-
+    show.results(rsp)
 
 if __name__ == "__main__":
     p = ArgumentParser()

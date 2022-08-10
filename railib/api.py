@@ -156,7 +156,7 @@ class Context(rest.Context):
 # Transaction async response class
 class TransactionAsyncResponse:
     def __init__(self, transaction: dict = None, metadata: MetadataInfo = None,
-                 results: pa.lib.Table = None, problems: list = None):
+                 results: list = None, problems: list = None):
         self.transaction = transaction
         self.metadata = metadata
         self.results = results
@@ -255,15 +255,16 @@ def _parse_metadata_proto(data: bytes) -> MetadataInfo:
 
 # Extract arrow result from transaction async files
 def _parse_arrow_results(files: List[TransactionAsyncFile]):
-    result_file = next(iter([file for file in files if file.content_type == "application/vnd.apache.arrow.stream"]), None)
-    if result_file is None:
-        raise Exception("results part is missing")
+    results = []
+    result_files = [file for file in files if file.content_type == "application/vnd.apache.arrow.stream"]
 
-    with pa.ipc.open_stream(result_file.content) as reader:
-        schema = reader.schema
-        batches = [batch for batch in reader]
-        table = pa.Table.from_batches(batches=batches, schema=schema)
-        return table
+    for file in result_files:
+        with pa.ipc.open_stream(file.content) as reader:
+            schema = reader.schema
+            batches = [batch for batch in reader]
+            table = pa.Table.from_batches(batches=batches, schema=schema)
+            results.append({'relationId': file.name, 'table': table})
+    return results
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     data = {
@@ -384,9 +385,9 @@ def get_transaction_results(ctx: Context, id: str) -> list:
 
 # When problems are part of the results relations, this function should be deprecated, get_transaction_results should be called instead
 def get_transaction_results_and_problems(ctx: Context, id: str) -> list:
-    rsp = []
-    rsp.append(get_transaction_problems(ctx, id))
-    rsp.append(get_transaction_results(ctx, id))
+    rsp = TransactionAsyncResponse()
+    rsp.problems = get_transaction_problems(ctx, id)
+    rsp.results = get_transaction_results(ctx, id)
     return rsp
 
 

@@ -20,6 +20,8 @@ from typing import Union
 from urllib.request import HTTPError
 import pyarrow as pa
 
+from railib.api import TransactionAsyncResponse
+
 __all__ = [
     "http_error",
     "problems",
@@ -107,3 +109,16 @@ def results(rsp: Union[dict, list], format="physical") -> None:
         problems(rsp)
     else:
         raise Exception(f"unknown format: '{format}'")
+
+# Print the results contained in the given TransactionAsyncResponse.
+def results(rsp: TransactionAsyncResponse) -> None:
+    if rsp.results is None:
+        return
+
+    for i, res in enumerate(rsp.results):
+        print(res["relationId"])
+        for v in zip(*res["table"].to_pydict().values()):
+            print(v)
+
+        if i < len(rsp.results) - 1:
+            print()
