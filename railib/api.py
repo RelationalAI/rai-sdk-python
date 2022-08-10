@@ -140,8 +140,6 @@ __all__ = [
     "list_oauth_clients",
     "load_csv",
     "update_user",
-    "query",
-    "query_async",
 ]
 
 
@@ -752,9 +750,10 @@ def exec(ctx: Context, database: str, engine: str, command: str,
         return txn
 
     rsp = TransactionAsyncResponse()
+    txn = get_transaction(ctx, txn.transaction["id"])
     while True:
         time.sleep(1)
-        txn = get_transaction(ctx, txn.transaction["id"])
+        txn = get_transaction(ctx, txn["id"])
         if is_txn_term_state(txn["state"]):
             rsp.transaction = txn
             rsp.metadata = get_transaction_metadata(ctx, txn["id"])
@@ -771,7 +770,7 @@ def exec_async(ctx: Context, database: str, engine: str, command: str,
     rsp = tx.run(ctx, command, inputs=inputs)
 
     if isinstance(rsp, dict):
-        return TransactionAsyncResponse(rsp, {}, {}, [])
+        return TransactionAsyncResponse(rsp, None, None, None)
 
     return _parse_transaction_async_response(rsp)
 
