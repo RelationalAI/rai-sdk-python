@@ -24,7 +24,8 @@ def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.get_transaction_metadata(ctx, id)
-    print(json.dumps(rsp, indent=2))
+    #print(json.dumps(rsp, indent=2))
+    print(rsp)
 
 
 if __name__ == "__main__":

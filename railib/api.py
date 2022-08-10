@@ -355,8 +355,14 @@ def get_transaction(ctx: Context, id: str) -> dict:
 
 
 def get_transaction_metadata(ctx: Context, id: str) -> list:
-    return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
+    headers = {'Accept': 'application/x-protobuf'}
+    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
+    rsp = rest.get(ctx, url, headers=headers)
+    content_type = rsp.headers.get('content-type', "")
+    if "application/x-protobuf" in content_type:
+        return _parse_metadata_proto(rsp.read())
 
+    raise Exception(f"invalid content type for metadata proto: {content_type}")
 
 def list_transactions(ctx: Context) -> list:
     return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions")
