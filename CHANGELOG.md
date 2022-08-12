@@ -1,6 +1,6 @@
 # Changelog
 
-## main
+## v0.6.4
 
 * Additional user APIs and examples:
     - api.update_user
