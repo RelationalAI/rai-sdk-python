@@ -211,19 +211,19 @@ def _parse_multipart_form(content_type: str, content: bytes) -> List[Transaction
         content_type=content_type, content=content).parts
 
     for part in parts:
-        txn = TransactionAsyncFile()
-        txn.content_type = part.headers[b'Content-Type'].decode()
-        txn.content = part.content
+        txn_file = TransactionAsyncFile()
+        txn_file.content_type = part.headers[b'Content-Type'].decode()
+        txn_file.content = part.content
 
         disposition = part.headers[b'Content-Disposition']
         name = re.match(b'.*; name="(.+?)"', disposition)
         if not(name is None):
-            txn.name = name.group(1).decode()
+            txn_file.name = name.group(1).decode()
         filename = re.match(b'.*filename="(.+?)"', disposition)
         if not(filename is None):
-            txn.filename = name.group(1).decode()
+            txn_file.filename = name.group(1).decode()
 
-        result.append(txn)
+        result.append(txn_file)
 
     return result
 
