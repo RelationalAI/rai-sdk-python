@@ -1,5 +1,10 @@
 # The RelationalAI Software Development Kit for Python
 
+| Workflow | Status |
+| --------------------------- | ---------------------------------------------------------------------- |
+| Continuous Integration (CI) | ![build](https://github.com/RelationalAI/rai-sdk-python/actions/workflows/build.yaml/badge.svg) |
+| [Publish to PYPI](https://pypi.org/project/rai-sdk/) | ![publish](https://github.com/RelationalAI/rai-sdk-python/actions/workflows/publish.yaml/badge.svg) |
+
 The RelationalAI (RAI) SDK for Python enables developers to access the RAI
 REST APIs from Python.
 
