@@ -30,12 +30,9 @@ def run(userid: str, profile: str, status: str, roles: List[api.Role]):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
-    p.add_argument("--status", type=str, default=None,
-                   help="updated user status")
-    p.add_argument("--roles", action='append', default=None,
-                   help="updated user roles")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("--status", type=str, default=None, help="updated user status")
+    p.add_argument("--roles", action="append", default=None, help="updated user roles")
     p.add_argument("userid", type=str, nargs=1, help="user id")
     args = p.parse_args()
     try:

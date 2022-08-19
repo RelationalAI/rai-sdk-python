@@ -9,11 +9,13 @@ from railib import api, config
 
 # TODO: create_engine_wait should be added to API
 # with exponential backoff
+
+
 def create_engine_wait(ctx: api.Context, engine: str):
     state = api.create_engine(ctx, engine)["compute"]["state"]
 
     count = 0
-    while not("PROVISIONED" == state):
+    while not ("PROVISIONED" == state):
         if count > 12:
             return
 
@@ -21,7 +23,8 @@ def create_engine_wait(ctx: api.Context, engine: str):
         sleep(30)
         state = api.get_engine(ctx, engine)["state"]
 
-## Get creds from env vars if exists
+
+# Get creds from env vars if exists
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 client_credentials_url = os.getenv("CLIENT_CREDENTIALS_URL")
@@ -50,6 +53,7 @@ suffix = uuid.uuid4()
 engine = f"python-sdk-{suffix}"
 dbname = f"python-sdk-{suffix}"
 
+
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
         create_engine_wait(ctx, engine)
@@ -75,13 +79,17 @@ class TestTransactionAsync(unittest.TestCase):
 
         # results
         self.assertEqual(
-            {'v1': [1, 2, 3, 4, 5], 'v2': [1, 4, 9, 16, 25], 'v3': [1, 8, 27, 64, 125], 'v4': [1, 16, 81, 256, 625]},
-            rsp.results[0]["table"].to_pydict()
-        )
+            {
+                'v1': [
+                    1, 2, 3, 4, 5], 'v2': [
+                    1, 4, 9, 16, 25], 'v3': [
+                    1, 8, 27, 64, 125], 'v4': [
+                        1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
 
     def tearDown(self):
         api.delete_engine(ctx, engine)
         api.delete_database(ctx, dbname)
+
 
 if __name__ == '__main__':
     unittest.main()

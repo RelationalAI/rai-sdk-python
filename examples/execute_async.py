@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
@@ -31,13 +30,15 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("command", type=str, help="rel source string")
-    p.add_argument("--readonly", action="store_true", default=False,
-                   help="readonly query (default: false)")
-    p.add_argument("-p", "--profile", type=str, default="default",
-                   help="profile name")
+    p.add_argument(
+        "--readonly",
+        action="store_true",
+        default=False,
+        help="readonly query (default: false)",
+    )
+    p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.command, args.readonly,
-            args.profile)
+        run(args.database, args.engine, args.command, args.readonly, args.profile)
     except HTTPError as e:
         show.http_error(e)

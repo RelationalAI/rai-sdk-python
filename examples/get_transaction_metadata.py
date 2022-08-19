@@ -14,7 +14,6 @@
 
 """Fetch metadata for the given transaction."""
 
-import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
@@ -24,14 +23,12 @@ def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.get_transaction_metadata(ctx, id)
-    #print(json.dumps(rsp, indent=2))
     print(rsp)
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     p.add_argument("id", type=str, help="transaction id")
     args = p.parse_args()
     try:

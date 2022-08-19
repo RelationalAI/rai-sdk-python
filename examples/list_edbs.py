@@ -30,8 +30,7 @@ def run(database: str, engine: str, profile: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     p.add_argument("engine", type=str, help="engine name")
     args = p.parse_args()
     try:

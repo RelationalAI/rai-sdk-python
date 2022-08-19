@@ -31,10 +31,13 @@ def run(user: str, roles: List[api.Role], profile: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("email", type=str, help="user email")
-    p.add_argument("--roles", action='append', default=None,
-                   help='user roles ("user" (default) or "admin")')
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument(
+        "--roles",
+        action="append",
+        default=None,
+        help='user roles ("user" (default) or "admin")',
+    )
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
         roles = [api.Role(r) for r in args.roles] if args.roles else None

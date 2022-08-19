@@ -44,10 +44,14 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("file", type=str, help="source file")
-    p.add_argument("-r", "--relation", type=str, default=None,
-                   help="relation name (default: file name)")
-    p.add_argument("-p", "--profile", type=str, default="default",
-                   help="profile name")
+    p.add_argument(
+        "-r",
+        "--relation",
+        type=str,
+        default=None,
+        help="relation name (default: file name)",
+    )
+    p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
     args = p.parse_args()
     try:
         run(args.database, args.engine, args.file, args.relation, args.profile)

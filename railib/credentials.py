@@ -20,7 +20,7 @@ __all__ = [
     "Credentials",
     "AccessKeyCredentials",
     "AccessToken",
-    "ClientCredentials"
+    "ClientCredentials",
 ]
 
 DEFAULT_CLIENT_CREDENTIALS_URL = "https://login.relationalai.com/oauth/token"
@@ -46,15 +46,22 @@ class AccessToken:
         self.created_on = round(time.time())
 
     def is_expired(self):
-        return time.time() - self.created_on >= self.expires_in - 5 # anticipate token expiration by 5 seconds
+        return (
+            time.time() - self.created_on >= self.expires_in - 5
+        )  # anticipate token expiration by 5 seconds
 
 
 # Represents OAuth client credentials.
 class ClientCredentials(Credentials):
-    def __init__(self, client_id: str, client_secret: str,
-                 client_credentials_url: str = None):
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        client_credentials_url: str = None,
+    ):
         self.access_token = None
         self.client_id = client_id
         self.client_secret = client_secret
-        self.client_credentials_url = \
+        self.client_credentials_url = (
             client_credentials_url or DEFAULT_CLIENT_CREDENTIALS_URL
+        )
