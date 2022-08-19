@@ -6,8 +6,7 @@ on:
     - cron: '30 5 * * *'
 
 jobs:
-    build:
-    name: CI
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
