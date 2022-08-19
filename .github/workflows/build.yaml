@@ -34,6 +34,6 @@ jobs:
         CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         CLIENT_CREDENTIALS_URL: ${{ secrets.CLIENT_CREDENTIALS_URL }}
       run: |
-        pip install -r requirements
+        pip install -r requirements.txt
         pip install -e ./
         python tests/integration.py
