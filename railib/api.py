@@ -24,11 +24,7 @@ from requests_toolbelt import multipart
 from google.protobuf.json_format import MessageToDict
 from . import rest
 
-# Workaround "ModuleNotFoundError: No module named 'schema_pb2'"
-# when importing MetadataInfo from protos.generated.message_pb2.
-import sys
-sys.path.append("../protos/generated")
-from protos.generated.message_pb2 import MetadataInfo
+from .pb.message_pb2 import MetadataInfo
 
 
 PATH_ENGINE = "/compute"

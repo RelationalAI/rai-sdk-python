@@ -1,0 +1,36 @@
+relations {
+  relation_id {
+    arguments {
+      tag: CONSTANT_TYPE
+      constant_type {
+        rel_type {
+          tag: PRIMITIVE_TYPE
+          primitive_type: STRING
+        }
+        value {
+          arguments {
+            tag: STRING
+            string_val: "output"
+          }
+        }
+      }
+    }
+    arguments {
+      tag: PRIMITIVE_TYPE
+      primitive_type: INT_64
+    }
+    arguments {
+      tag: PRIMITIVE_TYPE
+      primitive_type: INT_64
+    }
+    arguments {
+      tag: PRIMITIVE_TYPE
+      primitive_type: INT_64
+    }
+    arguments {
+      tag: PRIMITIVE_TYPE
+      primitive_type: INT_64
+    }
+  }
+  file_name: "0.arrow"
+}

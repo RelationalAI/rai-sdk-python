@@ -82,7 +82,7 @@ You can copy `config.spec` from the root of this repo and modify as needed.
 ## Generate python protobuf sources from protobuf specification
 
 ```shell
-python -m grpc_tools.protoc -I./protos/proto --python_out=./protos/generated ./protos/proto/*.proto
+python -m grpc_tools.protoc -I railib/pb --python_out=./railib/pb railib/pb/*.proto
 ```
 
 ## Examples
