@@ -7,6 +7,8 @@ import tempfile
 from pathlib import Path
 from railib import api, config
 
+# TODO: create_engine_wait should be added to API
+# with exponential backoff
 def create_engine_wait(ctx: api.Context, engine: str):
     state = api.create_engine(ctx, engine)["compute"]["state"]
 
