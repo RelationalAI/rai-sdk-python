@@ -23,11 +23,11 @@ jobs:
         pip install -r requirements.txt
         pip install -e ./
 
-    - name: Lint with flake8
-      run: flake8 .
-
     - name: Generate Protobuf
       run: python -m grpc_tools.protoc -I railib/pb --python_out=./railib/pb railib/pb/*.proto
+
+    - name: flake8 linter
+      run: flake8 .
 
     - name: test
       env:

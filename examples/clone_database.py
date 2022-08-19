@@ -13,7 +13,7 @@
 # limitations under the License
 
 """Clone an existing database by creating a new database and setting the
-optional api.create_database `source` argument to the name of the database 
+optional api.create_database `source` argument to the name of the database
 to clone."""
 
 from argparse import ArgumentParser
