@@ -40,6 +40,7 @@ Install from source in `editable` mode.
 ```console
 $ git clone git@github.com:RelationalAI/rai-sdk-python.git
 $ cd rai-sdk-python
+$ [sudo] pip install -r requirements.txt
 $ [sudo] pip install -e .
 ```
 
