@@ -18,10 +18,10 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, command: str, readonly: bool, profile: str):
+def run(database: str, engine: str, command: str, language: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.exec_async(ctx, database, engine, command, readonly=readonly)
+    rsp = api.exec_async(ctx, database, engine, command, language, readonly=readonly)
     print(json.dumps(rsp, indent=2))
 
 
@@ -30,13 +30,14 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("command", type=str, help="rel source string")
+    p.add_argument("language", type=str, help="query language")
     p.add_argument("--readonly", action="store_true", default=False,
                    help="readonly query (default: false)")
     p.add_argument("-p", "--profile", type=str, default="default",
                    help="profile name")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.command, args.readonly,
+        run(args.database, args.engine, args.command, args.language, args.readonly,
             args.profile)
     except HTTPError as e:
         show.http_error(e)

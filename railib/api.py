@@ -444,9 +444,10 @@ class TransactionAsync(object):
             result["engine_name"] = self.engine
         return result
 
-    def run(self, ctx: Context, command: str, inputs: dict = None) -> Union[dict, list]:
+    def run(self, ctx: Context, command: str, language: str, inputs: dict = None) -> Union[dict, list]:
         data = self.data
         data["query"] = command
+        data["language"] = language
         if not inputs is None:
             inputs = [_query_action_input(k, v) for k, v in inputs.items()]
             data["v1_inputs"] = inputs
@@ -701,10 +702,10 @@ def exec(ctx: Context, database: str, engine: str, command: str,
     return rsp
 
 
-def exec_async(ctx: Context, database: str, engine: str, command: str,
+def exec_async(ctx: Context, database: str, engine: str, command: str, language: str = "rel", 
                 readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
     tx = TransactionAsync(database, engine, readonly=readonly)
-    return tx.run(ctx, command, inputs=inputs)
+    return tx.run(ctx, command, language=language, inputs=inputs)
 
 
 create_compute = create_engine  # deprecated, use create_engine
