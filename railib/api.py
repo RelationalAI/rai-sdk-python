@@ -702,7 +702,7 @@ def exec(ctx: Context, database: str, engine: str, command: str,
     return rsp
 
 
-def exec_async(ctx: Context, database: str, engine: str, command: str, language: str = "rel", 
+def exec_async(ctx: Context, database: str, engine: str, command: str, language: str = "",
                 readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
     tx = TransactionAsync(database, engine, readonly=readonly)
     return tx.run(ctx, command, language=language, inputs=inputs)
