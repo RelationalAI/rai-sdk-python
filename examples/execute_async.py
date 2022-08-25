@@ -30,7 +30,7 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("command", type=str, help="rel source string")
-    p.add_argument("language", type=str, help="query language")
+    p.add_argument("--language", type=str, help="query language")
     p.add_argument("--readonly", action="store_true", default=False,
                    help="readonly query (default: false)")
     p.add_argument("-p", "--profile", type=str, default="default",
