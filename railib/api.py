@@ -14,13 +14,18 @@
 
 """Operation level interface to the RelationalAI REST API."""
 
-import io
 import json
 import pyarrow as pa
 import time
+import re
+import io
 from enum import Enum, unique
 from typing import List, Union
+from requests_toolbelt import multipart
 from . import rest
+
+from .pb.message_pb2 import MetadataInfo
+
 
 PATH_ENGINE = "/compute"
 PATH_DATABASE = "/database"
@@ -131,15 +136,20 @@ __all__ = [
     "list_oauth_clients",
     "load_csv",
     "update_user",
-    "query",
-    "query_async",
 ]
 
 
 # Context contains the state required to make rAI API calls.
 class Context(rest.Context):
-    def __init__(self, host: str = None, port: str = None, scheme: str = None,
-                 region: str = None, credentials=None, audience: str = None):
+    def __init__(
+        self,
+        host: str = None,
+        port: str = None,
+        scheme: str = None,
+        region: str = None,
+        credentials=None,
+        audience: str = None,
+    ):
         super().__init__(region=region, credentials=credentials)
         self.host = host
         self.port = port or "443"
@@ -147,7 +157,63 @@ class Context(rest.Context):
         self.audience = audience
 
 
+# Transaction async response class
+
+
+class TransactionAsyncResponse:
+    def __init__(
+        self,
+        transaction: dict = None,
+        metadata: MetadataInfo = None,
+        results: list = None,
+        problems: list = None,
+    ):
+        self.transaction = transaction
+        self.metadata = metadata
+        self.results = results
+        self.problems = problems
+
+    def __str__(self):
+        return str(
+            {
+                "transaction": self.transaction,
+                "metadata": self.metadata,
+                "results": self.results,
+                "problems": self.problems,
+            }
+        )
+
+
+# Transaction async file class
+
+
+class TransactionAsyncFile:
+    def __init__(
+        self,
+        name: str = None,
+        filename: str = None,
+        content_type: str = None,
+        content: bytes = None,
+    ):
+        self.name = name
+        self.filename = filename
+        self.content_type = content_type
+        self.content = content
+
+    def __str__(self):
+        return str(
+            {
+                "name": self.name,
+                "filename": self.filename,
+                "content-type": self.content_type,
+                "content": "...",
+            }
+        )
+
+
 # Construct a URL from the given context and path.
+
+
 def _mkurl(ctx: Context, path: str) -> str:
     return f"{ctx.scheme}://{ctx.host}:{ctx.port}{path}"
 
@@ -172,51 +238,96 @@ def _get_collection(ctx, path: str, key=None, **kwargs):
     return rsp[key] if key else rsp
 
 
-# Parses "multipart/form-data" responses. It returns the parts in a list.
-def _parse_multipart(content_type: str, content: bytes) -> list:
-    result = []
-    content_type_json = b'application/json'
-    content_type_arrow = b'application/vnd.apache.arrow.stream'
-    boundary = _extract_multipart_boundary(content_type)
+# Parse "multipart/form-data" response
 
-    parts = content.split(b'\r\n' + boundary)
-    for i, part in enumerate(parts):
-        # fix the first part, it may contain the boundary
-        if i == 0:
-            part = part.split(boundary)[-1]
-        # Skip "--\r\n"
-        if b'--\r\n' in part:
-            continue
-        # Part body and headers are separated with CRLFCRLF. Get the body.
-        part_value = part.split(b'\r\n\r\n')[-1]
-        if content_type_json in part:
-            result.append(json.loads(part_value))
-        # if the part has arrow stream, then decode the arrow stream
-        # the results are in a form of a tuple/table
-        elif content_type_arrow in part:
-            with pa.ipc.open_stream(part_value) as reader:
-                schema = reader.schema
-                batches = [batch for batch in reader]
-                table = pa.Table.from_batches(batches=batches, schema=schema)
-                result.append(table.to_pydict())
+
+def _parse_multipart_form(
+    content_type: str, content: bytes
+) -> List[TransactionAsyncFile]:
+    result = []
+
+    parts = multipart.decoder.MultipartDecoder(
+        content_type=content_type, content=content
+    ).parts
+
+    for part in parts:
+        txn_file = TransactionAsyncFile()
+        txn_file.content_type = part.headers[b"Content-Type"].decode()
+        txn_file.content = part.content
+
+        disposition = part.headers[b"Content-Disposition"]
+        name = re.match(b'.*; name="(.+?)"', disposition)
+        if not (name is None):
+            txn_file.name = name.group(1).decode()
+        filename = re.match(b'.*filename="(.+?)"', disposition)
+        if not (filename is None):
+            txn_file.filename = name.group(1).decode()
+
+        result.append(txn_file)
 
     return result
 
 
-# Finds and returns the multipart form-data boundary.
-# Example:
-#   "Content-Type: multipart/form-data; boundary=d6d47cadd395db7f6648a2ffb65751eb"
-def _extract_multipart_boundary(content_type: str) -> bytes:
-    if "boundary=" not in content_type:
-        raise Exception("no multipart boundary")
-    return b'--' + content_type.split("boundary=")[-1].encode("utf-8")
+# Parse TransactionAsync response
+
+
+def _parse_transaction_async_response(
+    files: List[TransactionAsyncFile],
+) -> TransactionAsyncResponse:
+    txn_file = next(iter([file for file in files if file.name == "transaction"]), None)
+    metadata_file = next(
+        iter([file for file in files if file.name == "metadata.proto"]), None
+    )
+    problems_file = next(
+        iter([file for file in files if file.name == "problems"]), None
+    )
+
+    if txn_file is None:
+        raise Exception("transaction part is missing")
+    if metadata_file is None:
+        raise Exception("metadata.proto part is missing")
+    if problems_file is None:
+        raise Exception("problems part is missing")
+
+    txn = json.loads(txn_file.content)
+    metadata = _parse_metadata_proto(metadata_file.content)
+    results = _parse_arrow_results(files)
+    problems = json.loads(problems_file.content)
+
+    return TransactionAsyncResponse(txn, metadata, results, problems)
+
+
+# Parse Metadata from protobuf
+
+
+def _parse_metadata_proto(data: bytes) -> MetadataInfo:
+    metadata = MetadataInfo()
+    metadata.ParseFromString(data)
+    return metadata
+
+
+# Extract arrow result from transaction async files
+
+
+def _parse_arrow_results(files: List[TransactionAsyncFile]):
+    results = []
+    result_files = [
+        file
+        for file in files
+        if file.content_type == "application/vnd.apache.arrow.stream"
+    ]
+
+    for file in result_files:
+        with pa.ipc.open_stream(file.content) as reader:
+            schema = reader.schema
+            batches = [batch for batch in reader]
+            table = pa.Table.from_batches(batches=batches, schema=schema)
+            results.append({"relationId": file.name, "table": table})
+    return results
 
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
-    data = {
-        "region": ctx.region,
-        "name": engine,
-        "size": size.value}
+    data = {"region": ctx.region, "name": engine, "size": size.value}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data)
     return json.loads(rsp.read())
@@ -224,9 +335,7 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
 
 def create_user(ctx: Context, email: str, roles: List[Role] = None):
     rs = roles or []
-    data = {
-        "email": email,
-        "roles": [r.value for r in rs]}
+    data = {"email": email, "roles": [r.value for r in rs]}
     url = _mkurl(ctx, PATH_USER)
     rsp = rest.post(ctx, url, data)
     return json.loads(rsp.read())
@@ -234,9 +343,7 @@ def create_user(ctx: Context, email: str, roles: List[Role] = None):
 
 def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] = None):
     ps = permissions or []
-    data = {
-        "name": name,
-        "permissions": ps}
+    data = {"name": name, "permissions": ps}
     url = _mkurl(ctx, PATH_OAUTH_CLIENT)
     rsp = rest.post(ctx, url, data)
     return json.loads(rsp.read())["client"]
@@ -302,7 +409,14 @@ def get_transaction(ctx: Context, id: str) -> dict:
 
 
 def get_transaction_metadata(ctx: Context, id: str) -> list:
-    return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
+    headers = {"Accept": "application/x-protobuf"}
+    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
+    rsp = rest.get(ctx, url, headers=headers)
+    content_type = rsp.headers.get("content-type", "")
+    if "application/x-protobuf" in content_type:
+        return _parse_metadata_proto(rsp.read())
+
+    raise Exception(f"invalid content type for metadata proto: {content_type}")
 
 
 def list_transactions(ctx: Context) -> list:
@@ -316,17 +430,24 @@ def get_transaction_problems(ctx: Context, id: str) -> list:
 def get_transaction_results(ctx: Context, id: str) -> list:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
     rsp = rest.get(ctx, url)
-    content_type = rsp.headers.get('content-type', "")
-    if "multipart/form-data" not in content_type:
-        raise Exception("invalid response type")
-    return _parse_multipart(content_type, rsp.read())
+    content_type = rsp.headers.get("content-type", "")
+    if "multipart/form-data" in content_type:
+        parts = _parse_multipart_form(content_type, rsp.read())
+        return _parse_arrow_results(parts)
 
-# When problems are part of the results relations, this function should be deprecated, get_transaction_results should be called instead
+    raise Exception("invalid response type")
+
+
+# When problems are part of the results relations, this function should be
+# deprecated, get_transaction_results should be called instead
+
+
 def get_transaction_results_and_problems(ctx: Context, id: str) -> list:
-    rsp = []
-    rsp.append(get_transaction_problems(ctx, id))
-    rsp.append(get_transaction_results(ctx, id))
+    rsp = TransactionAsyncResponse()
+    rsp.problems = get_transaction_problems(ctx, id)
+    rsp.results = get_transaction_results(ctx, id)
     return rsp
+
 
 def cancel_transaction(ctx: Context, id: str) -> dict:
     rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {})
@@ -371,9 +492,16 @@ def update_user(ctx: Context, userid: str, status: str = None, roles=None):
 
 
 class Transaction(object):
-    def __init__(self, database: str, engine: str, abort=False,
-                 mode: Mode = Mode.OPEN, nowait_durable=False, readonly=False,
-                 source_database=None):
+    def __init__(
+        self,
+        database: str,
+        engine: str,
+        abort=False,
+        mode: Mode = Mode.OPEN,
+        nowait_durable=False,
+        readonly=False,
+        source_database=None,
+    ):
         self.abort = abort
         self.database = database
         self.engine = engine
@@ -386,10 +514,13 @@ class Transaction(object):
     def _actions(self, *args):
         actions = []
         for i, action in enumerate(*args):
-            actions.append({
-                "name": f"action{i}",
-                "type": "LabeledAction",
-                "action": action})
+            actions.append(
+                {
+                    "name": f"action{i}",
+                    "type": "LabeledAction",
+                    "action": action,
+                }
+            )
         return actions
 
     @property
@@ -401,7 +532,7 @@ class Transaction(object):
             "nowait_durable": self.nowait_durable,
             "readonly": self.readonly,
             "type": "Transaction",
-            "version": 0
+            "version": 0,
         }
         if self.engine is not None:
             result["computeName"] = self.engine
@@ -417,7 +548,8 @@ class Transaction(object):
             "dbname": self.database,
             "compute_name": self.engine,
             "open_mode": self.mode.value,
-            "region": ctx.region}
+            "region": ctx.region,
+        }
         if self.source_database:
             kwargs["source_dbname"] = self.source_database
         url = _mkurl(ctx, PATH_TRANSACTION)
@@ -426,7 +558,9 @@ class Transaction(object):
 
 
 class TransactionAsync(object):
-    def __init__(self, database: str, engine: str, nowait_durable=False, readonly=False):
+    def __init__(
+        self, database: str, engine: str, nowait_durable=False, readonly=False
+    ):
         self.database = database
         self.engine = engine
         self.nowait_durable = nowait_durable
@@ -447,11 +581,11 @@ class TransactionAsync(object):
     def run(self, ctx: Context, command: str, inputs: dict = None) -> Union[dict, list]:
         data = self.data
         data["query"] = command
-        if not inputs is None:
+        if inputs is not None:
             inputs = [_query_action_input(k, v) for k, v in inputs.items()]
             data["v1_inputs"] = inputs
         rsp = rest.post(ctx, _mkurl(ctx, PATH_TRANSACTIONS), data)
-        content_type = rsp.headers.get('content-type', None)
+        content_type = rsp.headers.get("content-type", None)
         content = rsp.read()
         # todo: response model should be based on status code (200 v. 201)
         # async mode
@@ -459,7 +593,7 @@ class TransactionAsync(object):
             return json.loads(content)
         # sync mode
         if "multipart/form-data" in content_type.lower():
-            return _parse_multipart(content_type, content)
+            return _parse_multipart_form(content_type, content)
         raise Exception("invalid response type")
 
 
@@ -481,11 +615,7 @@ def _list_edb_action():
 
 # Return rel key correponding to the given name and list of keys.
 def _rel_key(name: str, keys: list) -> dict:
-    return {
-        "type": "RelKey",
-        "name": name,
-        "keys": keys,
-        "values": []}
+    return {"type": "RelKey", "name": name, "keys": keys, "values": []}
 
 
 # Return the rel typename corresponding to the type of the given value.
@@ -500,7 +630,8 @@ def _query_action_input(name: str, value) -> dict:
     return {
         "columns": [[value]],
         "rel_key": _rel_key(name, [_rel_typename(value)]),
-        "type": "Relation"}
+        "type": "Relation",
+    }
 
 
 # `inputs`: map of parameter name to input value
@@ -512,15 +643,17 @@ def _query_action(model: str, inputs: dict = None, outputs: list = None) -> dict
         "source": _model("query", model),
         "persist": [],
         "inputs": inputs,
-        "outputs": outputs or []}
+        "outputs": outputs or [],
+    }
 
 
 def _model(name: str, model: str) -> dict:
     return {
         "type": "Source",
         "name": name,
-        "path": "",       # todo: check if required?
-        "value": model}
+        "path": "",  # todo: check if required?
+        "value": model,
+    }
 
 
 # Returns full list of models.
@@ -535,9 +668,7 @@ def _list_models(ctx: Context, database: str, engine: str) -> dict:
 
 
 def create_database(ctx: Context, database: str, source: str = None) -> dict:
-    data = {
-        "name": database,
-        "source_name": source}
+    data = {"name": database, "source_name": source}
     url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.put(ctx, url, data)
     return json.loads(rsp.read())
@@ -560,8 +691,7 @@ def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
 
 def install_model(ctx: Context, database: str, engine: str, models: dict) -> dict:
     tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    actions = [_install_model_action(name, model)
-               for name, model in models.items()]
+    actions = [_install_model_action(name, model) for name, model in models.items()]
     return tx.run(ctx, *actions)
 
 
@@ -586,7 +716,7 @@ def _gen_literal_dict(items: dict) -> str:
     result = []
     for k, v in items:
         result.append(f"{_gen_literal(k)},{_gen_literal(v)}")
-    return '{' + ';'.join(result) + '}'
+    return "{" + ";".join(result) + "}"
 
 
 # Generate a rel literal for the given list.
@@ -594,7 +724,7 @@ def _gen_literal_list(items: list) -> str:
     result = []
     for item in items:
         result.append(_gen_literal(item))
-    return '{' + ','.join(result) + '}'
+    return "{" + ",".join(result) + "}"
 
 
 # Genearte a rel literal for the given string.
@@ -617,12 +747,7 @@ def _gen_literal(v) -> str:
     return repr(v)
 
 
-_syntax_options = [
-    "header",
-    "header_row",
-    "delim",
-    "quotechar",
-    "escapechar"]
+_syntax_options = ["header", "header_row", "delim", "quotechar", "escapechar"]
 
 
 # Generate list of config syntax options for `load_csv`.
@@ -644,74 +769,114 @@ def _gen_syntax_config(syntax: dict = {}) -> str:
 #
 # Schema: a map from col name to rel type name, eg:
 #   {'a': "int", 'b': "string"}
-def load_csv(ctx: Context, database: str, engine: str, relation: str,
-             data: str or io.TextIOBase, syntax: dict = {}) -> dict:
+def load_csv(
+    ctx: Context,
+    database: str,
+    engine: str,
+    relation: str,
+    data: str or io.TextIOBase,
+    syntax: dict = {},
+) -> dict:
     if isinstance(data, str):
         pass  # ok
     elif isinstance(data, io.TextIOBase):
         data = data.read()
     else:
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
-    inputs = {'data': data}
+    inputs = {"data": data}
     command = _gen_syntax_config(syntax)
-    command += ("def config:data = data\n"
-                "def insert:%s = load_csv[config]" % relation)
+    command += "def config:data = data\n" "def insert:%s = load_csv[config]" % relation
     return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
-def load_json(ctx: Context, database: str, engine: str, relation: str,
-              data: str or io.TextIOBase) -> dict:
+def load_json(
+    ctx: Context,
+    database: str,
+    engine: str,
+    relation: str,
+    data: str or io.TextIOBase,
+) -> dict:
     if isinstance(data, str):
         pass  # ok
     elif isinstance(data, io.TextIOBase):
         data = data.read()
     else:
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
-    inputs = {'data': data}
-    command = ("def config:data = data\n"
-               "def insert:%s = load_json[config]" % relation)
+    inputs = {"data": data}
+    command = "def config:data = data\n" "def insert:%s = load_json[config]" % relation
     return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
-def exec_v1(ctx: Context, database: str, engine: str, command: str,
-          inputs: dict = None, readonly: bool = True) -> dict:
+
+def exec_v1(
+    ctx: Context,
+    database: str,
+    engine: str,
+    command: str,
+    inputs: dict = None,
+    readonly: bool = True,
+) -> dict:
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
 
+
 # Answers if the given transaction state is a terminal state.
+
+
 def is_txn_term_state(state: str) -> bool:
     return state == "COMPLETED" or state == "ABORTED"
 
-def exec(ctx: Context, database: str, engine: str, command: str,
-          inputs: dict = None, readonly: bool = True) -> list:
-    async_result = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
-    if isinstance(async_result, list):  # in case of if short-path, return results directly, no need to poll for state
-        return async_result
 
-    rsp = []
+def exec(
+    ctx: Context,
+    database: str,
+    engine: str,
+    command: str,
+    inputs: dict = None,
+    readonly: bool = True,
+) -> TransactionAsyncResponse:
+    txn = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
+    # in case of if short-path, return results directly, no need to poll for
+    # state
+    if not (txn.results is None):
+        return txn
+
+    rsp = TransactionAsyncResponse()
+    txn = get_transaction(ctx, txn.transaction["id"])
     while True:
-        time.sleep(3)
-        txn = get_transaction(ctx, async_result["id"])
+        time.sleep(1)
+        txn = get_transaction(ctx, txn["id"])
         if is_txn_term_state(txn["state"]):
-            rsp.append(txn)
-            rsp.append(get_transaction_metadata(ctx, txn["id"]))
-            rsp.append(get_transaction_problems(ctx, txn["id"]))
-            rsp.append(get_transaction_results(ctx, txn["id"]))
+            rsp.transaction = txn
+            rsp.metadata = get_transaction_metadata(ctx, txn["id"])
+            rsp.problems = get_transaction_problems(ctx, txn["id"])
+            rsp.results = get_transaction_results(ctx, txn["id"])
             break
 
     return rsp
 
 
-def exec_async(ctx: Context, database: str, engine: str, command: str,
-                readonly: bool = True, inputs: dict = None) -> Union[dict, list]:
+def exec_async(
+    ctx: Context,
+    database: str,
+    engine: str,
+    command: str,
+    readonly: bool = True,
+    inputs: dict = None,
+) -> TransactionAsyncResponse:
     tx = TransactionAsync(database, engine, readonly=readonly)
-    return tx.run(ctx, command, inputs=inputs)
+    rsp = tx.run(ctx, command, inputs=inputs)
+
+    if isinstance(rsp, dict):
+        return TransactionAsyncResponse(rsp, None, None, None)
+
+    return _parse_transaction_async_response(rsp)
 
 
 create_compute = create_engine  # deprecated, use create_engine
 delete_compute = delete_engine  # deprecated, use delete_engine
-get_compute = get_engine        # deprecated, use get_engine
-list_computes = list_engines    # deprecated, use list_engines
-list_edb = list_edbs            # deprecated, use list_edbs
-delete_source = delete_model    # deprecated, use delete_model
-get_source = get_model          # deprecated, use get_model
-list_sources = list_models      # deprecated, use list_models
+get_compute = get_engine  # deprecated, use get_engine
+list_computes = list_engines  # deprecated, use list_engines
+list_edb = list_edbs  # deprecated, use list_edbs
+delete_source = delete_model  # deprecated, use delete_model
+get_source = get_model  # deprecated, use get_model
+list_sources = list_models  # deprecated, use list_models

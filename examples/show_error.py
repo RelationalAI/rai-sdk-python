@@ -27,4 +27,5 @@ def show_error(fun):
             return fun(*args, **kwargs)
         except HTTPError as e:
             show.http_error(e)
+
     return wrapped

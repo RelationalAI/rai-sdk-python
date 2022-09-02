@@ -35,12 +35,14 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("name", type=str, help="OAuth client name")
     perms = "', '".join(Permission)
-    p.add_argument("--permissions", nargs="*",
-                   help="OAuth client permissions. By default it will be "
-                        "assigned the same permissions as the creating entity "
-                        "(user or OAuth client). Available: '{0}'".format(perms))
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument(
+        "--permissions",
+        nargs="*",
+        help="OAuth client permissions. By default it will be "
+        "assigned the same permissions as the creating entity "
+        "(user or OAuth client). Available: '{0}'".format(perms),
+    )
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
         run(args.name, args.permissions, args.profile)

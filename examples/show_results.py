@@ -16,7 +16,6 @@
 console."""
 
 from argparse import ArgumentParser
-from urllib.request import HTTPError
 from railib import api, config, show
 from show_error import show_error
 
@@ -33,7 +32,6 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     run(args.database, args.engine, args.profile)

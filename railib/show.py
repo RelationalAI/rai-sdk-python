@@ -18,13 +18,10 @@ import json
 import sys
 from typing import Union
 from urllib.request import HTTPError
-import pyarrow as pa
 
-__all__ = [
-    "http_error",
-    "problems",
-    "results"
-]
+from railib.api import TransactionAsyncResponse
+
+__all__ = ["http_error", "problems", "results"]
 
 
 def http_error(e: HTTPError) -> None:
@@ -34,9 +31,9 @@ def http_error(e: HTTPError) -> None:
         print(json.dumps(rsp, indent=2))
 
 
-def _show_row(row: list, end='\n'):
+def _show_row(row: list, end="\n"):
     row = [f'"{item}"' if isinstance(item, str) else str(item) for item in row]
-    row = ', '.join(row)
+    row = ", ".join(row)
     print(row, end=end)
 
 
@@ -60,7 +57,7 @@ def _show_rel(rsp: dict) -> None:
                 continue  # ignore constraint results
             if count > 0:
                 print()
-            sig = '*'.join(keys)
+            sig = "*".join(keys)
             print(f"// {name} ({sig})")
             rows = list(zip(*cols))
             if len(rows) == 0:
@@ -69,7 +66,7 @@ def _show_rel(rsp: dict) -> None:
             for i, row in enumerate(rows):
                 if i > 0:
                     print(";")
-                _show_row(row, end='')
+                _show_row(row, end="")
             print()
             count += 1
     if rsp.get("status", False):
@@ -107,3 +104,17 @@ def results(rsp: Union[dict, list], format="physical") -> None:
         problems(rsp)
     else:
         raise Exception(f"unknown format: '{format}'")
+
+
+# Print the results contained in the given TransactionAsyncResponse.
+def results(rsp: TransactionAsyncResponse) -> None:
+    if rsp.results is None:
+        return
+
+    for i, res in enumerate(rsp.results):
+        print(res["relationId"])
+        for v in zip(*res["table"].to_pydict().values()):
+            print(v)
+
+        if i < len(rsp.results) - 1:
+            print()

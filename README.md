@@ -1,5 +1,10 @@
 # The RelationalAI Software Development Kit for Python
 
+| Workflow | Status |
+| --------------------------- | ---------------------------------------------------------------------- |
+| Continuous Integration (CI) | ![build](https://github.com/RelationalAI/rai-sdk-python/actions/workflows/build.yaml/badge.svg) |
+| [Publish to PYPI](https://pypi.org/project/rai-sdk/) | ![publish](https://github.com/RelationalAI/rai-sdk-python/actions/workflows/publish.yaml/badge.svg) |
+
 The RelationalAI (RAI) SDK for Python enables developers to access the RAI
 REST APIs from Python.
 
@@ -35,6 +40,7 @@ Install from source in `editable` mode.
 ```console
 $ git clone git@github.com:RelationalAI/rai-sdk-python.git
 $ cd rai-sdk-python
+$ [sudo] pip install -r requirements.txt
 $ [sudo] pip install -e .
 ```
 
@@ -78,6 +84,12 @@ Note, the SDK expects to find the private key file in the same folder as the
 config file.
 
 You can copy `config.spec` from the root of this repo and modify as needed.
+
+## Generate python protobuf sources from protobuf specification
+
+```shell
+python -m grpc_tools.protoc -I railib/pb --python_out=./railib/pb railib/pb/*.proto
+```
 
 ## Examples
 
