@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 import railib
 
@@ -39,6 +39,6 @@ setup(
     long_description="Enables access to the RelationalAI REST APIs from Python",
     long_description_content_type="text/markdown",
     name="rai-sdk",
-    packages=find_packages(),
+    packages=["railib", "railib.pb"],
     url="http://github.com/RelationalAI/rai-sdk-python",
     version=railib.__version__)
