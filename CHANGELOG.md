@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.6.5
+## v0.6.8
 
 * Added protobuf metadata support
 * Deprecated json metadata
