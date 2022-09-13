@@ -29,8 +29,7 @@ def run(userid: str, profile: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     p.add_argument("userid", type=str, nargs=1, help="user id")
     args = p.parse_args()
     try:

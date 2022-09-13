@@ -31,8 +31,7 @@ def run(id: str, profile: str):
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("id", type=str, help="OAuth client id")
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
         run(args.id, args.profile)

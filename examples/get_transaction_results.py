@@ -14,7 +14,6 @@
 
 """Fetch results for the given transaction."""
 
-import json
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
@@ -24,13 +23,12 @@ def run(id: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.get_transaction_results_and_problems(ctx, id)
-    show.results(rsp, "wire")
+    show.results(rsp)
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     p.add_argument("id", type=str, help="transaction id")
     args = p.parse_args()
     try:

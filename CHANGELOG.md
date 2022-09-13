@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6.8
+
+* Added protobuf metadata support
+* Deprecated json metadata
+* `exec` and `exec_async` return `TransactionAsyncResponse`
+* Added integration tests for asynchronous transaction
+* Setup CI workflow
+
 ## v0.6.4
 
 * Additional user APIs and examples:

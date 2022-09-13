@@ -32,7 +32,6 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("model", type=str, help="model name")
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     run(args.database, args.engine, args.model, args.profile)

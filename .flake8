@@ -1,0 +1,6 @@
+[flake8]
+ignore = F811, E501
+exclude = env,.git,__pycache__,railib/pb,build,dist
+max-line-length = 79
+max-complexity = 18
+

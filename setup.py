@@ -33,11 +33,13 @@ setup(
     description="The RelationalAI Software Development Kit for Python",
     install_requires=[
         "ed25519==1.5",
-        "pyarrow>=6.0.1"],
+        "pyarrow>=6.0.1",
+        "requests-toolbelt==0.9.1",
+        "protobuf==3.20.1"],
     license="http://www.apache.org/licenses/LICENSE-2.0",
     long_description="Enables access to the RelationalAI REST APIs from Python",
     long_description_content_type="text/markdown",
     name="rai-sdk",
-    packages=["railib"],
+    packages=["railib", "railib.pb"],
     url="http://github.com/RelationalAI/rai-sdk-python",
     version=railib.__version__)
