@@ -40,6 +40,6 @@ if __name__ == "__main__":
     p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.command, args.readonly, args.profile)
+        run(args.database, args.engine, args.command, args.language, args.readonly, args.profile)
     except HTTPError as e:
         show.http_error(e)
