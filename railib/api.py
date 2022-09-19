@@ -658,15 +658,17 @@ def _model(name: str, model: str) -> dict:
 
 
 # Returns full list of models.
-def _list_models(ctx: Context, database: str, engine: str) -> dict:
-    tx = Transaction(database, engine, mode=Mode.OPEN)
-    rsp = tx.run(ctx, _list_action())
-    actions = rsp["actions"]
-    assert len(actions) == 1
-    action = actions[0]
-    models = action["result"]["sources"]
-    return models
+def _list_models(ctx: Context, database: str, engine: str) -> List:
+    models = []
+    response = exec(ctx, database, engine, "def output:__models__ = rel:catalog:model")
+    for result in response.results:
+        if '/:output/:__models__' in result['relationId']:
+            table = result['table'].to_pydict()
+            models.extend([{'name': table['v1'][i], 'value': table['v2'][i]} for i in range(1, len(table['v1']))])
+    if len(response.problems) > 0:
+        print(response.problems)
 
+    return models
 
 def create_database(ctx: Context, database: str, source: str = None) -> dict:
     data = {"name": database, "source_name": source}
@@ -674,12 +676,11 @@ def create_database(ctx: Context, database: str, source: str = None) -> dict:
     rsp = rest.put(ctx, url, data)
     return json.loads(rsp.read())
 
+def delete_model(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
+    return exec(ctx, database, engine, f'def delete:rel:catalog:model["{model}"] = rel:catalog:model["{model}"]', readonly=False)
 
-def delete_model(ctx: Context, database: str, engine: str, model: str) -> dict:
-    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    actions = [_delete_model_action(model)]
-    return tx.run(ctx, *actions)
-
+def delete_model_async(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
+    return exec_async(ctx, database, engine, f'def delete:rel:catalog:model["{model}"] = rel:catalog:model["{model}"]', readonly=False)
 
 # Returns the named model
 def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
@@ -689,12 +690,13 @@ def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
             return model["value"]
     raise Exception(f"model '{name}' not found")
 
+def install_model(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
+    queries = [f'def insert:rel:catalog:model["{name}"] = """{models[name]}"""' for name in models.keys()]
+    return exec(ctx, database, engine, '\n'.join(queries), readonly=False)
 
-def install_model(ctx: Context, database: str, engine: str, models: dict) -> dict:
-    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    actions = [_install_model_action(name, model) for name, model in models.items()]
-    return tx.run(ctx, *actions)
-
+def install_model_async(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
+    queries = [f'def insert:rel:catalog:model["{name}"] = """{models[name]}"""' for name in models.keys()]
+    return exec_async(ctx, database, engine, '\n'.join(queries), readonly=False)
 
 def list_edbs(ctx: Context, database: str, engine: str) -> list:
     tx = Transaction(database, engine, mode=Mode.OPEN)

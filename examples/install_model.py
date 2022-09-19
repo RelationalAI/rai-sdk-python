@@ -33,7 +33,7 @@ def run(database: str, engine: str, fname: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.install_model(ctx, database, engine, models)
-    print(json.dumps(rsp, indent=2))
+    print(rsp)
 
 
 if __name__ == "__main__":

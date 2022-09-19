@@ -24,8 +24,7 @@ def run(database: str, engine: str, model: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
     rsp = api.delete_model(ctx, database, engine, model)
-    print(json.dumps(rsp, indent=2))
-
+    print(rsp)
 
 if __name__ == "__main__":
     p = ArgumentParser()
