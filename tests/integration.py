@@ -90,6 +90,26 @@ class TestTransactionAsync(unittest.TestCase):
         api.delete_engine(ctx, engine)
         api.delete_database(ctx, dbname)
 
+class TestModels(unittest.TestCase):
+    def setUp(self):
+        create_engine_wait(ctx, engine)
+        api.create_database(ctx, dbname)
+
+    def test_models(self):
+        models = api.list_models(ctx, dbname, engine)
+        self.assertTrue(len(models) > 0)
+
+        resp = api.install_model(ctx, dbname, engine, {"test_model": "def foo=:bar"})
+        self.assertEqual(resp.transaction["state"], "COMPLETED")
+
+        models = api.list_models(ctx, dbname, engine)
+        self.assertTrue("test_model" in models)
+
+        resp = api.delete_model(ctx, dbname, engine, "test_model")
+        self.assertEqual(resp.transaction["state"], "COMPLETED")
+
+        models = api.list_models(ctx, dbname, engine)
+        self.assertFalse("test_model" in models)
 
 if __name__ == '__main__':
     unittest.main()
