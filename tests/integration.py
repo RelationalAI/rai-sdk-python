@@ -86,16 +86,6 @@ class TestTransactionAsync(unittest.TestCase):
                     1, 8, 27, 64, 125], 'v4': [
                         1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
 
-    def tearDown(self):
-        api.delete_engine(ctx, engine)
-        api.delete_database(ctx, dbname)
-
-
-class TestModels(unittest.TestCase):
-    def setUp(self):
-        create_engine_wait(ctx, engine)
-        api.create_database(ctx, dbname)
-
     def test_models(self):
         models = api.list_models(ctx, dbname, engine)
         self.assertTrue(len(models) > 0)
