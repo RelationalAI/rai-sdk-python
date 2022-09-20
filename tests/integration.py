@@ -90,6 +90,7 @@ class TestTransactionAsync(unittest.TestCase):
         api.delete_engine(ctx, engine)
         api.delete_database(ctx, dbname)
 
+
 class TestModels(unittest.TestCase):
     def setUp(self):
         create_engine_wait(ctx, engine)
@@ -110,6 +111,11 @@ class TestModels(unittest.TestCase):
 
         models = api.list_models(ctx, dbname, engine)
         self.assertFalse("test_model" in models)
+
+    def tearDown(self):
+        api.delete_engine(ctx, engine)
+        api.delete_database(ctx, dbname)
+
 
 if __name__ == '__main__':
     unittest.main()

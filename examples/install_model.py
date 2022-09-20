@@ -15,7 +15,6 @@
 """Install the given Rel model in the given database"""
 
 from argparse import ArgumentParser
-import json
 from os import path
 from urllib.request import HTTPError
 from railib import api, config, show

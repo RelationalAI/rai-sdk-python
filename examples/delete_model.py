@@ -15,7 +15,6 @@
 """Delete the given Rel model from the given database."""
 
 from argparse import ArgumentParser
-import json
 from urllib.request import HTTPError
 from railib import api, config, show
 
@@ -25,6 +24,7 @@ def run(database: str, engine: str, model: str, profile: str):
     ctx = api.Context(**cfg)
     rsp = api.delete_model(ctx, database, engine, model)
     print(rsp)
+
 
 if __name__ == "__main__":
     p = ArgumentParser()
