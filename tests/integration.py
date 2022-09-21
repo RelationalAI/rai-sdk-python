@@ -60,7 +60,7 @@ class TestTransactionAsync(unittest.TestCase):
 
     def test_v2_exec(self):
         cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-        rsp = api.exec(ctx, "hnr-db", "hnr-engine", cmd)
+        rsp = api.exec(ctx, self.dbname, self.engine, cmd)
 
         # transaction
         self.assertEqual("COMPLETED", rsp.transaction["state"])
@@ -79,24 +79,12 @@ class TestTransactionAsync(unittest.TestCase):
         # results
         self.assertEqual(
             {
-                'v1': [
-                    1, 2, 3, 4, 5], 'v2': [
-                    1, 4, 9, 16, 25], 'v3': [
-                    1, 8, 27, 64, 125], 'v4': [
-                        1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
-
-    def tearDown(self):
-        api.delete_engine(ctx, self.engine)
-        api.delete_database(ctx, self.dbname)
-
-
-class TestModels(unittest.TestCase):
-    def setUp(self):
-        self.suffix = uuid.uuid4()
-        self.engine = f"python-sdk-{self.suffix}"
-        self.dbname = f"python-sdk-{self.suffix}"
-        create_engine_wait(ctx, self.engine)
-        api.create_database(ctx, self.dbname)
+                'v1': [1, 2, 3, 4, 5],
+                'v2': [1, 4, 9, 16, 25],
+                'v3': [1, 8, 27, 64, 125],
+                'v4': [1, 16, 81, 256, 625]
+            },
+            rsp.results[0]["table"].to_pydict())
 
     def test_models(self):
         models = api.list_models(ctx, self.dbname, self.engine)
