@@ -49,15 +49,13 @@ else:
 
 ctx = api.Context(**cfg)
 
-suffix = uuid.uuid4()
-engine = f"python-sdk-{suffix}"
-dbname = f"python-sdk-{suffix}"
-
-
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
-        create_engine_wait(ctx, engine)
-        api.create_database(ctx, dbname)
+        self.suffix = uuid.uuid4()
+        self.engine = f"python-sdk-{self.suffix}"
+        self.dbname = f"python-sdk-{self.suffix}"
+        create_engine_wait(ctx, self.engine)
+        api.create_database(ctx, self.dbname)
 
     def test_v2_exec(self):
         cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
@@ -86,26 +84,38 @@ class TestTransactionAsync(unittest.TestCase):
                     1, 8, 27, 64, 125], 'v4': [
                         1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
 
+    def tearDown(self):
+        api.delete_engine(ctx, self.engine)
+        api.delete_database(ctx, self.dbname)
+
+
+class TestModels(unittest.TestCase):
+    def setUp(self):
+        self.suffix = uuid.uuid4()
+        self.engine = f"python-sdk-{self.suffix}"
+        self.dbname = f"python-sdk-{self.suffix}"
+        create_engine_wait(ctx, self.engine)
+        api.create_database(ctx, self.dbname)
+
     def test_models(self):
-        models = api.list_models(ctx, dbname, engine)
+        models = api.list_models(ctx, self.dbname, self.engine)
         self.assertTrue(len(models) > 0)
 
-        resp = api.install_model(ctx, dbname, engine, {"test_model": "def foo=:bar"})
+        resp = api.install_model(ctx, self.dbname, self.engine, {"test_model": "def foo=:bar"})
         self.assertEqual(resp.transaction["state"], "COMPLETED")
 
-        models = api.list_models(ctx, dbname, engine)
+        models = api.list_models(ctx, self.dbname, self.engine)
         self.assertTrue("test_model" in models)
 
-        resp = api.delete_model(ctx, dbname, engine, "test_model")
+        resp = api.delete_model(ctx, self.dbname, self.engine, "test_model")
         self.assertEqual(resp.transaction["state"], "COMPLETED")
 
-        models = api.list_models(ctx, dbname, engine)
+        models = api.list_models(ctx, self.dbname, self.engine)
         self.assertFalse("test_model" in models)
 
     def tearDown(self):
-        api.delete_engine(ctx, engine)
-        api.delete_database(ctx, dbname)
-
+        api.delete_engine(ctx, self.engine)
+        api.delete_database(ctx, self.dbname)
 
 if __name__ == '__main__':
     unittest.main()
