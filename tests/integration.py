@@ -49,6 +49,7 @@ else:
 
 ctx = api.Context(**cfg)
 
+
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
         self.suffix = uuid.uuid4()
@@ -116,6 +117,7 @@ class TestModels(unittest.TestCase):
     def tearDown(self):
         api.delete_engine(ctx, self.engine)
         api.delete_database(ctx, self.dbname)
+
 
 if __name__ == '__main__':
     unittest.main()
