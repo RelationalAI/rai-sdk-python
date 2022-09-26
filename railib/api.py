@@ -653,7 +653,7 @@ def _model(name: str, model: str) -> dict:
 def list_models(ctx: Context, database: str, engine: str) -> List:
     models = []
     out_name = f'model{random.randint(0, sys.maxsize)}'
-    resp = exec(ctx, database, engine, f'def output:{out_name} = rel:catalog:model')
+    resp = exec(ctx, database, engine, f'def output:{out_name}[name] = rel:catalog:model(name, _)')
     for result in resp.results:
         if f'/:output/:{out_name}' in result['relationId']:
             table = result['table'].to_pydict()
