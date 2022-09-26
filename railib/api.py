@@ -19,9 +19,13 @@ import pyarrow as pa
 import time
 import re
 import io
+import sys
+import random
+
 from enum import Enum, unique
 from typing import List, Union
 from requests_toolbelt import multipart
+
 from . import rest
 
 from .pb.message_pb2 import MetadataInfo
@@ -114,7 +118,7 @@ __all__ = [
     "create_oauth_client",
     "delete_database",
     "delete_engine",
-    "delete_model",
+    "delete_models",
     "disable_user",
     "enable_user",
     "delete_oauth_client",
@@ -598,18 +602,6 @@ class TransactionAsync(object):
         raise Exception("invalid response type")
 
 
-def _delete_model_action(name: str) -> dict:
-    return {"type": "ModifyWorkspaceAction", "delete_source": [name]}
-
-
-def _install_model_action(name: str, model: str) -> dict:
-    return {"type": "InstallAction", "sources": [_model(name, model)]}
-
-
-def _list_action():
-    return {"type": "ListSourceAction"}
-
-
 def _list_edb_action():
     return {"type": "ListEdbAction"}
 
@@ -660,13 +652,12 @@ def _model(name: str, model: str) -> dict:
 # Returns full list of models.
 def _list_models(ctx: Context, database: str, engine: str) -> List:
     models = []
-    response = exec(ctx, database, engine, "def output:__models__ = rel:catalog:model")
-    for result in response.results:
-        if '/:output/:__models__' in result['relationId']:
+    out_name = f'model{random.randint(0, sys.maxsize)}'
+    resp = exec(ctx, database, engine, f'def output:{out_name} = rel:catalog:model')
+    for result in resp.results:
+        if '/:output/:{out_name}' in result['relationId']:
             table = result['table'].to_pydict()
             models.extend([{'name': table['v1'][i], 'value': table['v2'][i]} for i in range(1, len(table['v1']))])
-    if len(response.problems) > 0:
-        print(response.problems)
 
     return models
 
@@ -678,29 +669,40 @@ def create_database(ctx: Context, database: str, source: str = None) -> dict:
     return json.loads(rsp.read())
 
 
-def delete_model(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
-    return exec(ctx, database, engine, f'def delete:rel:catalog:model["{model}"] = rel:catalog:model["{model}"]', readonly=False)
+def delete_models(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
+    queries = [
+        f'def delete:rel:catalog:model["{model_name}"] = rel:catalog:model["{model_name}"]'
+        for model_name in models
+    ]
+    return exec(ctx, database, engine, '\n'.join(queries), readonly=False)
 
 
-def delete_model_async(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
-    return exec_async(ctx, database, engine, f'def delete:rel:catalog:model["{model}"] = rel:catalog:model["{model}"]', readonly=False)
+def delete_model_async(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
+    queries = [
+        f'def delete:rel:catalog:model["{model_name}"] = rel:catalog:model["{model_name}"]'
+        for model_name in models
+    ]
+    return exec_async(ctx, database, engine, '\n'.join(queries), readonly=False)
 
 
 # Returns the named model
 def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
-    models = _list_models(ctx, database, engine)
-    for model in models:
-        if model["name"] == name:
-            return model["value"]
+    out_name = f'model{random.randint(0, sys.maxsize)}'
+    cmd = f'def output:{out_name} = rel:catalog:model["{name}"]'
+    resp = exec(ctx, database, engine, cmd)
+    for result in resp.results:
+        if f'/:output/:{out_name}' in result['relationId']:
+            table = result['table'].to_pydict()
+            return table['v1'][0]
     raise Exception(f"model '{name}' not found")
 
 
-def install_model(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
+def install_models(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
     queries = [f'def insert:rel:catalog:model["{name}"] = """{models[name]}"""' for name in models.keys()]
     return exec(ctx, database, engine, '\n'.join(queries), readonly=False)
 
 
-def install_model_async(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
+def install_models_async(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
     queries = [f'def insert:rel:catalog:model["{name}"] = """{models[name]}"""' for name in models.keys()]
     return exec_async(ctx, database, engine, '\n'.join(queries), readonly=False)
 
@@ -888,6 +890,6 @@ delete_compute = delete_engine  # deprecated, use delete_engine
 get_compute = get_engine  # deprecated, use get_engine
 list_computes = list_engines  # deprecated, use list_engines
 list_edb = list_edbs  # deprecated, use list_edbs
-delete_source = delete_model  # deprecated, use delete_model
+delete_source = delete_models  # deprecated, use delete_model
 get_source = get_model  # deprecated, use get_model
 list_sources = list_models  # deprecated, use list_models

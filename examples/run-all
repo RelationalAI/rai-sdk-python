@@ -36,7 +36,7 @@ python3 ./show_results.py $DATABASE $ENGINE
 python3 ./show_problems.py $DATABASE $ENGINE
 
 # load model
-python3 ./install_model.py $DATABASE $ENGINE hello.rel
+python3 ./install_models.py $DATABASE $ENGINE hello.rel
 python3 ./get_model.py $DATABASE $ENGINE hello
 python3 ./list_models.py $DATABASE $ENGINE
 python3 ./delete_model.py $DATABASE $ENGINE hello
@@ -60,7 +60,7 @@ python3 ./list_edbs.py $DATABASE $ENGINE
 python3 ./delete_database.py $DATABASE
 python3 ./create_database.py $DATABASE
 python3 ./load_json.py $DATABASE $ENGINE sample.json -r sample_json
-python3 ./install_model.py $DATABASE $ENGINE hello.rel
+python3 ./install_models.py $DATABASE $ENGINE hello.rel
 python3 ./clone_database.py $DATABASE_CLONE $DATABASE
 python3 ./get_database.py $DATABASE_CLONE
 python3 ./list_databases.py
