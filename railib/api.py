@@ -650,14 +650,14 @@ def _model(name: str, model: str) -> dict:
 
 
 # Returns full list of models.
-def _list_models(ctx: Context, database: str, engine: str) -> List:
+def list_models(ctx: Context, database: str, engine: str) -> List:
     models = []
     out_name = f'model{random.randint(0, sys.maxsize)}'
     resp = exec(ctx, database, engine, f'def output:{out_name} = rel:catalog:model')
     for result in resp.results:
-        if '/:output/:{out_name}' in result['relationId']:
+        if f'/:output/:{out_name}' in result['relationId']:
             table = result['table'].to_pydict()
-            models.extend([{'name': table['v1'][i], 'value': table['v2'][i]} for i in range(1, len(table['v1']))])
+            models.extend([table['v1'][i] for i in range(1, len(table['v1']))])
 
     return models
 
@@ -715,12 +715,6 @@ def list_edbs(ctx: Context, database: str, engine: str) -> list:
     action = actions[0]
     rels = action["result"]["rels"]
     return rels
-
-
-# Returns a list of models installed in the given database.
-def list_models(ctx: Context, database: str, engine: str) -> list:
-    models = _list_models(ctx, database, engine)
-    return [model["name"] for model in models]
 
 
 # Generate a rel literal relation for the given dict.
