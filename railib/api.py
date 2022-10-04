@@ -649,6 +649,13 @@ def _model(name: str, model: str) -> dict:
     }
 
 
+def create_database(ctx: Context, database: str, source: str = None) -> dict:
+    data = {"name": database, "source_name": source}
+    url = _mkurl(ctx, PATH_DATABASE)
+    rsp = rest.put(ctx, url, data)
+    return json.loads(rsp.read())
+
+
 # Returns full list of models.
 def list_models(ctx: Context, database: str, engine: str) -> List:
     models = []
@@ -662,13 +669,6 @@ def list_models(ctx: Context, database: str, engine: str) -> List:
     return models
 
 
-def create_database(ctx: Context, database: str, source: str = None) -> dict:
-    data = {"name": database, "source_name": source}
-    url = _mkurl(ctx, PATH_DATABASE)
-    rsp = rest.put(ctx, url, data)
-    return json.loads(rsp.read())
-
-
 def delete_models(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
     queries = [
         f'def delete:rel:catalog:model["{model_name}"] = rel:catalog:model["{model_name}"]'
@@ -677,7 +677,7 @@ def delete_models(ctx: Context, database: str, engine: str, models: List[str]) -
     return exec(ctx, database, engine, '\n'.join(queries), readonly=False)
 
 
-def delete_model_async(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
+def delete_models_async(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
     queries = [
         f'def delete:rel:catalog:model["{model_name}"] = rel:catalog:model["{model_name}"]'
         for model_name in models
@@ -698,13 +698,34 @@ def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
 
 
 def install_models(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
-    queries = [f'def insert:rel:catalog:model["{name}"] = """{models[name]}"""' for name in models.keys()]
-    return exec(ctx, database, engine, '\n'.join(queries), readonly=False)
+    queries = []
+    queries_inputs = {}
+    randint = random.randint(0, sys.maxsize)
+    index = 0
+    for name, value in models.items():
+        input_name = f'input_{randint}_{index}'
+        queries.append(f'def delete:rel:catalog:model["{name}"] = rel:catalog:model["{name}"]')
+        queries.append(f'def insert:rel:catalog:model["{name}"] = {input_name}')
+
+        queries_inputs[input_name] = value
+        index += 1
+
+    return exec(ctx, database, engine, '\n'.join(queries), inputs=queries_inputs, readonly=False)
 
 
 def install_models_async(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
-    queries = [f'def insert:rel:catalog:model["{name}"] = """{models[name]}"""' for name in models.keys()]
-    return exec_async(ctx, database, engine, '\n'.join(queries), readonly=False)
+    queries = []
+    queries_inputs = {}
+    randint = random.randint(0, sys.maxsize)
+    index = 0
+    for name, value in models.items():
+        input_name = f'input_{randint}_{index}'
+        queries.append(f'def delete:rel:catalog:model["{name}"] = rel:catalog:model["{name}"]')
+        queries.append(f'def insert:rel:catalog:model["{name}"] = {input_name}')
+
+        queries_inputs[input_name] = value
+        index += 1
+    return exec_async(ctx, database, engine, '\n'.join(queries), inputs=queries_inputs, readonly=False)
 
 
 def list_edbs(ctx: Context, database: str, engine: str) -> list:

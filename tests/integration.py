@@ -90,11 +90,15 @@ class TestTransactionAsync(unittest.TestCase):
         models = api.list_models(ctx, self.dbname, self.engine)
         self.assertTrue(len(models) > 0)
 
-        resp = api.install_models(ctx, self.dbname, self.engine, {"test_model": "def foo=:bar"})
+        models = {"test_model": "def foo=:bar"}
+        resp = api.install_models(ctx, self.dbname, self.engine, models)
         self.assertEqual(resp.transaction["state"], "COMPLETED")
 
         models = api.list_models(ctx, self.dbname, self.engine)
         self.assertTrue("test_model" in models)
+
+        value = api.get_model(ctx, self.dbname, self.engine, "test_model")
+        self.assertEqual(models["test_model"], value)
 
         resp = api.delete_models(ctx, self.dbname, self.engine, ["test_model"])
         self.assertEqual(resp.transaction["state"], "COMPLETED")

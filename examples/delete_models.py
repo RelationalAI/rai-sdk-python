@@ -22,7 +22,7 @@ from railib import api, config, show
 def run(database: str, engine: str, model: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.delete_models(ctx, database, engine, model)
+    rsp = api.delete_models(ctx, database, engine, [model])
     print(rsp)
 
 
