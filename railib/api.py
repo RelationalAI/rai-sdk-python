@@ -33,7 +33,8 @@ PATH_TRANSACTION = "/transaction"
 PATH_TRANSACTIONS = "/transactions"
 PATH_USER = "/users"
 PATH_OAUTH_CLIENT = "/oauth-clients"
-
+PATH_ACCOUNT = "/system/accounts"
+PATH_IDPROVIDERS = "/id-providers"
 
 # Engine sizes
 @unique
@@ -62,10 +63,18 @@ class Role(str, Enum):
     USER = "user"
     ADMIN = "admin"
 
+@unique
+class IDProvider(str, Enum):
+    googleOauth2 = "google-oauth2"
+    googleApps = "google-apps"
+
 
 # User/OAuth-client permissions
 @unique
 class Permission(str, Enum):
+    #accounts
+    READ_ACCOUNT = "read:account"
+    
     # computes
     CREATE_COMPUTE = "create:compute"
     DELETE_COMPUTE = "delete:compute"
@@ -128,6 +137,10 @@ __all__ = [
     "get_transaction_results_and_problems",
     "cancel_transaction",
     "get_user",
+    "get_account",
+    "create_account",
+    "list_accounts",
+    "list_id_providers",
     "list_databases",
     "list_edbs",
     "list_engines",
@@ -332,6 +345,17 @@ def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
     rsp = rest.put(ctx, url, data)
     return json.loads(rsp.read())
 
+def create_account(ctx: Context, name: str, adminUsername: str, idproviders: List[IDProvider] = None):
+    idp = idproviders or []
+    data = {
+        "name": name,
+        "admin_username": adminUsername,
+        "id_providers": [i.value for i in idp]
+        }
+    url = _mkurl(ctx, PATH_ACCOUNT)
+    rsp = rest.post(ctx, url, data)
+    return json.loads(rsp.read())
+
 
 def create_user(ctx: Context, email: str, roles: List[Role] = None):
     rs = roles or []
@@ -391,6 +415,8 @@ def delete_oauth_client(ctx: Context, id: str) -> dict:
 def enable_user(ctx: Context, userid: str) -> dict:
     return update_user(ctx, userid, status="ACTIVE")
 
+def get_account(ctx:Context, accountName: str) -> dict:
+    return _get_resource(ctx, f"{PATH_ACCOUNT}/{accountName}")
 
 def get_engine(ctx: Context, engine: str) -> dict:
     return _get_resource(ctx, PATH_ENGINE, name=engine, deleted_on="", key="computes")
@@ -479,6 +505,22 @@ def list_users(ctx: Context) -> list:
 def list_oauth_clients(ctx: Context) -> list:
     return _get_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
 
+def list_accounts(ctx: Context) -> list:
+    return _get_collection(ctx, PATH_ACCOUNT, key="accounts")
+
+def list_id_providers(ctx: Context) -> list:
+    return _get_collection(ctx, PATH_IDPROVIDERS)
+
+
+def update_account(ctx: Context, name: str, idProviders = None):
+    data = {}
+    
+    if idProviders is not None:
+        data["id_providers"] = [i.value for i in idProviders]
+        print(data["id_providers"])
+    url = _mkurl(ctx, f"{PATH_ACCOUNT}/{name}")
+    rsp = rest.patch(ctx, url, data)
+    return json.loads(rsp.read())
 
 def update_user(ctx: Context, userid: str, status: str = None, roles=None):
     data = {}

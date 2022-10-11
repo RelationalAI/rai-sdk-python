@@ -12,36 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Create a user with an (optional) role."""
+"""List all ID providers."""
 
-from argparse import ArgumentParser
 import json
-from typing import List
+from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(user: str, roles: List[api.Role], profile: str):
+def run(profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_user(ctx, user, roles)
+    rsp = api.list_id_providers(ctx)
     print(json.dumps(rsp, indent=2))
 
-# python3 ./create_user.py testuser@gmail.com --roles admin user
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("email", type=str, help="user email")
-    p.add_argument(
-        "--roles",
-        action="append",
-        default=None,
-        help='user roles ("user" (default) or "admin")',
-    )
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        roles = [api.Role(r) for r in args.roles] if args.roles else None
-        run(args.email, roles, args.profile)
+        run(args.profile)
     except HTTPError as e:
         show.http_error(e)

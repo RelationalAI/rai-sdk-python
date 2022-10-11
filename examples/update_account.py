@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Create a user with an (optional) role."""
+"""Update an account"""
 
 from argparse import ArgumentParser
 import json
@@ -21,27 +21,23 @@ from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(user: str, roles: List[api.Role], profile: str):
+def run(name: str, idproviders: List[api.IDProvider], profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_user(ctx, user, roles)
+    rsp = api.update_account(ctx, name, idproviders)
     print(json.dumps(rsp, indent=2))
 
-# python3 ./create_user.py testuser@gmail.com --roles admin user
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("email", type=str, help="user email")
-    p.add_argument(
-        "--roles",
-        action="append",
-        default=None,
-        help='user roles ("user" (default) or "admin")',
-    )
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
+    p.add_argument("name", type=str, help="account name")             
+    p.add_argument("--idProviders", action='append', default=None,
+                   help='identity providers "google-oauth2" and/or "google-apps"')
+    p.add_argument("-p", "--profile", type=str,
+                   help="profile name", default="default")
     args = p.parse_args()
     try:
-        roles = [api.Role(r) for r in args.roles] if args.roles else None
-        run(args.email, roles, args.profile)
+        idProviders = [api.IDProvider(r) for r in args.idProviders] if args.idProviders else None
+        run(args.name, idProviders, args.profile)
     except HTTPError as e:
         show.http_error(e)
