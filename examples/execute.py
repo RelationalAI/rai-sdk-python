@@ -1,4 +1,4 @@
-# Copyright 2021 RelationalAI, Inc.
+# Copyright 2022 RelationalAI, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ from railib import api, config, show
 def run(database: str, engine: str, command: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.query_async(ctx, database, engine, command, readonly=readonly)
+    rsp = api.exec(ctx, database, engine, command, readonly=readonly)
+    print(rsp)
     show.results(rsp)
 
 
@@ -29,13 +30,15 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("command", type=str, help="rel source string")
-    p.add_argument("--readonly", action="store_true", default=False,
-                   help="readonly query (default: false)")
-    p.add_argument("-p", "--profile", type=str, default="default",
-                   help="profile name")
+    p.add_argument(
+        "--readonly",
+        action="store_true",
+        default=False,
+        help="readonly query (default: false)",
+    )
+    p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.command, args.readonly,
-            args.profile)
+        run(args.database, args.engine, args.command, args.readonly, args.profile)
     except HTTPError as e:
         show.http_error(e)

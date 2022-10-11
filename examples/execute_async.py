@@ -1,4 +1,4 @@
-# Copyright 2021-2022 RelationalAI, Inc.
+# Copyright 2021 RelationalAI, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,26 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Fetch results for the given transaction."""
-
 from argparse import ArgumentParser
 from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(id: str, profile: str):
+def run(database: str, engine: str, command: str, language: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.get_transaction_results_and_problems(ctx, id)
+    rsp = api.exec_async(ctx, database, engine, command, language, readonly=readonly)
+    print(rsp)
     show.results(rsp)
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
-    p.add_argument("id", type=str, help="transaction id")
+    p.add_argument("database", type=str, help="database name")
+    p.add_argument("engine", type=str, help="engine name")
+    p.add_argument("command", type=str, help="rel source string")
+    p.add_argument("--language", type=str, help="query language")
+    p.add_argument(
+        "--readonly",
+        action="store_true",
+        default=False,
+        help="readonly query (default: false)",
+    )
+    p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
     args = p.parse_args()
     try:
-        run(args.id, args.profile)
+        run(args.database, args.engine, args.command, args.language, args.readonly, args.profile)
     except HTTPError as e:
         show.http_error(e)

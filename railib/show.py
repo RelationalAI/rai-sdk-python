@@ -18,13 +18,10 @@ import json
 import sys
 from typing import Union
 from urllib.request import HTTPError
-import pyarrow as pa
 
-__all__ = [
-    "http_error",
-    "problems",
-    "results"
-]
+from railib.api import TransactionAsyncResponse
+
+__all__ = ["http_error", "problems", "results"]
 
 
 def http_error(e: HTTPError) -> None:
@@ -34,9 +31,9 @@ def http_error(e: HTTPError) -> None:
         print(json.dumps(rsp, indent=2))
 
 
-def _show_row(row: list, end='\n'):
+def _show_row(row: list, end="\n"):
     row = [f'"{item}"' if isinstance(item, str) else str(item) for item in row]
-    row = ', '.join(row)
+    row = ", ".join(row)
     print(row, end=end)
 
 
@@ -60,7 +57,7 @@ def _show_rel(rsp: dict) -> None:
                 continue  # ignore constraint results
             if count > 0:
                 print()
-            sig = '*'.join(keys)
+            sig = "*".join(keys)
             print(f"// {name} ({sig})")
             rows = list(zip(*cols))
             if len(rows) == 0:
@@ -69,36 +66,11 @@ def _show_rel(rsp: dict) -> None:
             for i, row in enumerate(rows):
                 if i > 0:
                     print(";")
-                _show_row(row, end='')
+                _show_row(row, end="")
             print()
             count += 1
     if rsp.get("status", False):
         print(rsp["status"])
-
-
-def _show_multipart(parts: list):
-    result = []
-    content_type_json = b'application/json'
-    content_type_arrow_stream = b'application/vnd.apache.arrow.stream'
-    for part in parts:
-        # split the part
-        # part body and headers are separated with CRLFCRLF
-        strings = part.split(b'\r\n\r\n')
-        # last part is the content/body
-        part_value = strings[len(strings) - 1]
-        # content is json, decode the part content as json
-        if content_type_json in part:
-            result.append(json.loads(part_value))
-        # if the part has arrow stream, then decode the arrow stream
-        # the results are in a form of a tuple/table
-        elif content_type_arrow_stream in part:
-            with pa.ipc.open_stream(part_value) as reader:
-                schema = reader.schema
-                batches = [batch for batch in reader]
-                table = pa.Table.from_batches(batches=batches, schema=schema)
-                result.append(table.to_pydict())
-
-    json.dump(result, sys.stdout, indent=2)
 
 
 # Print the problems in the given response dict.
@@ -122,17 +94,27 @@ def problems(rsp: dict) -> None:
 
 
 # Print the results contained in the given response dict.
-def results(rsp: Union[dict, list], format=None) -> None:
+def results(rsp: Union[dict, list], format="physical") -> None:
     if rsp is None:
         return
-    if format is None:
-        format = "multipart" if isinstance(rsp, list) else "wire"
     if format == "wire":
         json.dump(rsp, sys.stdout, indent=2)
     elif format == "physical":
         _show_rel(rsp)
         problems(rsp)
-    elif format == "multipart":
-        _show_multipart(rsp)
     else:
         raise Exception(f"unknown format: '{format}'")
+
+
+# Print the results contained in the given TransactionAsyncResponse.
+def results(rsp: TransactionAsyncResponse) -> None:
+    if rsp.results is None:
+        return
+
+    for i, res in enumerate(rsp.results):
+        print(res["relationId"])
+        for v in zip(*res["table"].to_pydict().values()):
+            print(v)
+
+        if i < len(rsp.results) - 1:
+            print()

@@ -31,9 +31,9 @@ def run(state: str, profile: str):
 
 if __name__ == "__main__":
     p = ArgumentParser()
-    p.add_argument("--state", type=str, default=None,
-                   help="state filter (default: none")
-    p.add_argument("-p", "--profile", type=str,
-                   help="profile name", default="default")
+    p.add_argument(
+        "--state", type=str, default=None, help="state filter (default: none"
+    )
+    p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     run(args.state, args.profile)

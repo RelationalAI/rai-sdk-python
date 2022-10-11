@@ -14,19 +14,21 @@
 
 """Low level HTTP interface to the RelationalAI REST API."""
 
-from abc import ABC
 import ed25519
 import base64
 from datetime import datetime
 import hashlib
 import json
-from pprint import pprint
 from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
-import time
 
 from .__init__ import __version__
-from .credentials import AccessKeyCredentials, AccessToken, Credentials, ClientCredentials
+from .credentials import (
+    AccessKeyCredentials,
+    AccessToken,
+    Credentials,
+    ClientCredentials,
+)
 
 __all__ = ["Context", "get", "put", "post", "request"]
 
@@ -40,7 +42,7 @@ CLIENT_CREDENTIALS_KEY = "client_credentials"
 EXPIRES_IN_KEY = "expires_in"
 
 
-_empty = bytes('', encoding='utf8')
+_empty = bytes("", encoding="utf8")
 
 
 # Context contains the state required to make rAI REST API calls.
@@ -96,14 +98,13 @@ def _encode_path(path: str) -> str:
 # Returns an urlencoded query string.
 # Note: the signing algo below **requires** query params to be sorted.
 def _encode_qs(kwargs: dict) -> str:
-    args = [(k, v) for k, v in kwargs.items()]
-    args.sort()
+    args = sorted([(k, v) for k, v in kwargs.items()])
     return urlencode(args)
 
 
 # Retrieve the hostname from the given url.
 def _get_host(url: str) -> str:
-    return urlsplit(url).netloc.split(':')[0]
+    return urlsplit(url).netloc.split(":")[0]
 
 
 def _print_request(req: Request, level=0):
@@ -121,7 +122,7 @@ def _print_request(req: Request, level=0):
 # Returns the current access token if valid, otherwise requests new token.
 def _get_access_token(ctx: Context, url: str) -> AccessToken:
     creds = ctx.credentials
-    assert type(creds) == ClientCredentials
+    assert isinstance(creds, ClientCredentials)
     if creds.access_token is None or creds.access_token.is_expired():
         creds.access_token = _request_access_token(ctx, url)
     return creds.access_token.token
@@ -129,22 +130,28 @@ def _get_access_token(ctx: Context, url: str) -> AccessToken:
 
 def _request_access_token(ctx: Context, url: str) -> AccessToken:
     creds = ctx.credentials
-    assert type(creds) == ClientCredentials
+    assert isinstance(creds, ClientCredentials)
     # ensure the audience contains the protocol scheme
     audience = ctx.audience or f"https://{_get_host(url)}"
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Host": _get_host(creds.client_credentials_url),
-        "User-Agent": _default_user_agent()}
+        "User-Agent": _default_user_agent(),
+    }
     body = {
         CLIENT_ID_KEY: creds.client_id,
         CLIENT_SECRET_KEY: creds.client_secret,
         AUDIENCE_KEY: audience,
-        GRANT_TYPE_KEY: CLIENT_CREDENTIALS_KEY}
+        GRANT_TYPE_KEY: CLIENT_CREDENTIALS_KEY,
+    }
     data = _encode(body)
-    req = Request(method="POST", url=creds.client_credentials_url,
-                  headers=headers, data=data)
+    req = Request(
+        method="POST",
+        url=creds.client_credentials_url,
+        headers=headers,
+        data=data,
+    )
     _print_request(req)
     with urlopen(req) as rsp:
         result = json.loads(rsp.read())
@@ -158,7 +165,7 @@ def _request_access_token(ctx: Context, url: str) -> AccessToken:
 # Implement RAI API key authentication by signing the request and adding the
 # required authorization header.
 def _sign(ctx: Context, req: Request) -> None:
-    assert type(ctx.credentials) == AccessKeyCredentials
+    assert isinstance(ctx.credentials, AccessKeyCredentials)
 
     ts = datetime.utcnow()
 
@@ -177,12 +184,11 @@ def _sign(ctx: Context, req: Request) -> None:
     req.headers["x-rai-date"] = signature_date
 
     # Sort and lowercase headers to produce a canonical form
-    canonical_headers = [f"{k.lower()}:{v.strip()}" for k,
-                         v in req.headers.items()]
-    canonical_headers.sort()
+    canonical_headers = sorted(
+        [f"{k.lower()}:{v.strip()}" for k, v in req.headers.items()]
+    )
 
-    h_names = [k.lower() for k in req.headers]
-    h_names.sort()
+    h_names = sorted([k.lower() for k in req.headers])
     signed_headers = ";".join(h_names)
 
     # Create hash of canonical request
@@ -193,19 +199,24 @@ def _sign(ctx: Context, req: Request) -> None:
         split_result.query,
         "\n".join(canonical_headers),
         signed_headers,
-        content_hash)
+        content_hash,
+    )
 
     canonical_hash = hashlib.sha256(canonical_form.encode("utf-8")).hexdigest()
     # Create and sign "String to sign"
     string_to_sign = "RAI01-ED25519-SHA256\n{}\n{}\n{}".format(
-        signature_date, scope, canonical_hash)
+        signature_date, scope, canonical_hash
+    )
 
     seed = base64.b64decode(ctx.credentials.pkey)
     signing_key = ed25519.SigningKey(seed)
     sig = signing_key.sign(string_to_sign.encode("utf-8")).hex()
 
-    req.headers["authorization"] = "RAI01-ED25519-SHA256 Credential={}/{}, SignedHeaders={}, Signature={}".format(
-        ctx.credentials.akey, scope, signed_headers, sig)
+    req.headers["authorization"] = (
+        "RAI01-ED25519-SHA256 Credential={}/{},"
+        "SignedHeaders={},"
+        "Signature={}".format(ctx.credentials.akey, scope, signed_headers, sig)
+    )
 
 
 # Authenticate the request by signing or adding access token.
@@ -213,11 +224,11 @@ def _authenticate(ctx: Context, req: Request) -> Request:
     creds = ctx.credentials
     if creds is None:
         return req
-    if type(creds) is ClientCredentials:
+    if isinstance(creds, ClientCredentials):
         access_token = _get_access_token(ctx, req.full_url)
         req.headers["authorization"] = f"Bearer {access_token}"
         return req
-    if type(creds) is AccessKeyCredentials:
+    if isinstance(creds, AccessKeyCredentials):
         _sign(ctx, req)
         return req
     raise Exception("unknown credential type")

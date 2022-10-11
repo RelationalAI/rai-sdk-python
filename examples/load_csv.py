@@ -45,20 +45,31 @@ if __name__ == "__main__":
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
     p.add_argument("file", type=str, help="source file")
-    p.add_argument("--header-row", type=int, default=None,
-                   help="header row number, 0 for no header (default: 1)")
-    p.add_argument("--delim", type=str, default=None,
-                   help="field delimiter")
-    p.add_argument("--escapechar", type=str, default=None,
-                   help="character used to escape quotes")
-    p.add_argument("--quotechar", type=str, default=None,
-                   help="quoted field character")
-    p.add_argument("-r", "--relation", type=str, default=None,
-                   help="relation name (default: file name)")
-    p.add_argument("-p", "--profile", type=str, default="default",
-                   help="profile name")
-    p.add_argument("--schema", type=str, default="", 
-                   help="Comma separated list of expressions `col=type` specifying that `col` has Rel type `type`.")
+    p.add_argument(
+        "--header-row",
+        type=int,
+        default=None,
+        help="header row number, 0 for no header (default: 1)",
+    )
+    p.add_argument("--delim", type=str, default=None, help="field delimiter")
+    p.add_argument(
+        "--escapechar", type=str, default=None, help="character used to escape quotes"
+    )
+    p.add_argument("--quotechar", type=str, default=None, help="quoted field character")
+    p.add_argument(
+        "-r",
+        "--relation",
+        type=str,
+        default=None,
+        help="relation name (default: file name)",
+    )
+    p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
+    p.add_argument(
+        "--schema", 
+        type=str, 
+        default="", 
+        help="Comma separated list of expressions `col=type` specifying that `col` has Rel type `type`."
+    )
     
     args = p.parse_args()
     syntax = {}  # find full list of syntax options in the RAI docs
@@ -74,7 +85,14 @@ if __name__ == "__main__":
     schema = {col: type for col, type in [pair.split("=") for pair in args.schema.split(",")]}    
     
     try:
-        run(args.database, args.engine, args.file,
-            args.relation, syntax, schema, args.profile)
+        run(
+            args.database, 
+            args.engine, 
+            args.file, 
+            args.relation, 
+            syntax, 
+            args.profile, 
+            args.schema
+        )
     except HTTPError as e:
         show.http_error(e)
