@@ -646,14 +646,13 @@ def load_csv(ctx: Context, database: str, engine: str, relation: str,
     
     inputs = {'data': data}
     command = _gen_syntax_config(syntax)
-    command += "".join(
-        [f'def config:schema[:"{col}"] = "{type}"\n' for col, type in schema.items()]
-    )
+    
+    for col, type in schema.items():
+        command += f'def config:schema[:"{col}"] = "{type}"\n'
+        
     command += ("def config:data = data\n"
                 f"def insert[:{relation}] = load_csv[config]")
-    
-    print(command)
-    
+        
     return query(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
