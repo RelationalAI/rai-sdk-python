@@ -57,12 +57,8 @@ if __name__ == "__main__":
                    help="relation name (default: file name)")
     p.add_argument("-p", "--profile", type=str, default="default",
                    help="profile name")
-    p.add_argument(
-        "--schema", 
-        type=str, 
-        default="", 
-        help="Comma separated list of expressions `col=type` specifying that `col` has Rel type `type`."
-    )
+    p.add_argument("--schema", type=str, default="", 
+                   help="Comma separated list of expressions `col=type` specifying that `col` has Rel type `type`.")
     
     args = p.parse_args()
     syntax = {}  # find full list of syntax options in the RAI docs
