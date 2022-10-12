@@ -36,6 +36,7 @@ PATH_OAUTH_CLIENT = "/oauth-clients"
 PATH_ACCOUNT = "/system/accounts"
 PATH_IDPROVIDERS = "/id-providers"
 
+
 # Engine sizes
 @unique
 class EngineSize(str, Enum):
@@ -63,10 +64,12 @@ class Role(str, Enum):
     USER = "user"
     ADMIN = "admin"
 
+
 @unique
 class IDProvider(str, Enum):
     googleOauth2 = "google-oauth2"
     googleApps = "google-apps"
+    oidc = "oidc"
 
 
 # User/OAuth-client permissions
@@ -74,6 +77,8 @@ class IDProvider(str, Enum):
 class Permission(str, Enum):
     #accounts
     READ_ACCOUNT = "read:account"
+    CREATE_ACCOUNT = "create:account"
+    LIST_ACCOUNTS = "list:account"
     
     # computes
     CREATE_COMPUTE = "create:compute"
@@ -117,6 +122,7 @@ __all__ = [
     "Mode",
     "Role",
     "Permission",
+    "IDProvider",
     "create_database",
     "create_engine",
     "create_user",
@@ -510,17 +516,6 @@ def list_accounts(ctx: Context) -> list:
 
 def list_id_providers(ctx: Context) -> list:
     return _get_collection(ctx, PATH_IDPROVIDERS)
-
-
-def update_account(ctx: Context, name: str, idProviders = None):
-    data = {}
-    
-    if idProviders is not None:
-        data["id_providers"] = [i.value for i in idProviders]
-        print(data["id_providers"])
-    url = _mkurl(ctx, f"{PATH_ACCOUNT}/{name}")
-    rsp = rest.patch(ctx, url, data)
-    return json.loads(rsp.read())
 
 def update_user(ctx: Context, userid: str, status: str = None, roles=None):
     data = {}

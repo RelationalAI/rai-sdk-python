@@ -20,11 +20,10 @@ from typing import List
 from urllib.request import HTTPError
 from railib import api, config, show
 
-# python3 ./create_account.py accounttest --adminUsername blabla --idProviders google-oauth2 google-apps
 def run(name: str, idproviders: List[api.IDProvider], adminUsername: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.create_account(ctx, name,adminUsername, idproviders)
+    rsp = api.create_account(ctx, name, adminUsername, idproviders)
     print(json.dumps(rsp, indent=2))
 
 
@@ -32,7 +31,7 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("name", type=str, help="account name")
     p.add_argument("--adminUsername", type=str, default=None,
-                   help='admin username')                   
+                   help='admin username')
     p.add_argument("--idProviders", action='append', default=None,
                    help='identity providers "google-oauth2" and/or "google-apps"')
     p.add_argument("-p", "--profile", type=str,

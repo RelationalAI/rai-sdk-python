@@ -27,7 +27,6 @@ def run(user: str, roles: List[api.Role], profile: str):
     rsp = api.create_user(ctx, user, roles)
     print(json.dumps(rsp, indent=2))
 
-# python3 ./create_user.py testuser@gmail.com --roles admin user
 
 if __name__ == "__main__":
     p = ArgumentParser()
