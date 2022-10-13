@@ -79,7 +79,7 @@ class Permission(str, Enum):
     READ_ACCOUNT = "read:account"
     CREATE_ACCOUNT = "create:account"
     LIST_ACCOUNTS = "list:account"
-    #id providers
+    # id providers
     LIST_ID_PROVIDERS = "list:id_providers"
     # computes
     CREATE_COMPUTE = "create:compute"
