@@ -30,7 +30,6 @@ client_secret = os.getenv("CLIENT_SECRET")
 client_credentials_url = os.getenv("CLIENT_CREDENTIALS_URL")
 
 if client_id is None:
-    print("not using config from path")
     cfg = config.read()
 else:
     file = tempfile.NamedTemporaryFile(mode="w")
@@ -49,19 +48,18 @@ else:
 
 ctx = api.Context(**cfg)
 
-suffix = uuid.uuid4()
-engine = f"python-sdk-{suffix}"
-dbname = f"python-sdk-{suffix}"
-
-
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
-        create_engine_wait(ctx, engine)
-        api.create_database(ctx, dbname)
+        suffix = uuid.uuid4()
+        self.engine = f"python-sdk-{suffix}"
+        self.dbname = f"python-sdk-{suffix}"
+
+        create_engine_wait(ctx, self.engine)
+        api.create_database(ctx, self.dbname)
 
     def test_v2_exec(self):
         cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-        rsp = api.exec(ctx, dbname, engine, cmd)
+        rsp = api.exec(ctx, self.dbname, self.engine, cmd)
 
         # transaction
         self.assertEqual("COMPLETED", rsp.transaction["state"])
@@ -87,30 +85,34 @@ class TestTransactionAsync(unittest.TestCase):
                         1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
 
     def tearDown(self):
-        api.delete_engine(ctx, engine)
-        api.delete_database(ctx, dbname)
+        api.delete_engine(ctx, self.engine)
+        api.delete_database(ctx, self.dbname)
 
 
 class TestDataload(unittest.TestCase):
     def setUp(self):
-        create_engine_wait(ctx, engine)
-        api.create_database(ctx, dbname)
+        suffix = uuid.uuid4()
+        self.engine = f"python-sdk-{suffix}"
+        self.dbname = f"python-sdk-{suffix}"
+
+        create_engine_wait(ctx, self.engine)
+        api.create_database(ctx, self.dbname)
 
     def test_load_json(self):
         json = '{ "test" : 123 }'
-        resp = api.load_json(ctx, dbname, engine, 'test_relation', json)
+        resp = api.load_json(ctx, self.dbname, self.engine, 'test_relation', json)
         self.assertEqual("COMPLETED", resp.transaction["state"])
 
-        resp = api.exec(ctx, dbname, engine, 'def output = test_relation')
+        resp = api.exec(ctx, self.dbname, self.engine, 'def output = test_relation')
         self.assertEqual("COMPLETED", resp.transaction["state"])
         self.assertEqual({'v1': [123]}, resp.results[0]["table"].to_pydict())
 
     def test_load_csv(self):
         csv = 'foo,bar\n1,2'
-        resp = api.load_csv(ctx, dbname, engine, 'test_relation_1', csv)
+        resp = api.load_csv(ctx, self.dbname, self.engine, 'test_relation_1', csv)
         self.assertEqual("COMPLETED", resp.transaction["state"])
 
-        resp = api.exec(ctx, dbname, engine, 'def output = test_relation_1')
+        resp = api.exec(ctx, self.dbname, self.engine, 'def output = test_relation_1')
         self.assertEqual("COMPLETED", resp.transaction["state"])
         self.assertEqual({'v1': [2], 'v2': ['2']}, resp.results[0]["table"].to_pydict())
         self.assertEqual({'v1': [2], 'v2': ['1']}, resp.results[1]["table"].to_pydict())
@@ -119,8 +121,8 @@ class TestDataload(unittest.TestCase):
         csv = 'foo|bar\n1,2'
         resp = api.load_csv(
             ctx,
-            dbname,
-            engine,
+            self.dbname,
+            self.engine,
             'test_relation_2',
             csv,
             {
@@ -133,7 +135,7 @@ class TestDataload(unittest.TestCase):
         )
         self.assertEqual("COMPLETED", resp.transaction["state"])
 
-        resp = api.exec(ctx, dbname, engine, 'def output = test_relation_2')
+        resp = api.exec(ctx, self.dbname, self.engine, 'def output = test_relation_2')
         self.assertEqual("COMPLETED", resp.transaction["state"])
         self.assertEqual({'v1': [2], 'v2': [2], 'v3': ['1,2']}, resp.results[0]["table"].to_pydict())
 
@@ -141,8 +143,8 @@ class TestDataload(unittest.TestCase):
         csv = 'foo,bar\n1,test'
         resp = api.load_csv(
             ctx,
-            dbname,
-            engine,
+            self.dbname,
+            self.engine,
             'test_relation_3',
             csv,
             schema={
@@ -152,14 +154,14 @@ class TestDataload(unittest.TestCase):
         )
         self.assertEqual("COMPLETED", resp.transaction["state"])
 
-        resp = api.exec(ctx, dbname, engine, 'def output = test_relation_3')
+        resp = api.exec(ctx, self.dbname, self.engine, 'def output = test_relation_3')
         self.assertEqual("COMPLETED", resp.transaction["state"])
         self.assertEqual({'v1': [2], 'v2': ['test']}, resp.results[0]["table"].to_pydict())
         self.assertEqual({'v1': [2], 'v2': [1]}, resp.results[1]["table"].to_pydict())
 
     def tearDown(self):
-        api.delete_engine(ctx, engine)
-        api.delete_database(ctx, dbname)
+        api.delete_engine(ctx, self.engine)
+        api.delete_database(ctx, self.dbname)
 
 
 if __name__ == '__main__':
