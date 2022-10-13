@@ -51,7 +51,6 @@ ctx = api.Context(**cfg)
 
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
-        print("==> setup 1")
         suffix = uuid.uuid4()
         self.engine = f"python-sdk-{suffix}"
         self.dbname = f"python-sdk-{suffix}"
@@ -60,7 +59,6 @@ class TestTransactionAsync(unittest.TestCase):
         api.create_database(ctx, self.dbname)
 
     def test_v2_exec(self):
-        print("=> test v2 exec")
         cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
         rsp = api.exec(ctx, self.dbname, self.engine, cmd)
 
@@ -88,25 +86,20 @@ class TestTransactionAsync(unittest.TestCase):
                         1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
 
     def tearDown(self):
-        print("==> tear down 1")
         api.delete_engine(ctx, self.engine)
         api.delete_database(ctx, self.dbname)
 
 
 class TestDataload(unittest.TestCase):
     def setUp(self):
-        print("==> setup 2")
         suffix = uuid.uuid4()
         self.engine = f"python-sdk-{suffix}"
         self.dbname = f"python-sdk-{suffix}"
-        print(self.engine)
-        print(self.dbname)
 
         create_engine_wait(ctx, self.engine)
         api.create_database(ctx, self.dbname)
 
     def test_load_json(self):
-        print("=> test load json")
         json = '{ "test" : 123 }'
         resp = api.load_json(ctx, self.dbname, self.engine, 'test_relation', json)
         self.assertEqual("COMPLETED", resp.transaction["state"])
@@ -116,7 +109,6 @@ class TestDataload(unittest.TestCase):
         self.assertEqual({'v1': [123]}, resp.results[0]["table"].to_pydict())
 
     def test_load_csv(self):
-        print("=> test load csv")
         csv = 'foo,bar\n1,2'
         resp = api.load_csv(ctx, self.dbname, self.engine, 'test_relation', csv)
         self.assertEqual("COMPLETED", resp.transaction["state"])
@@ -127,7 +119,6 @@ class TestDataload(unittest.TestCase):
         self.assertEqual({'v1': [2], 'v2': ['1']}, resp.results[1]["table"].to_pydict())
 
     def test_load_csv_with_syntax(self):
-        print("=> load csv with syntax")
         csv = 'foo|bar\n1,2'
         resp = api.load_csv(
             ctx,
@@ -150,7 +141,6 @@ class TestDataload(unittest.TestCase):
         self.assertEqual({'v1': [2], 'v2': [2], 'v3': ['1,2']}, resp.results[0]["table"].to_pydict())
 
     def test_load_csv_with_schema(self):
-        print("=> load csv with schema")
         csv = 'foo,bar\n1,test'
         resp = api.load_csv(
             ctx,
@@ -171,9 +161,6 @@ class TestDataload(unittest.TestCase):
         self.assertEqual({'v1': [2], 'v2': [1]}, resp.results[1]["table"].to_pydict())
 
     def tearDown(self):
-        print("==> tear down 2")
-        print(self.engine)
-        print(self.dbname)
         api.delete_engine(ctx, self.engine)
         api.delete_database(ctx, self.dbname)
 
