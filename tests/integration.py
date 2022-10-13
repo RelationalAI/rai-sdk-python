@@ -91,5 +91,76 @@ class TestTransactionAsync(unittest.TestCase):
         api.delete_database(ctx, dbname)
 
 
+class TestDataload(unittest.TestCase):
+    def setUp(self):
+        create_engine_wait(ctx, engine)
+        api.create_database(ctx, dbname)
+
+    def test_load_json(self):
+        json = '{ "test" : 123 }'
+        resp = api.load_json(ctx, dbname, engine, 'test_relation', json)
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+
+        resp = api.exec(ctx, dbname, engine, 'def output = test_relation')
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+        self.assertEqual({'v1': [123]}, resp.results[0]["table"].to_pydict())
+
+    def test_load_csv(self):
+        csv = 'foo,bar\n1,2'
+        resp = api.load_csv(ctx, dbname, engine, 'test_relation_1', csv)
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+
+        resp = api.exec(ctx, dbname, engine, 'def output = test_relation_1')
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+        self.assertEqual({'v1': [2], 'v2': ['2']}, resp.results[0]["table"].to_pydict())
+        self.assertEqual({'v1': [2], 'v2': ['1']}, resp.results[1]["table"].to_pydict())
+
+    def test_load_csv_with_syntax(self):
+        csv = 'foo|bar\n1,2'
+        resp = api.load_csv(
+            ctx,
+            dbname,
+            engine,
+            'test_relation_2',
+            csv,
+            {
+                'header': {1: 'foo', 2: 'bar'},
+                'delim': '|',
+                'quotechar': "'",
+                'header_row': 0,
+                'escapechar': ']'
+            }
+        )
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+
+        resp = api.exec(ctx, dbname, engine, 'def output = test_relation_2')
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+        self.assertEqual({'v1': [2], 'v2': [2], 'v3': ['1,2']}, resp.results[0]["table"].to_pydict())
+
+    def test_load_csv_with_schema(self):
+        csv = 'foo,bar\n1,test'
+        resp = api.load_csv(
+            ctx,
+            dbname,
+            engine,
+            'test_relation_3',
+            csv,
+            schema={
+                ':foo': 'int',
+                ':bar': 'string'
+            }
+        )
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+
+        resp = api.exec(ctx, dbname, engine, 'def output = test_relation_3')
+        self.assertEqual("COMPLETED", resp.transaction["state"])
+        self.assertEqual({'v1': [2], 'v2': ['test']}, resp.results[0]["table"].to_pydict())
+        self.assertEqual({'v1': [2], 'v2': [1]}, resp.results[1]["table"].to_pydict())
+
+    def tearDown(self):
+        api.delete_engine(ctx, engine)
+        api.delete_database(ctx, dbname)
+
+
 if __name__ == '__main__':
     unittest.main()

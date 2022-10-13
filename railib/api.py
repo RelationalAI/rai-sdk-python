@@ -715,7 +715,7 @@ def list_models(ctx: Context, database: str, engine: str) -> list:
 # Generate a rel literal relation for the given dict.
 def _gen_literal_dict(items: dict) -> str:
     result = []
-    for k, v in items:
+    for k, v in items.items():
         result.append(f"{_gen_literal(k)},{_gen_literal(v)}")
     return "{" + ";".join(result) + "}"
 
@@ -761,6 +761,14 @@ def _gen_syntax_config(syntax: dict = {}) -> str:
     return result
 
 
+# Generate list of config schema options for `load_csv`
+def _gen_schema_config(schema: dict = {}) -> str:
+    result = ""
+    for k, v in schema.items():
+        result += f"def config:schema{k} = \"{v}\"\n"
+    return result
+
+
 # `syntax`:
 #   * header: a map from col number to name (base 1)
 #   * header_row: row number of header, 0 means no header (default: 1)
@@ -777,6 +785,7 @@ def load_csv(
     relation: str,
     data: str or io.TextIOBase,
     syntax: dict = {},
+    schema: dict = {},
 ) -> dict:
     if isinstance(data, str):
         pass  # ok
@@ -786,8 +795,9 @@ def load_csv(
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
     inputs = {"data": data}
     command = _gen_syntax_config(syntax)
+    command += _gen_schema_config(schema)
     command += "def config:data = data\n" "def insert:%s = load_csv[config]" % relation
-    return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
+    return exec(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
 def load_json(
@@ -805,7 +815,7 @@ def load_json(
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
     inputs = {"data": data}
     command = "def config:data = data\n" "def insert:%s = load_json[config]" % relation
-    return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
+    return exec(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
 def exec_v1(
