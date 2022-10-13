@@ -35,7 +35,7 @@ if __name__ == "__main__":
         "--roles",
         action="append",
         default=None,
-        help='user roles ("user" (default) or "admin")',
+        help='user roles ("user" (default), "admin", or "system admin")',
     )
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()

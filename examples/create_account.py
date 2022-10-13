@@ -33,7 +33,7 @@ if __name__ == "__main__":
     p.add_argument("name", type=str, help="account name")
     p.add_argument("--adminUsername", type=str, default=None,
                    help='admin username')
-    p.add_argument("--idProviders", action='append', default=None,
+    p.add_argument("--idProviders", nargs="*",
                    help='identity providers "google-oauth2" and/or "google-apps"')
     p.add_argument("-p", "--profile", type=str,
                    help="profile name", default="default")
