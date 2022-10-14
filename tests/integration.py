@@ -30,7 +30,7 @@ client_secret = os.getenv("CLIENT_SECRET")
 client_credentials_url = os.getenv("CLIENT_CREDENTIALS_URL")
 
 if client_id is None:
-    print("not using config from path")
+    print("using config from path")
     cfg = config.read()
 else:
     file = tempfile.NamedTemporaryFile(mode="w")
