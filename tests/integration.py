@@ -13,7 +13,7 @@ from railib import api, config
 
 
 def create_engine_wait(ctx: api.Context, engine: str):
-    state = api.create_engine(ctx, engine, headers=headers)["compute"]["state"]
+    state = api.create_engine(ctx, engine, headers=custom_headers)["compute"]["state"]
 
     count = 0
     while not ("PROVISIONED" == state):
@@ -29,7 +29,7 @@ def create_engine_wait(ctx: api.Context, engine: str):
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 client_credentials_url = os.getenv("CLIENT_CREDENTIALS_URL")
-headers = json.loads(os.getenv('CUSTOM_HEADERS', '{}'))
+custom_headers = json.loads(os.getenv('CUSTOM_HEADERS', '{}'))
 
 if client_id is None:
     print("using config from path")
