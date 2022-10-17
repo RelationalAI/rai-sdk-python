@@ -326,26 +326,26 @@ def _parse_arrow_results(files: List[TransactionAsyncFile]):
     return results
 
 
-def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS):
+def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS, **kwargs):
     data = {"region": ctx.region, "name": engine, "size": size.value}
     url = _mkurl(ctx, PATH_ENGINE)
-    rsp = rest.put(ctx, url, data)
+    rsp = rest.put(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def create_user(ctx: Context, email: str, roles: List[Role] = None):
+def create_user(ctx: Context, email: str, roles: List[Role] = None, **kwargs):
     rs = roles or []
     data = {"email": email, "roles": [r.value for r in rs]}
     url = _mkurl(ctx, PATH_USER)
-    rsp = rest.post(ctx, url, data)
+    rsp = rest.post(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] = None):
+def create_oauth_client(ctx: Context, name: str, permissions: List[Permission] = None, **kwargs):
     ps = permissions or []
     data = {"name": name, "permissions": ps}
     url = _mkurl(ctx, PATH_OAUTH_CLIENT)
-    rsp = rest.post(ctx, url, data)
+    rsp = rest.post(ctx, url, data, **kwargs)
     return json.loads(rsp.read())["client"]
 
 
@@ -358,60 +358,60 @@ def _create_mode(source_database: str, overwrite: bool) -> Mode:
     return result
 
 
-def delete_database(ctx: Context, database: str) -> dict:
+def delete_database(ctx: Context, database: str, **kwargs) -> dict:
     data = {"name": database}
     url = _mkurl(ctx, PATH_DATABASE)
-    rsp = rest.delete(ctx, url, data)
+    rsp = rest.delete(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def delete_engine(ctx: Context, engine: str) -> dict:
+def delete_engine(ctx: Context, engine: str, **kwargs) -> dict:
     data = {"name": engine}
     url = _mkurl(ctx, PATH_ENGINE)
-    rsp = rest.delete(ctx, url, data)
+    rsp = rest.delete(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def delete_user(ctx: Context, id: str) -> dict:
+def delete_user(ctx: Context, id: str, **kwargs) -> dict:
     url = _mkurl(ctx, f"{PATH_USER}/{id}")
-    rsp = rest.delete(ctx, url, None)
+    rsp = rest.delete(ctx, url, None, **kwargs)
     return json.loads(rsp.read())
 
 
-def disable_user(ctx: Context, userid: str) -> dict:
-    return update_user(ctx, userid, status="INACTIVE")
+def disable_user(ctx: Context, userid: str, **kwargs) -> dict:
+    return update_user(ctx, userid, status="INACTIVE", **kwargs)
 
 
-def delete_oauth_client(ctx: Context, id: str) -> dict:
+def delete_oauth_client(ctx: Context, id: str, **kwargs) -> dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
-    rsp = rest.delete(ctx, url, None)
+    rsp = rest.delete(ctx, url, None, **kwargs)
     return json.loads(rsp.read())
 
 
-def enable_user(ctx: Context, userid: str) -> dict:
-    return update_user(ctx, userid, status="ACTIVE")
+def enable_user(ctx: Context, userid: str, **kwargs) -> dict:
+    return update_user(ctx, userid, status="ACTIVE", **kwargs)
 
 
-def get_engine(ctx: Context, engine: str) -> dict:
-    return _get_resource(ctx, PATH_ENGINE, name=engine, deleted_on="", key="computes")
+def get_engine(ctx: Context, engine: str, **kwargs) -> dict:
+    return _get_resource(ctx, PATH_ENGINE, name=engine, deleted_on="", key="computes", **kwargs)
 
 
-def get_database(ctx: Context, database: str) -> dict:
-    return _get_resource(ctx, PATH_DATABASE, name=database, key="databases")
+def get_database(ctx: Context, database: str, **kwargs) -> dict:
+    return _get_resource(ctx, PATH_DATABASE, name=database, key="databases", **kwargs)
 
 
-def get_oauth_client(ctx: Context, id: str) -> dict:
-    return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client")
+def get_oauth_client(ctx: Context, id: str, **kwargs) -> dict:
+    return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client", **kwargs)
 
 
-def get_transaction(ctx: Context, id: str) -> dict:
-    return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction")
+def get_transaction(ctx: Context, id: str, **kwargs) -> dict:
+    return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction", **kwargs)
 
 
-def get_transaction_metadata(ctx: Context, id: str) -> list:
+def get_transaction_metadata(ctx: Context, id: str, **kwargs) -> list:
     headers = {"Accept": "application/x-protobuf"}
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
-    rsp = rest.get(ctx, url, headers=headers)
+    rsp = rest.get(ctx, url, headers=headers, **kwargs)
     content_type = rsp.headers.get("content-type", "")
     if "application/x-protobuf" in content_type:
         return _parse_metadata_proto(rsp.read())
@@ -419,17 +419,17 @@ def get_transaction_metadata(ctx: Context, id: str) -> list:
     raise Exception(f"invalid content type for metadata proto: {content_type}")
 
 
-def list_transactions(ctx: Context) -> list:
-    return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions")
+def list_transactions(ctx: Context, **kwargs) -> list:
+    return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions", **kwargs)
 
 
-def get_transaction_problems(ctx: Context, id: str) -> list:
-    return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/problems")
+def get_transaction_problems(ctx: Context, id: str, **kwargs) -> list:
+    return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/problems", **kwargs)
 
 
-def get_transaction_results(ctx: Context, id: str) -> list:
+def get_transaction_results(ctx: Context, id: str, **kwargs) -> list:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
-    rsp = rest.get(ctx, url)
+    rsp = rest.get(ctx, url, **kwargs)
     content_type = rsp.headers.get("content-type", "")
     if "multipart/form-data" in content_type:
         parts = _parse_multipart_form(content_type, rsp.read())
@@ -442,20 +442,20 @@ def get_transaction_results(ctx: Context, id: str) -> list:
 # deprecated, get_transaction_results should be called instead
 
 
-def get_transaction_results_and_problems(ctx: Context, id: str) -> list:
+def get_transaction_results_and_problems(ctx: Context, id: str, **kwargs) -> list:
     rsp = TransactionAsyncResponse()
-    rsp.problems = get_transaction_problems(ctx, id)
-    rsp.results = get_transaction_results(ctx, id)
+    rsp.problems = get_transaction_problems(ctx, id, **kwargs)
+    rsp.results = get_transaction_results(ctx, id, **kwargs)
     return rsp
 
 
-def cancel_transaction(ctx: Context, id: str) -> dict:
-    rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {})
+def cancel_transaction(ctx: Context, id: str, **kwargs) -> dict:
+    rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {}, **kwargs)
     return json.loads(rsp.read())
 
 
-def get_user(ctx: Context, userid: str) -> dict:
-    return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid)
+def get_user(ctx: Context, userid: str, **kwargs) -> dict:
+    return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid, **kwargs)
 
 
 def list_engines(ctx: Context, state=None) -> list:
@@ -472,22 +472,22 @@ def list_databases(ctx: Context, state=None) -> list:
     return _get_collection(ctx, PATH_DATABASE, key="databases", **kwargs)
 
 
-def list_users(ctx: Context) -> list:
-    return _get_collection(ctx, PATH_USER, key="users")
+def list_users(ctx: Context, **kwargs) -> list:
+    return _get_collection(ctx, PATH_USER, key="users", **kwargs)
 
 
-def list_oauth_clients(ctx: Context) -> list:
-    return _get_collection(ctx, PATH_OAUTH_CLIENT, key="clients")
+def list_oauth_clients(ctx: Context, **kwargs) -> list:
+    return _get_collection(ctx, PATH_OAUTH_CLIENT, key="clients", **kwargs)
 
 
-def update_user(ctx: Context, userid: str, status: str = None, roles=None):
+def update_user(ctx: Context, userid: str, status: str = None, roles=None, **kwargs):
     data = {}
     if status is not None:
         data["status"] = status
     if roles is not None:
         data["roles"] = roles
     url = _mkurl(ctx, f"{PATH_USER}/{userid}")
-    rsp = rest.patch(ctx, url, data)
+    rsp = rest.patch(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
@@ -578,14 +578,14 @@ class TransactionAsync(object):
             result["engine_name"] = self.engine
         return result
 
-    def run(self, ctx: Context, command: str, language: str, inputs: dict = None) -> Union[dict, list]:
+    def run(self, ctx: Context, command: str, language: str, inputs: dict = None, **kwargs) -> Union[dict, list]:
         data = self.data
         data["query"] = command
         data["language"] = language
         if inputs is not None:
             inputs = [_query_action_input(k, v) for k, v in inputs.items()]
             data["v1_inputs"] = inputs
-        rsp = rest.post(ctx, _mkurl(ctx, PATH_TRANSACTIONS), data)
+        rsp = rest.post(ctx, _mkurl(ctx, PATH_TRANSACTIONS), data, **kwargs)
         content_type = rsp.headers.get("content-type", None)
         content = rsp.read()
         # todo: response model should be based on status code (200 v. 201)
@@ -668,10 +668,10 @@ def _list_models(ctx: Context, database: str, engine: str) -> dict:
     return models
 
 
-def create_database(ctx: Context, database: str, source: str = None) -> dict:
+def create_database(ctx: Context, database: str, source: str = None, **kwargs) -> dict:
     data = {"name": database, "source_name": source}
     url = _mkurl(ctx, PATH_DATABASE)
-    rsp = rest.put(ctx, url, data)
+    rsp = rest.put(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
@@ -834,6 +834,7 @@ def exec(
     command: str,
     inputs: dict = None,
     readonly: bool = True,
+    **kwargs
 ) -> TransactionAsyncResponse:
     txn = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
     # in case of if short-path, return results directly, no need to poll for
@@ -842,15 +843,15 @@ def exec(
         return txn
 
     rsp = TransactionAsyncResponse()
-    txn = get_transaction(ctx, txn.transaction["id"])
+    txn = get_transaction(ctx, txn.transaction["id"], **kwargs)
     while True:
         time.sleep(1)
-        txn = get_transaction(ctx, txn["id"])
+        txn = get_transaction(ctx, txn["id"], **kwargs)
         if is_txn_term_state(txn["state"]):
             rsp.transaction = txn
-            rsp.metadata = get_transaction_metadata(ctx, txn["id"])
-            rsp.problems = get_transaction_problems(ctx, txn["id"])
-            rsp.results = get_transaction_results(ctx, txn["id"])
+            rsp.metadata = get_transaction_metadata(ctx, txn["id"], **kwargs)
+            rsp.problems = get_transaction_problems(ctx, txn["id"], **kwargs)
+            rsp.results = get_transaction_results(ctx, txn["id"], **kwargs)
             break
 
     return rsp
@@ -864,9 +865,10 @@ def exec_async(
     language: str = "",
     readonly: bool = True,
     inputs: dict = None,
+    **kwargs,
 ) -> TransactionAsyncResponse:
     tx = TransactionAsync(database, engine, readonly=readonly)
-    rsp = tx.run(ctx, command, language=language, inputs=inputs)
+    rsp = tx.run(ctx, command, language=language, inputs=inputs, **kwargs)
 
     if isinstance(rsp, dict):
         return TransactionAsyncResponse(rsp, None, None, None)
