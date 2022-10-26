@@ -19,6 +19,7 @@ import pyarrow as pa
 import time
 import re
 import io
+from datetime import datetime, timezone
 from enum import Enum, unique
 from typing import List, Union
 from requests_toolbelt import multipart
@@ -325,12 +326,53 @@ def _parse_arrow_results(files: List[TransactionAsyncFile]):
             results.append({"relationId": file.name, "table": table})
     return results
 
+# polling with specified overhead
+# delay is the overhead % of the time the transaction has been running so far
+
+
+def poll_with_specified_overhead(
+    f,
+    overhead_rate: float = 0.1,
+    start_time: datetime = datetime.now(timezone.utc),
+    timeout: int = None,
+    max_retries: int = None
+):
+    retries = 0
+    max_time = time.time() + timeout if timeout else None
+
+    while True:
+        if max_retries is not None and retries >= max_retries:
+            raise Exception(f'max retries {max_retries} exhausted')
+
+        if max_time is not None and time.time() >= max_time:
+            raise Exception(f'timed out after {timeout} seconds')
+
+        if f():
+            break
+
+        retries += 1
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds() * overhead_rate
+        time.sleep(duration)
+
+
+def is_engine_term_state(state: str) -> bool:
+    return state == "PROVISIONED" or ("FAILED" in state)
+
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS, **kwargs):
     data = {"region": ctx.region, "name": engine, "size": size.value}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
+
+
+def create_engine_wait(ctx: Context, engine: str, size: EngineSize = EngineSize.XS, **kwargs):
+    create_engine(ctx, engine, size, **kwargs)
+    poll_with_specified_overhead(
+        lambda: is_engine_term_state(get_engine(ctx, engine)["state"]),
+        timeout=30 * 60,
+    )
+    return get_engine(ctx, engine)
 
 
 def create_user(ctx: Context, email: str, roles: List[Role] = None, **kwargs):
@@ -844,15 +886,17 @@ def exec(
 
     rsp = TransactionAsyncResponse()
     txn = get_transaction(ctx, txn.transaction["id"], **kwargs)
-    while True:
-        time.sleep(1)
-        txn = get_transaction(ctx, txn["id"], **kwargs)
-        if is_txn_term_state(txn["state"]):
-            rsp.transaction = txn
-            rsp.metadata = get_transaction_metadata(ctx, txn["id"], **kwargs)
-            rsp.problems = get_transaction_problems(ctx, txn["id"], **kwargs)
-            rsp.results = get_transaction_results(ctx, txn["id"], **kwargs)
-            break
+    start_time = datetime.fromtimestamp(txn["created_on"] / 1000, tz=timezone.utc)
+
+    poll_with_specified_overhead(
+        lambda: is_txn_term_state(get_transaction(ctx, txn["id"], **kwargs)["state"]),
+        start_time=start_time,
+    )
+
+    rsp.transaction = get_transaction(ctx, txn["id"], **kwargs)
+    rsp.metadata = get_transaction_metadata(ctx, txn["id"], **kwargs)
+    rsp.problems = get_transaction_problems(ctx, txn["id"], **kwargs)
+    rsp.results = get_transaction_results(ctx, txn["id"], **kwargs)
 
     return rsp
 
