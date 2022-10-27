@@ -2,6 +2,7 @@ import unittest
 
 from railib import api
 
+
 class TestPolling(unittest.TestCase):
     def test_timeout_exception(self):
         try:
