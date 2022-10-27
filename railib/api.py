@@ -335,14 +335,14 @@ def poll_with_specified_overhead(
     overhead_rate: float = 0.1,
     start_time: datetime = datetime.now(timezone.utc),
     timeout: int = None,
-    max_retries: int = None
+    max_tries: int = None
 ):
-    retries = 0
+    tries = 0
     max_time = time.time() + timeout if timeout else None
 
     while True:
-        if max_retries is not None and retries >= max_retries:
-            raise Exception(f'max retries {max_retries} exhausted')
+        if max_tries is not None and tries >= max_tries:
+            raise Exception(f'max tries {max_tries} exhausted')
 
         if max_time is not None and time.time() >= max_time:
             raise Exception(f'timed out after {timeout} seconds')
@@ -350,7 +350,7 @@ def poll_with_specified_overhead(
         if f():
             break
 
-        retries += 1
+        tries += 1
         duration = (datetime.now(timezone.utc) - start_time).total_seconds() * overhead_rate
         time.sleep(duration)
 
