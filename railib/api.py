@@ -895,6 +895,7 @@ def exec(
 
     poll_with_specified_overhead(
         lambda: is_txn_term_state(get_transaction(ctx, txn["id"], **kwargs)["state"]),
+        overhead_rate=0.2,
         start_time=start_time,
     )
 
