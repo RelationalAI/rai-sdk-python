@@ -883,6 +883,7 @@ def exec(
     readonly: bool = True,
     **kwargs
 ) -> TransactionAsyncResponse:
+    start_time = time.time()
     txn = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
     # in case of if short-path, return results directly, no need to poll for
     # state
@@ -891,7 +892,6 @@ def exec(
 
     rsp = TransactionAsyncResponse()
     txn = get_transaction(ctx, txn.transaction["id"], **kwargs)
-    start_time = datetime.fromtimestamp(txn["created_on"] / 1000, tz=timezone.utc)
 
     poll_with_specified_overhead(
         lambda: is_txn_term_state(get_transaction(ctx, txn["id"], **kwargs)["state"]),
