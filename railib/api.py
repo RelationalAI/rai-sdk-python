@@ -332,27 +332,31 @@ def _parse_arrow_results(files: List[TransactionAsyncFile]):
 
 def poll_with_specified_overhead(
     f,
-    overhead_rate: float = 0.1,
-    start_time: datetime = datetime.now(timezone.utc),
+    overhead_rate: float,
+    start_time: int = time.time(),
     timeout: int = None,
-    max_tries: int = None
+    max_tries: int = None,
+    max_delay: int = 120,
 ):
     tries = 0
     max_time = time.time() + timeout if timeout else None
 
     while True:
+        if f():
+            break
+
         if max_tries is not None and tries >= max_tries:
             raise Exception(f'max tries {max_tries} exhausted')
 
         if max_time is not None and time.time() >= max_time:
             raise Exception(f'timed out after {timeout} seconds')
 
-        if f():
-            break
-
         tries += 1
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds() * overhead_rate
-        time.sleep(duration)
+        duration = min((time.time() - start_time) * overhead_rate, max_delay)
+        if tries == 1:
+            time.sleep(0.5)
+        else:
+            time.sleep(duration)
 
 
 def is_engine_term_state(state: str) -> bool:
@@ -370,6 +374,7 @@ def create_engine_wait(ctx: Context, engine: str, size: EngineSize = EngineSize.
     create_engine(ctx, engine, size, **kwargs)
     poll_with_specified_overhead(
         lambda: is_engine_term_state(get_engine(ctx, engine)["state"]),
+        overhead_rate=0.2,
         timeout=30 * 60,
     )
     return get_engine(ctx, engine)
