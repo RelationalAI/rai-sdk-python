@@ -19,7 +19,6 @@ import pyarrow as pa
 import time
 import re
 import io
-from datetime import datetime, timezone
 from enum import Enum, unique
 from typing import List, Union
 from requests_toolbelt import multipart
