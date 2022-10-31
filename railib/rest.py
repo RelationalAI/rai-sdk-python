@@ -19,6 +19,7 @@ import base64
 from datetime import datetime
 import hashlib
 import json
+from os import path
 from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
 
@@ -40,6 +41,7 @@ AUDIENCE_KEY = "audience"
 GRANT_TYPE_KEY = "grant_type"
 CLIENT_CREDENTIALS_KEY = "client_credentials"
 EXPIRES_IN_KEY = "expires_in"
+SCOPE = "scope"
 
 
 _empty = bytes("", encoding="utf8")
@@ -119,13 +121,51 @@ def _print_request(req: Request, level=0):
                 print(json.dumps(json.loads(req.data.decode("utf8")), indent=2))
 
 
+def _cache_file() -> str:
+    return path.join(path.expanduser('~'), '.rai', 'tokens.json')
+
+# Read oauth cache
+def _read_cache() -> dict:
+    try:
+        with open(_cache_file(), 'r') as cache:
+            return json.loads(cache.read())
+    except:
+        return None
+
+
+# Read access token from cache
+def _read_token_cache(creds: ClientCredentials) -> AccessToken:
+    try:
+        cache = _read_cache()
+        return AccessToken(**cache[creds.client_id])
+    except:
+        return None
+
+
+# write access token to cache
+def _write_token_cache(creds: ClientCredentials):
+    try:
+        cache = _read_cache()
+        if cache:
+            cache[creds.client_id] = creds.access_token
+        else:
+            cache = {creds.client_id: creds.access_token}
+        with open(_cache_file(), 'w') as f:
+            f.write(json.dumps(cache, default=vars))
+    except Exception as e:
+        print(e)
+        pass
+
 # Returns the current access token if valid, otherwise requests new token.
 def _get_access_token(ctx: Context, url: str) -> AccessToken:
     creds = ctx.credentials
     assert isinstance(creds, ClientCredentials)
     if creds.access_token is None or creds.access_token.is_expired():
-        creds.access_token = _request_access_token(ctx, url)
-    return creds.access_token.token
+        creds.access_token = _read_token_cache(creds)
+        if creds.access_token is None or creds.access_token.is_expired():
+            creds.access_token = _request_access_token(ctx, url)
+            _write_token_cache(creds)
+    return creds.access_token.access_token
 
 
 def _request_access_token(ctx: Context, url: str) -> AccessToken:
@@ -156,9 +196,11 @@ def _request_access_token(ctx: Context, url: str) -> AccessToken:
     with urlopen(req) as rsp:
         result = json.loads(rsp.read())
         token = result.get(ACCESS_KEY_TOKEN_KEY, None)
+        print(result)
         if token is not None:
             expires_in = result.get(EXPIRES_IN_KEY, None)
-            return AccessToken(token, expires_in)
+            scope = result.get(SCOPE, None)
+            return AccessToken(token, scope, expires_in)
     raise Exception("failed to get the access token")
 
 
