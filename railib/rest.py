@@ -124,12 +124,13 @@ def _print_request(req: Request, level=0):
 def _cache_file() -> str:
     return path.join(path.expanduser('~'), '.rai', 'tokens.json')
 
+
 # Read oauth cache
 def _read_cache() -> dict:
     try:
         with open(_cache_file(), 'r') as cache:
             return json.loads(cache.read())
-    except:
+    except Exception:
         return None
 
 
@@ -138,7 +139,7 @@ def _read_token_cache(creds: ClientCredentials) -> AccessToken:
     try:
         cache = _read_cache()
         return AccessToken(**cache[creds.client_id])
-    except:
+    except Exception:
         return None
 
 
@@ -152,9 +153,9 @@ def _write_token_cache(creds: ClientCredentials):
             cache = {creds.client_id: creds.access_token}
         with open(_cache_file(), 'w') as f:
             f.write(json.dumps(cache, default=vars))
-    except Exception as e:
-        print(e)
+    except Exception:
         pass
+
 
 # Returns the current access token if valid, otherwise requests new token.
 def _get_access_token(ctx: Context, url: str) -> AccessToken:
