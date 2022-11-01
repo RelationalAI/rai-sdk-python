@@ -325,12 +325,58 @@ def _parse_arrow_results(files: List[TransactionAsyncFile]):
             results.append({"relationId": file.name, "table": table})
     return results
 
+# polling with specified overhead
+# delay is the overhead % of the time the transaction has been running so far
+
+
+def poll_with_specified_overhead(
+    f,
+    overhead_rate: float,
+    start_time: int = time.time(),
+    timeout: int = None,
+    max_tries: int = None,
+    max_delay: int = 120,
+):
+    tries = 0
+    max_time = time.time() + timeout if timeout else None
+
+    while True:
+        if f():
+            break
+
+        if max_tries is not None and tries >= max_tries:
+            raise Exception(f'max tries {max_tries} exhausted')
+
+        if max_time is not None and time.time() >= max_time:
+            raise Exception(f'timed out after {timeout} seconds')
+
+        tries += 1
+        duration = min((time.time() - start_time) * overhead_rate, max_delay)
+        if tries == 1:
+            time.sleep(0.5)
+        else:
+            time.sleep(duration)
+
+
+def is_engine_term_state(state: str) -> bool:
+    return state == "PROVISIONED" or ("FAILED" in state)
+
 
 def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS, **kwargs):
     data = {"region": ctx.region, "name": engine, "size": size.value}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
+
+
+def create_engine_wait(ctx: Context, engine: str, size: EngineSize = EngineSize.XS, **kwargs):
+    create_engine(ctx, engine, size, **kwargs)
+    poll_with_specified_overhead(
+        lambda: is_engine_term_state(get_engine(ctx, engine)["state"]),
+        overhead_rate=0.2,
+        timeout=30 * 60,
+    )
+    return get_engine(ctx, engine)
 
 
 def create_user(ctx: Context, email: str, roles: List[Role] = None, **kwargs):
@@ -836,6 +882,7 @@ def exec(
     readonly: bool = True,
     **kwargs
 ) -> TransactionAsyncResponse:
+    start_time = time.time()
     txn = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
     # in case of if short-path, return results directly, no need to poll for
     # state
@@ -844,15 +891,17 @@ def exec(
 
     rsp = TransactionAsyncResponse()
     txn = get_transaction(ctx, txn.transaction["id"], **kwargs)
-    while True:
-        time.sleep(1)
-        txn = get_transaction(ctx, txn["id"], **kwargs)
-        if is_txn_term_state(txn["state"]):
-            rsp.transaction = txn
-            rsp.metadata = get_transaction_metadata(ctx, txn["id"], **kwargs)
-            rsp.problems = get_transaction_problems(ctx, txn["id"], **kwargs)
-            rsp.results = get_transaction_results(ctx, txn["id"], **kwargs)
-            break
+
+    poll_with_specified_overhead(
+        lambda: is_txn_term_state(get_transaction(ctx, txn["id"], **kwargs)["state"]),
+        overhead_rate=0.2,
+        start_time=start_time,
+    )
+
+    rsp.transaction = get_transaction(ctx, txn["id"], **kwargs)
+    rsp.metadata = get_transaction_metadata(ctx, txn["id"], **kwargs)
+    rsp.problems = get_transaction_problems(ctx, txn["id"], **kwargs)
+    rsp.results = get_transaction_results(ctx, txn["id"], **kwargs)
 
     return rsp
 
