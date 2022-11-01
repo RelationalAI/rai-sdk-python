@@ -197,7 +197,6 @@ def _request_access_token(ctx: Context, url: str) -> AccessToken:
     with urlopen(req) as rsp:
         result = json.loads(rsp.read())
         token = result.get(ACCESS_KEY_TOKEN_KEY, None)
-        print(result)
         if token is not None:
             expires_in = result.get(EXPIRES_IN_KEY, None)
             scope = result.get(SCOPE, None)
