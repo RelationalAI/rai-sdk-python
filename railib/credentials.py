@@ -40,10 +40,11 @@ class AccessKeyCredentials(Credentials):
 
 # Represents an OAuth access token.
 class AccessToken:
-    def __init__(self, access_token: str, expires_in: int):
-        self.token = access_token
+    def __init__(self, access_token: str, scope: str, expires_in: int, created_on: float = time.time()):
+        self.access_token = access_token
+        self.scope = scope
         self.expires_in = expires_in
-        self.created_on = round(time.time())
+        self.created_on = created_on
 
     def is_expired(self):
         return (
