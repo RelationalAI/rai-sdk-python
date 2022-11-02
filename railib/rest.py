@@ -131,7 +131,7 @@ def _read_cache() -> dict:
         with open(_cache_file(), 'r') as cache:
             return json.loads(cache.read())
     except Exception:
-        return None
+        return {}
 
 
 # Read access token from cache
@@ -147,10 +147,8 @@ def _read_token_cache(creds: ClientCredentials) -> AccessToken:
 def _write_token_cache(creds: ClientCredentials):
     try:
         cache = _read_cache()
-        if cache:
-            cache[creds.client_id] = creds.access_token
-        else:
-            cache = {creds.client_id: creds.access_token}
+        cache[creds.client_id] = creds.access_token
+
         with open(_cache_file(), 'w') as f:
             f.write(json.dumps(cache, default=vars))
     except Exception:
