@@ -2,19 +2,19 @@ name: 'rai-sdk-python test'
 
 inputs:
   client_id:
-    required: true
+    required: false
     description: 'Client ID for oAuth'
 
   client_secret:
-    required: true
+    required: false
     description: 'Client secret for oAuth'
 
   client_credentials_url:
-    required: true
+    required: false
     description: 'Client credentials url for fetching the oAuth token'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - uses: actions/checkout@v3
       with:
