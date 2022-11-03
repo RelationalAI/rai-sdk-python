@@ -31,11 +31,13 @@ runs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -e ./
+      shell: bash
 
     - name: Generate Protobuf
       run: |
         cd rai-sdk-python
         python -m grpc_tools.protoc -I railib/pb --python_out=./railib/pb railib/pb/*.proto
+      shell: bash
 
     - name: test
       env:
@@ -46,3 +48,4 @@ runs:
         cd rai-sdk-python
         mkdir -p ~/.rai
         python -m unittest
+      shell: bash
