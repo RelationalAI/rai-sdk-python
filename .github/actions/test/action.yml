@@ -42,7 +42,7 @@ runs:
     - name: test
       env:
         CLIENT_ID: ${{ inputs.client_id }}
-        CLIENT_SECRET: ${{ inputs.client_id }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
         CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
       run: |
         cd rai-sdk-python
