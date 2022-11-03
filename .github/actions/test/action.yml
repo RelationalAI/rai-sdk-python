@@ -13,6 +13,10 @@ inputs:
     required: false
     description: 'Client credentials url for fetching the oAuth token'
 
+  host:
+    required: false
+    description: 'RAI host'
+
 runs:
   using: 'composite'
   steps:
@@ -45,6 +49,7 @@ runs:
         CLIENT_ID: ${{ inputs.client_id }}
         CLIENT_SECRET: ${{ inputs.client_secret }}
         CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
+        HOST: ${{ inputs.host }}
       run: |
         mkdir -p ~/.rai
         python -m unittest
