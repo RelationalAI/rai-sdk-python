@@ -17,6 +17,9 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v3
+      with:
+        repository: RelationalAI/rai-sdk-python
+        ref: ia-test-refactor
 
     - name: Initialize Python 3.7
       uses: actions/setup-python@v1
