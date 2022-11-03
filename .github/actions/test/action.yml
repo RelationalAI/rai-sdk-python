@@ -33,9 +33,9 @@ runs:
         pip install -e ./
 
     - name: Generate Protobuf
-        run: |
-          cd rai-sdk-python
-          python -m grpc_tools.protoc -I railib/pb --python_out=./railib/pb railib/pb/*.proto
+      run: |
+        cd rai-sdk-python
+        python -m grpc_tools.protoc -I railib/pb --python_out=./railib/pb railib/pb/*.proto
 
     - name: test
       env:
