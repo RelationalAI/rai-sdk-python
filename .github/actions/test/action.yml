@@ -18,6 +18,10 @@ inputs:
     description: 'RAI host'
     default: 'azure-staging.relationalai.com'
 
+  custom_headers:
+    required: false
+    description: 'Optional http headers'
+
 runs:
   using: 'composite'
   steps:
@@ -51,6 +55,7 @@ runs:
         CLIENT_SECRET: ${{ inputs.client_secret }}
         CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
         HOST: ${{ inputs.rai_host }}
+        CUSTOM_HEADERS: ${{ inputs.custom_headers }}
       run: |
         mkdir -p ~/.rai
         python -m unittest
