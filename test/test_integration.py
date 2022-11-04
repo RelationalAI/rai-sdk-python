@@ -12,6 +12,7 @@ from railib import api, config
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 client_credentials_url = os.getenv("CLIENT_CREDENTIALS_URL")
+host = os.getenv("HOST")
 custom_headers = json.loads(os.getenv('CUSTOM_HEADERS', '{}'))
 
 if client_id is None:
@@ -26,7 +27,7 @@ else:
     client_credentials_url={client_credentials_url}
     region=us-east
     port=443
-    host=azure.relationalai.com
+    host={host}
     """)
     file.seek(0)
     cfg = config.read(fname=file.name)
