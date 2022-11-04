@@ -21,6 +21,7 @@ inputs:
   custom_headers:
     required: false
     description: 'Optional http headers'
+    default: '{}'
 
 runs:
   using: 'composite'
