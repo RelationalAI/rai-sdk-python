@@ -16,7 +16,7 @@ inputs:
   rai_host:
     required: false
     description: 'RAI host'
-    default: 'azure-staging.relationalai.com'
+    default: 'azure.relationalai.com'
 
   custom_headers:
     required: false

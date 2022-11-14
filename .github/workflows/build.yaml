@@ -29,4 +29,4 @@ jobs:
         client_id: ${{ secrets.CLIENT_ID }}
         client_secret: ${{ secrets.CLIENT_SECRET }}
         client_credentials_url: ${{ secrets.CLIENT_CREDENTIALS_URL }}
-        rai_host: 'azure.relationalai.com'
+
