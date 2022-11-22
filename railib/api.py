@@ -715,12 +715,20 @@ def list_models(ctx: Context, database: str, engine: str) -> List:
     return models
 
 
+def delete_model(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
+    return delete_models(ctx, database, engine, [model])
+
+
 def delete_models(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
     queries = [
         f'def delete:rel:catalog:model["{model_name}"] = rel:catalog:model["{model_name}"]'
         for model_name in models
     ]
     return exec(ctx, database, engine, '\n'.join(queries), readonly=False)
+
+
+def delete_model_async(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
+    return delete_models_async(ctx, database, engine, [model])
 
 
 def delete_models_async(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
@@ -956,6 +964,6 @@ delete_compute = delete_engine  # deprecated, use delete_engine
 get_compute = get_engine  # deprecated, use get_engine
 list_computes = list_engines  # deprecated, use list_engines
 list_edb = list_edbs  # deprecated, use list_edbs
-delete_source = delete_models  # deprecated, use delete_model
+delete_source = delete_model  # deprecated, use delete_model
 get_source = get_model  # deprecated, use get_model
 list_sources = list_models  # deprecated, use list_models
