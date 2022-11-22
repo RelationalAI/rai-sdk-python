@@ -71,6 +71,11 @@ class Permission(str, Enum):
     DELETE_COMPUTE = "delete:compute"
     LIST_COMPUTES = "list:compute"
     READ_COMPUTE = "read:compute"
+    # engines (duplicate to computes)
+    CREATE_ENGINE = "create:engine"
+    DELETE_ENGINE = "delete:engine"
+    LIST_ENGINES = "list:engine"
+    READ_ENGINE = "read:engine"
     # databases
     LIST_DATABASES = "list:database"
     UPDATE_DATABASE = "update:database"
