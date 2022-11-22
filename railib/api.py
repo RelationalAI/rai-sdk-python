@@ -695,7 +695,7 @@ def _model(name: str, model: str) -> dict:
     }
 
 
-def create_database(ctx: Context, database: str, source: str = None) -> dict:
+def create_database(ctx: Context, database: str, source: str = None, **kwargs) -> dict:
     data = {"name": database, "source_name": source}
     url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.put(ctx, url, data, **kwargs)
