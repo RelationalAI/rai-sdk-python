@@ -14,10 +14,6 @@
 
 """Low level HTTP interface to the RelationalAI REST API."""
 
-import ed25519
-import base64
-from datetime import datetime
-import hashlib
 import json
 from os import path
 from urllib.parse import urlencode, urlsplit, quote
@@ -25,7 +21,6 @@ from urllib.request import Request, urlopen
 
 from .__init__ import __version__
 from .credentials import (
-    AccessKeyCredentials,
     AccessToken,
     Credentials,
     ClientCredentials,
@@ -42,9 +37,6 @@ GRANT_TYPE_KEY = "grant_type"
 CLIENT_CREDENTIALS_KEY = "client_credentials"
 EXPIRES_IN_KEY = "expires_in"
 SCOPE = "scope"
-
-
-_empty = bytes("", encoding="utf8")
 
 
 # Context contains the state required to make rAI REST API calls.
@@ -202,63 +194,6 @@ def _request_access_token(ctx: Context, url: str) -> AccessToken:
     raise Exception("failed to get the access token")
 
 
-# Implement RAI API key authentication by signing the request and adding the
-# required authorization header.
-def _sign(ctx: Context, req: Request) -> None:
-    assert isinstance(ctx.credentials, AccessKeyCredentials)
-
-    ts = datetime.utcnow()
-
-    # ISO8601 date/time strings for time of request
-    signature_date = ts.strftime("%Y%m%dT%H%M%SZ")
-    scope_date = ts.strftime("%Y%m%d")
-
-    # Authentication scope
-    scope = f"{scope_date}/{ctx.region}/{ctx.service}/rai01_request"
-
-    # SHA256 hash of content
-    content = req.data or _empty
-    content_hash = hashlib.sha256(content).hexdigest()
-
-    # Include "x-rai-date" in signed headers
-    req.headers["x-rai-date"] = signature_date
-
-    # Sort and lowercase headers to produce a canonical form
-    canonical_headers = sorted(
-        [f"{k.lower()}:{v.strip()}" for k, v in req.headers.items()]
-    )
-
-    h_names = sorted([k.lower() for k in req.headers])
-    signed_headers = ";".join(h_names)
-
-    # Create hash of canonical request
-    split_result = urlsplit(req.full_url)  # was self.url
-    canonical_form = "{}\n{}\n{}\n{}\n\n{}\n{}".format(
-        req.method,
-        _encode_path(split_result.path),
-        split_result.query,
-        "\n".join(canonical_headers),
-        signed_headers,
-        content_hash,
-    )
-
-    canonical_hash = hashlib.sha256(canonical_form.encode("utf-8")).hexdigest()
-    # Create and sign "String to sign"
-    string_to_sign = "RAI01-ED25519-SHA256\n{}\n{}\n{}".format(
-        signature_date, scope, canonical_hash
-    )
-
-    seed = base64.b64decode(ctx.credentials.pkey)
-    signing_key = ed25519.SigningKey(seed)
-    sig = signing_key.sign(string_to_sign.encode("utf-8")).hex()
-
-    req.headers["authorization"] = (
-        "RAI01-ED25519-SHA256 Credential={}/{},"
-        "SignedHeaders={},"
-        "Signature={}".format(ctx.credentials.akey, scope, signed_headers, sig)
-    )
-
-
 # Authenticate the request by signing or adding access token.
 def _authenticate(ctx: Context, req: Request) -> Request:
     creds = ctx.credentials
@@ -267,9 +202,6 @@ def _authenticate(ctx: Context, req: Request) -> Request:
     if isinstance(creds, ClientCredentials):
         access_token = _get_access_token(ctx, req.full_url)
         req.headers["authorization"] = f"Bearer {access_token}"
-        return req
-    if isinstance(creds, AccessKeyCredentials):
-        _sign(ctx, req)
         return req
     raise Exception("unknown credential type")
 

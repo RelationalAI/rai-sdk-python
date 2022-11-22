@@ -18,7 +18,6 @@ import time
 
 __all__ = [
     "Credentials",
-    "AccessKeyCredentials",
     "AccessToken",
     "ClientCredentials",
 ]
@@ -29,13 +28,6 @@ DEFAULT_CLIENT_CREDENTIALS_URL = "https://login.relationalai.com/oauth/token"
 # Abstract base class shared by all credential types supported by railib.
 class Credentials(ABC):
     pass
-
-
-# Represents access key credentials.
-class AccessKeyCredentials(Credentials):
-    def __init__(self, akey: str, pkey: str):
-        self.akey = akey  # access_key
-        self.pkey = pkey  # private_key
 
 
 # Represents an OAuth access token.
