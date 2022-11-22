@@ -19,11 +19,10 @@
 # and client credentials.
 
 import configparser
-import json
 import os
 from pathlib import Path
 
-from .credentials import AccessKeyCredentials, ClientCredentials
+from .credentials import ClientCredentials
 
 
 def _read_config_profile(fname: str, profile: str) -> dict:
@@ -33,27 +32,6 @@ def _read_config_profile(fname: str, profile: str) -> dict:
         fname = os.path.basename(fname)
         raise Exception(f"profile '{profile}' not found in {fname}")
     return {k: config[profile][k] for k in config[profile]}
-
-
-def _read_pkey(fname: Path):
-    with open(fname) as fp:
-        data = json.load(fp)
-        pkey = data.get("sodium", {}).get("seed", None)
-        if pkey is None:
-            raise Exception("malformed private key")
-        return pkey
-
-
-# Reads access key credentials from the config file. Returns None if they
-# do not exist.
-def _read_access_key_credentials(data, path: Path):
-    akey = data.get("access_key", None)
-    if akey is not None:
-        fname = data.get("private_key_filename", None)
-        if fname is not None:
-            pkey = _read_pkey(path.with_name(fname))
-            return AccessKeyCredentials(akey, pkey)
-    return None
 
 
 # Read client credentials from the config file. Returns None if they do not
@@ -72,8 +50,6 @@ def _read_client_credentials(data):
 # if they exist. Returns None if no credentials exist.
 def _read_credentials(data, path):
     creds = _read_client_credentials(data)
-    if creds is None:
-        creds = _read_access_key_credentials(data, path)
     return creds
 
 
