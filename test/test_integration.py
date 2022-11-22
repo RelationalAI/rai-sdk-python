@@ -76,28 +76,28 @@ class TestTransactionAsync(unittest.TestCase):
             rsp.results[0]["table"].to_pydict())
 
     def test_models(self):
-        models = api.list_models(ctx, self.dbname, self.engine)
+        models = api.list_models(ctx, dbname, engine)
         self.assertTrue(len(models) > 0)
 
         models = {'test_model': 'def foo=:bar'}
-        resp = api.install_models(ctx, self.dbname, self.engine, models)
+        resp = api.install_models(ctx, dbname, engine, models)
         self.assertEqual(resp.transaction['state'], 'COMPLETED')
 
-        value = api.get_model(ctx, self.dbname, self.engine, 'test_model')
+        value = api.get_model(ctx, dbname, engine, 'test_model')
         self.assertEqual(models['test_model'], value)
 
-        models = api.list_models(ctx, self.dbname, self.engine)
+        models = api.list_models(ctx, dbname, engine)
         self.assertTrue('test_model' in models)
 
-        resp = api.delete_models(ctx, self.dbname, self.engine, ['test_model'])
+        resp = api.delete_models(ctx, dbname, engine, ['test_model'])
         self.assertEqual(resp.transaction['state'], 'COMPLETED')
 
-        models = api.list_models(ctx, self.dbname, self.engine)
+        models = api.list_models(ctx, dbname, engine)
         self.assertFalse('test_model' in models)
 
     def tearDown(self):
-        api.delete_engine(ctx, self.engine)
-        api.delete_database(ctx, self.dbname)
+        api.delete_engine(ctx, engine)
+        api.delete_database(ctx, dbname)
 
 
 if __name__ == '__main__':
