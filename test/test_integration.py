@@ -1,4 +1,4 @@
-from time import sleep
+import json
 import unittest
 import os
 import uuid
@@ -7,30 +7,16 @@ import tempfile
 from pathlib import Path
 from railib import api, config
 
-# TODO: create_engine_wait should be added to API
-# with exponential backoff
-
-
-def create_engine_wait(ctx: api.Context, engine: str):
-    state = api.create_engine(ctx, engine)["compute"]["state"]
-
-    count = 0
-    while not ("PROVISIONED" == state):
-        if count > 12:
-            return
-
-        count += 1
-        sleep(30)
-        state = api.get_engine(ctx, engine)["state"]
-
 
 # Get creds from env vars if exists
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 client_credentials_url = os.getenv("CLIENT_CREDENTIALS_URL")
+host = os.getenv("HOST")
+custom_headers = json.loads(os.getenv('CUSTOM_HEADERS', '{}'))
 
 if client_id is None:
-    print("not using config from path")
+    print("using config from path")
     cfg = config.read()
 else:
     file = tempfile.NamedTemporaryFile(mode="w")
@@ -41,7 +27,7 @@ else:
     client_credentials_url={client_credentials_url}
     region=us-east
     port=443
-    host=azure.relationalai.com
+    host={host}
     """)
     file.seek(0)
     cfg = config.read(fname=file.name)
@@ -49,18 +35,20 @@ else:
 
 ctx = api.Context(**cfg)
 
+suffix = uuid.uuid4()
+engine = f"python-sdk-{suffix}"
+dbname = f"python-sdk-{suffix}"
 
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
-        self.suffix = uuid.uuid4()
-        self.engine = f"python-sdk-{self.suffix}"
-        self.dbname = f"python-sdk-{self.suffix}"
-        create_engine_wait(ctx, self.engine)
-        api.create_database(ctx, self.dbname)
+        rsp = api.create_engine_wait(ctx, engine, headers=custom_headers)
+        self.assertEqual("PROVISIONED", rsp["state"])
+        rsp = api.create_database(ctx, dbname)
+        self.assertEqual("CREATED", rsp["database"]["state"])
 
     def test_v2_exec(self):
         cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-        rsp = api.exec(ctx, self.dbname, self.engine, cmd)
+        rsp = api.exec(ctx, dbname, engine, cmd)
 
         # transaction
         self.assertEqual("COMPLETED", rsp.transaction["state"])
