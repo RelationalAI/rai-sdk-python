@@ -3,6 +3,8 @@ import unittest
 import os
 import uuid
 import tempfile
+import logging
+import sys
 
 from pathlib import Path
 from railib import api, config
@@ -41,7 +43,13 @@ dbname = f"python-sdk-{suffix}"
 
 
 class TestTransactionAsync(unittest.TestCase):
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+
     def setUp(self):
+        self.logger.info(f"custom headers: {custom_headers}")
+        self.logger.info(f"engine: {engine}, database: {dbname}")
         rsp = api.create_engine_wait(ctx, engine, headers=custom_headers)
         self.assertEqual("PROVISIONED", rsp["state"])
         rsp = api.create_database(ctx, dbname)
@@ -50,6 +58,7 @@ class TestTransactionAsync(unittest.TestCase):
     def test_v2_exec(self):
         cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
         rsp = api.exec(ctx, dbname, engine, cmd)
+        self.logger.info(f"transaction id: {rsp.transaction['id']}")
 
         # transaction
         self.assertEqual("COMPLETED", rsp.transaction["state"])
