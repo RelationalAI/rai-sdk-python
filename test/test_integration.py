@@ -1,4 +1,6 @@
 import json
+import logging
+import sys
 import unittest
 import os
 import uuid
@@ -38,6 +40,14 @@ ctx = api.Context(**cfg)
 suffix = uuid.uuid4()
 engine = f"python-sdk-{suffix}"
 dbname = f"python-sdk-{suffix}"
+
+# init logger
+logger = api.logger
+logger.setLevel(logging.INFO)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logger.addHandler(handler)
 
 
 class TestTransactionAsync(unittest.TestCase):
