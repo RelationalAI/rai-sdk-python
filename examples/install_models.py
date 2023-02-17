@@ -12,29 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-"""Delete the given Rel model from the given database."""
+"""Install the given Rel model in the given database"""
 
 from argparse import ArgumentParser
-import json
+from os import path
 from urllib.request import HTTPError
 from railib import api, config, show
 
 
-def run(database: str, engine: str, model: str, profile: str):
+# Reeturns the file basename without extension.
+def _sansext(fname: str) -> str:
+    return path.splitext(path.basename(fname))[0]
+
+
+def run(database: str, engine: str, fname: str, profile: str):
+    models = {}
+    with open(fname) as fp:
+        models[_sansext(fname)] = fp.read()  # model name => model
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.delete_model(ctx, database, engine, model)
-    print(json.dumps(rsp, indent=2))
+    rsp = api.install_models(ctx, database, engine, models)
+    print(rsp)
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("database", type=str, help="database name")
     p.add_argument("engine", type=str, help="engine name")
-    p.add_argument("model", type=str, help="model name")
+    p.add_argument("file", type=str, help="model file")
     p.add_argument("-p", "--profile", type=str, help="profile name", default="default")
     args = p.parse_args()
     try:
-        run(args.database, args.engine, args.model, args.profile)
+        run(args.database, args.engine, args.file, args.profile)
     except HTTPError as e:
         show.http_error(e)

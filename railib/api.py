@@ -19,9 +19,13 @@ import pyarrow as pa
 import time
 import re
 import io
+import sys
+import random
+
 from enum import Enum, unique
 from typing import List, Union
 from requests_toolbelt import multipart
+
 from . import rest
 
 from .pb.message_pb2 import MetadataInfo
@@ -119,7 +123,7 @@ __all__ = [
     "create_oauth_client",
     "delete_database",
     "delete_engine",
-    "delete_model",
+    "delete_models",
     "disable_user",
     "enable_user",
     "delete_oauth_client",
@@ -649,18 +653,6 @@ class TransactionAsync(object):
         raise Exception("invalid response type")
 
 
-def _delete_model_action(name: str) -> dict:
-    return {"type": "ModifyWorkspaceAction", "delete_source": [name]}
-
-
-def _install_model_action(name: str, model: str) -> dict:
-    return {"type": "InstallAction", "sources": [_model(name, model)]}
-
-
-def _list_action():
-    return {"type": "ListSourceAction"}
-
-
 def _list_edb_action():
     return {"type": "ListEdbAction"}
 
@@ -708,17 +700,6 @@ def _model(name: str, model: str) -> dict:
     }
 
 
-# Returns full list of models.
-def _list_models(ctx: Context, database: str, engine: str) -> dict:
-    tx = Transaction(database, engine, mode=Mode.OPEN)
-    rsp = tx.run(ctx, _list_action())
-    actions = rsp["actions"]
-    assert len(actions) == 1
-    action = actions[0]
-    models = action["result"]["sources"]
-    return models
-
-
 def create_database(ctx: Context, database: str, source: str = None, **kwargs) -> dict:
     data = {"name": database, "source_name": source}
     url = _mkurl(ctx, PATH_DATABASE)
@@ -726,25 +707,84 @@ def create_database(ctx: Context, database: str, source: str = None, **kwargs) -
     return json.loads(rsp.read())
 
 
-def delete_model(ctx: Context, database: str, engine: str, model: str) -> dict:
-    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    actions = [_delete_model_action(model)]
-    return tx.run(ctx, *actions)
+# Returns full list of models.
+def list_models(ctx: Context, database: str, engine: str) -> List:
+    models = []
+    out_name = f'model{random.randint(0, sys.maxsize)}'
+    resp = exec(ctx, database, engine, f'def output:{out_name}[name] = rel:catalog:model(name, _)')
+    for result in resp.results:
+        if f'/:output/:{out_name}' in result['relationId']:
+            table = result['table'].to_pydict()
+            models.extend([table['v1'][i] for i in range(1, len(table['v1']))])
+
+    return models
+
+
+def delete_model(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
+    return delete_models(ctx, database, engine, [model])
+
+
+def delete_models(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
+    queries = [
+        f'def delete:rel:catalog:model["{model_name}"] = rel:catalog:model["{model_name}"]'
+        for model_name in models
+    ]
+    return exec(ctx, database, engine, '\n'.join(queries), readonly=False)
+
+
+def delete_model_async(ctx: Context, database: str, engine: str, model: str) -> TransactionAsyncResponse:
+    return delete_models_async(ctx, database, engine, [model])
+
+
+def delete_models_async(ctx: Context, database: str, engine: str, models: List[str]) -> TransactionAsyncResponse:
+    queries = [
+        f'def delete:rel:catalog:model["{model_name}"] = rel:catalog:model["{model_name}"]'
+        for model_name in models
+    ]
+    return exec_async(ctx, database, engine, '\n'.join(queries), readonly=False)
 
 
 # Returns the named model
 def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
-    models = _list_models(ctx, database, engine)
-    for model in models:
-        if model["name"] == name:
-            return model["value"]
+    out_name = f'model{random.randint(0, sys.maxsize)}'
+    cmd = f'def output:{out_name} = rel:catalog:model["{name}"]'
+    resp = exec(ctx, database, engine, cmd)
+    for result in resp.results:
+        if f'/:output/:{out_name}' in result['relationId']:
+            table = result['table'].to_pydict()
+            return table['v1'][0]
     raise Exception(f"model '{name}' not found")
 
 
-def install_model(ctx: Context, database: str, engine: str, models: dict) -> dict:
-    tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
-    actions = [_install_model_action(name, model) for name, model in models.items()]
-    return tx.run(ctx, *actions)
+def install_models(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
+    queries = []
+    queries_inputs = {}
+    randint = random.randint(0, sys.maxsize)
+    index = 0
+    for name, value in models.items():
+        input_name = f'input_{randint}_{index}'
+        queries.append(f'def delete:rel:catalog:model["{name}"] = rel:catalog:model["{name}"]')
+        queries.append(f'def insert:rel:catalog:model["{name}"] = {input_name}')
+
+        queries_inputs[input_name] = value
+        index += 1
+
+    return exec(ctx, database, engine, '\n'.join(queries), inputs=queries_inputs, readonly=False)
+
+
+def install_models_async(ctx: Context, database: str, engine: str, models: dict) -> TransactionAsyncResponse:
+    queries = []
+    queries_inputs = {}
+    randint = random.randint(0, sys.maxsize)
+    index = 0
+    for name, value in models.items():
+        input_name = f'input_{randint}_{index}'
+        queries.append(f'def delete:rel:catalog:model["{name}"] = rel:catalog:model["{name}"]')
+        queries.append(f'def insert:rel:catalog:model["{name}"] = {input_name}')
+
+        queries_inputs[input_name] = value
+        index += 1
+    return exec_async(ctx, database, engine, '\n'.join(queries), inputs=queries_inputs, readonly=False)
 
 
 def list_edbs(ctx: Context, database: str, engine: str) -> list:
@@ -755,12 +795,6 @@ def list_edbs(ctx: Context, database: str, engine: str) -> list:
     action = actions[0]
     rels = action["result"]["rels"]
     return rels
-
-
-# Returns a list of models installed in the given database.
-def list_models(ctx: Context, database: str, engine: str) -> list:
-    models = _list_models(ctx, database, engine)
-    return [model["name"] for model in models]
 
 
 # Generate a rel literal relation for the given dict.

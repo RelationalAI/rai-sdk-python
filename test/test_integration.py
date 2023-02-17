@@ -68,11 +68,32 @@ class TestTransactionAsync(unittest.TestCase):
         # results
         self.assertEqual(
             {
-                'v1': [
-                    1, 2, 3, 4, 5], 'v2': [
-                    1, 4, 9, 16, 25], 'v3': [
-                    1, 8, 27, 64, 125], 'v4': [
-                        1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
+                'v1': [1, 2, 3, 4, 5],
+                'v2': [1, 4, 9, 16, 25],
+                'v3': [1, 8, 27, 64, 125],
+                'v4': [1, 16, 81, 256, 625]
+            },
+            rsp.results[0]["table"].to_pydict())
+
+    def test_models(self):
+        models = api.list_models(ctx, dbname, engine)
+        self.assertTrue(len(models) > 0)
+
+        models = {'test_model': 'def foo=:bar'}
+        resp = api.install_models(ctx, dbname, engine, models)
+        self.assertEqual(resp.transaction['state'], 'COMPLETED')
+
+        value = api.get_model(ctx, dbname, engine, 'test_model')
+        self.assertEqual(models['test_model'], value)
+
+        models = api.list_models(ctx, dbname, engine)
+        self.assertTrue('test_model' in models)
+
+        resp = api.delete_models(ctx, dbname, engine, ['test_model'])
+        self.assertEqual(resp.transaction['state'], 'COMPLETED')
+
+        models = api.list_models(ctx, dbname, engine)
+        self.assertFalse('test_model' in models)
 
     def tearDown(self):
         api.delete_engine(ctx, engine)
