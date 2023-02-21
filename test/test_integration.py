@@ -41,9 +41,9 @@ suffix = uuid.uuid4()
 engine = f"python-sdk-{suffix}"
 dbname = f"python-sdk-{suffix}"
 
-# init logger
+# init "rai" logger
 logger = api.logger
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))

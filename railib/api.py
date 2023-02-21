@@ -897,6 +897,7 @@ def exec(
     # in case of if short-path, return results directly, no need to poll for
     # state
     if not (txn.results is None):
+        logger.info('transaction id: %s' % txn.transaction["id"])
         return txn
 
     rsp = TransactionAsyncResponse()
