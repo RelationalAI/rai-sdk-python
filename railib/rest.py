@@ -42,6 +42,7 @@ SCOPE = "scope"
 # logger
 logger = logging.getLogger("rai")
 
+
 # Context contains the state required to make rAI REST API calls.
 class Context(object):
     def __init__(self, region: str = None, credentials: Credentials = None):
