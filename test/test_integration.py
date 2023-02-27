@@ -6,6 +6,7 @@ import os
 import uuid
 import tempfile
 
+from logging.config import fileConfig
 from pathlib import Path
 from railib import api, config
 
@@ -42,13 +43,7 @@ engine = f"python-sdk-{suffix}"
 dbname = f"python-sdk-{suffix}"
 
 # init "rai" logger
-logger = api.logger
-logger.setLevel(logging.DEBUG)
-
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-logger.addHandler(handler)
-
+fileConfig("./test/logger.config")
 
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
