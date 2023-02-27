@@ -1,6 +1,4 @@
 import json
-import logging
-import sys
 import unittest
 import os
 import uuid
@@ -44,6 +42,7 @@ dbname = f"python-sdk-{suffix}"
 
 # init "rai" logger
 fileConfig("./test/logger.config")
+
 
 class TestTransactionAsync(unittest.TestCase):
     def setUp(self):
