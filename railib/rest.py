@@ -40,7 +40,7 @@ EXPIRES_IN_KEY = "expires_in"
 SCOPE = "scope"
 
 # logger
-logger = logging.getLogger("rai")
+logger = logging.getLogger(__package__)
 
 
 # Context contains the state required to make rAI REST API calls.

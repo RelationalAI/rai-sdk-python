@@ -36,7 +36,7 @@ PATH_USER = "/users"
 PATH_OAUTH_CLIENT = "/oauth-clients"
 
 # logger
-logger = logging.getLogger("rai")
+logger = logging.getLogger(__package__)
 
 
 # Engine sizes
