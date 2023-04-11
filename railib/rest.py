@@ -15,6 +15,7 @@
 """Low level HTTP interface to the RelationalAI REST API."""
 
 import json
+import logging
 from os import path
 from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
@@ -37,6 +38,9 @@ GRANT_TYPE_KEY = "grant_type"
 CLIENT_CREDENTIALS_KEY = "client_credentials"
 EXPIRES_IN_KEY = "expires_in"
 SCOPE = "scope"
+
+# logger
+logger = logging.getLogger(__package__)
 
 
 # Context contains the state required to make rAI REST API calls.
@@ -215,7 +219,14 @@ def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs
     req = Request(method=method, url=url, headers=headers, data=data)
     req = _authenticate(ctx, req)
     _print_request(req)
-    return urlopen(req)
+    rsp = urlopen(req)
+
+    # logging
+    content_type = headers["Content-Type"] if "Content-Type" in headers else ""
+    agent = headers["User-Agent"] if "User-Agent" in headers else ""
+    request_id = rsp.headers["X-Request-ID"] if "X-Request-ID" in rsp.headers else ""
+    logger.debug(f"{rsp._method} HTTP/{rsp.version} {content_type} {rsp.url} {rsp.status} {agent} {request_id}")
+    return rsp
 
 
 def delete(ctx: Context, url: str, data, headers={}, **kwargs):

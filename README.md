@@ -115,3 +115,4 @@ to submit an issue or a PR here.
 The RelationalAI Software Development Kit for Python is licensed under the
 Apache License 2.0. See:
 https://github.com/RelationalAI/rai-sdk-python/blob/master/LICENSE
+

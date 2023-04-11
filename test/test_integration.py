@@ -4,6 +4,7 @@ import os
 import uuid
 import tempfile
 
+from logging.config import fileConfig
 from pathlib import Path
 from railib import api, config
 
@@ -38,6 +39,9 @@ ctx = api.Context(**cfg)
 suffix = uuid.uuid4()
 engine = f"python-sdk-{suffix}"
 dbname = f"python-sdk-{suffix}"
+
+# init "rai" logger
+fileConfig("./test/logger.config")
 
 
 class TestTransactionAsync(unittest.TestCase):
