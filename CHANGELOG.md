@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.9
+
+* Added `poll_with_specified_overhead`
+* Added `create_engine_wait`
+* OAuth access token caching on disk `~/.rai/tokens.js`
+* Access key authentication support dropped
+
 ## v0.6.8
 
 * Added protobuf metadata support
