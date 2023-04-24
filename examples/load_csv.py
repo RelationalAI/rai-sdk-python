@@ -30,14 +30,13 @@ def _sansext(fname: str) -> str:
     return path.splitext(path.basename(fname))[0]
 
 
-def run(
-    database: str, engine: str, fname: str, relation: str, syntax: dict, profile: str
-):
+def run(database: str, engine: str, fname: str, relation: str,
+        syntax: dict, schema: dict, profile: str):
     data = _read(fname)
     relation = relation or _sansext(fname)
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.load_csv(ctx, database, engine, relation, data, syntax)
+    rsp = api.load_csv(ctx, database, engine, relation, data, syntax, schema)
     print(json.dumps(rsp, indent=2))
 
 
@@ -65,6 +64,13 @@ if __name__ == "__main__":
         help="relation name (default: file name)",
     )
     p.add_argument("-p", "--profile", type=str, default="default", help="profile name")
+    p.add_argument(
+        "--schema",
+        type=str,
+        default="",
+        help="Comma separated list of expressions `col=type` specifying that `col` has Rel type `type`."
+    )
+
     args = p.parse_args()
     syntax = {}  # find full list of syntax options in the RAI docs
     if args.header_row is not None:
@@ -75,7 +81,18 @@ if __name__ == "__main__":
         syntax["escapechar"] = args.escapechar
     if args.quotechar:
         syntax["quotechar"] = args.quotechar
+
+    schema = {col: type for col, type in [pair.split("=") for pair in args.schema.split(",")]}
+
     try:
-        run(args.database, args.engine, args.file, args.relation, syntax, args.profile)
+        run(
+            args.database,
+            args.engine,
+            args.file,
+            args.relation,
+            syntax,
+            args.profile,
+            args.schema
+        )
     except HTTPError as e:
         show.http_error(e)

@@ -816,32 +816,47 @@ def _gen_syntax_config(syntax: dict = {}) -> str:
     return result
 
 
-# `syntax`:
-#   * header: a map from col number to name (base 1)
-#   * header_row: row number of header, 0 means no header (default: 1)
-#   * delim: default: ,
-#   * quotechar: default: "
-#   * escapechar: default: \
-#
-# Schema: a map from col name to rel type name, eg:
-#   {'a': "int", 'b': "string"}
-def load_csv(
-    ctx: Context,
-    database: str,
-    engine: str,
-    relation: str,
-    data: str or io.TextIOBase,
-    syntax: dict = {},
-) -> dict:
+def load_csv(ctx: Context, database: str, engine: str, relation: str,
+             data: str or io.TextIOBase, syntax: dict = {}, schema={}) -> dict:
+    """
+    Loads CSV data present in `data` into `database` using `engine`. Upon
+    success, parsed CSV data is stored in `relation`.
+
+    Args:
+        - `ctx` (`Context`): The RAI API context.
+        - `database` (`str`): The target database name.
+        - `engine` (`str`): The engine used for loading.
+        - `relation` (`str`): Relation name used to store CSV data.
+        - `data` (`str or or io.TextIOBase`): Data specified either as a string or as a stream of type `io.TextIOBase`.
+        - `syntax` (`dict`, optional): Dictionary containing parsing configuration, defaults to {}. Valid entries are:
+            - `header`: A dictionary mapping column numbers to a names.
+            - `header_row`: the row number of the header row; 0 means no header. Defaults to `1`.
+            - `delim`: Column delimiter used. Defaults to `,`.
+            - `quotechar`: Quotation character used. Defaults to `"`.
+            - `escapechar`: Escape charater used. Defaults to `\\`.
+        - `schema` (`dict`, optional): Dictionary mapping column names to Rel type names. Defaults to `{}`.
+    Raises:
+        `TypeError`: If `data` is neither `str` nor `io.TextIOBase`.
+
+    Returns:
+        `dict`: The response of the query action.
+    """
     if isinstance(data, str):
         pass  # ok
     elif isinstance(data, io.TextIOBase):
         data = data.read()
     else:
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
-    inputs = {"data": data}
+
+    inputs = {'data': data}
     command = _gen_syntax_config(syntax)
-    command += "def config:data = data\n" "def insert:%s = load_csv[config]" % relation
+
+    for col, type in schema.items():
+        command += f'def config:schema[:"{col}"] = "{type}"\n'
+
+    command += ("def config:data = data\n"
+                f"def insert[:{relation}] = load_csv[config]")
+
     return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
