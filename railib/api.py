@@ -21,7 +21,7 @@ import re
 import io
 import logging
 from enum import Enum, unique
-from typing import List, Union
+from typing import Dict, List, Union
 from requests_toolbelt import multipart
 from . import rest
 
@@ -228,7 +228,7 @@ def _mkurl(ctx: Context, path: str) -> str:
 
 
 # Retrieve an individual resource.
-def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> dict:
+def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> Dict:
     url = _mkurl(ctx, path)
     rsp = rest.get(ctx, url, **kwargs)
     rsp = json.loads(rsp.read())
@@ -413,57 +413,62 @@ def _create_mode(source_database: str, overwrite: bool) -> Mode:
     return result
 
 
-def delete_database(ctx: Context, database: str, **kwargs) -> dict:
+def delete_database(ctx: Context, database: str, **kwargs) -> Dict:
     data = {"name": database}
     url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.delete(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def delete_engine(ctx: Context, engine: str, **kwargs) -> dict:
+def delete_engine(ctx: Context, engine: str, **kwargs) -> Dict:
     data = {"name": engine}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.delete(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def delete_user(ctx: Context, id: str, **kwargs) -> dict:
+def delete_user(ctx: Context, id: str, **kwargs) -> Dict:
     url = _mkurl(ctx, f"{PATH_USER}/{id}")
     rsp = rest.delete(ctx, url, None, **kwargs)
     return json.loads(rsp.read())
 
 
-def disable_user(ctx: Context, userid: str, **kwargs) -> dict:
+def disable_user(ctx: Context, userid: str, **kwargs) -> Dict:
     return update_user(ctx, userid, status="INACTIVE", **kwargs)
 
 
-def delete_oauth_client(ctx: Context, id: str, **kwargs) -> dict:
+def delete_oauth_client(ctx: Context, id: str, **kwargs) -> Dict:
     url = _mkurl(ctx, f"{PATH_OAUTH_CLIENT}/{id}")
     rsp = rest.delete(ctx, url, None, **kwargs)
     return json.loads(rsp.read())
 
 
-def enable_user(ctx: Context, userid: str, **kwargs) -> dict:
+def enable_user(ctx: Context, userid: str, **kwargs) -> Dict:
     return update_user(ctx, userid, status="ACTIVE", **kwargs)
 
 
-def get_engine(ctx: Context, engine: str, **kwargs) -> dict:
+def get_engine(ctx: Context, engine: str, **kwargs) -> Dict:
     return _get_resource(ctx, PATH_ENGINE, name=engine, deleted_on="", key="computes", **kwargs)
 
 
-def get_database(ctx: Context, database: str, **kwargs) -> dict:
+def get_database(ctx: Context, database: str, **kwargs) -> Dict:
     return _get_resource(ctx, PATH_DATABASE, name=database, key="databases", **kwargs)
 
 
-def get_oauth_client(ctx: Context, id: str, **kwargs) -> dict:
+def get_oauth_client(ctx: Context, id: str, **kwargs) -> Dict:
     return _get_resource(ctx, f"{PATH_OAUTH_CLIENT}/{id}", key="client", **kwargs)
 
 
-def get_transaction(ctx: Context, id: str, **kwargs) -> dict:
+def cancel_transaction(ctx: Context, id: str, **kwargs) -> Dict:
+    rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {}, **kwargs)
+    return json.loads(rsp.read())
+
+
+def get_transaction(ctx: Context, id: str, **kwargs) -> Dict:
     return _get_resource(ctx, f"{PATH_TRANSACTIONS}/{id}", key="transaction", **kwargs)
 
 
-def get_transaction_metadata(ctx: Context, id: str, **kwargs) -> list:
+def get_transaction_metadata(ctx: Context, id: str, **kwargs) -> List:
     headers = {"Accept": "application/x-protobuf"}
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/metadata")
     rsp = rest.get(ctx, url, headers=headers, **kwargs)
@@ -474,15 +479,11 @@ def get_transaction_metadata(ctx: Context, id: str, **kwargs) -> list:
     raise Exception(f"invalid content type for metadata proto: {content_type}")
 
 
-def list_transactions(ctx: Context, **kwargs) -> list:
-    return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions", **kwargs)
-
-
-def get_transaction_problems(ctx: Context, id: str, **kwargs) -> list:
+def get_transaction_problems(ctx: Context, id: str, **kwargs) -> List:
     return _get_collection(ctx, f"{PATH_TRANSACTIONS}/{id}/problems", **kwargs)
 
 
-def get_transaction_results(ctx: Context, id: str, **kwargs) -> list:
+def get_transaction_results(ctx: Context, id: str, **kwargs) -> List:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/results")
     rsp = rest.get(ctx, url, **kwargs)
     content_type = rsp.headers.get("content-type", "")
@@ -495,43 +496,46 @@ def get_transaction_results(ctx: Context, id: str, **kwargs) -> list:
 
 # When problems are part of the results relations, this function should be
 # deprecated, get_transaction_results should be called instead
-
-
-def get_transaction_results_and_problems(ctx: Context, id: str, **kwargs) -> list:
+def get_transaction_results_and_problems(ctx: Context, id: str, **kwargs) -> List:
     rsp = TransactionAsyncResponse()
     rsp.problems = get_transaction_problems(ctx, id, **kwargs)
     rsp.results = get_transaction_results(ctx, id, **kwargs)
     return rsp
 
 
-def cancel_transaction(ctx: Context, id: str, **kwargs) -> dict:
-    rsp = rest.post(ctx, _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/cancel"), {}, **kwargs)
-    return json.loads(rsp.read())
+def get_transaction_query(ctx: Context, id: str, **kwargs) -> str:
+    url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/query")
+    rsp = rest.get(ctx, url, **kwargs)
+    return str(rsp.read())
 
 
-def get_user(ctx: Context, userid: str, **kwargs) -> dict:
+def list_transactions(ctx: Context, **kwargs) -> List:
+    return _get_collection(ctx, PATH_TRANSACTIONS, key="transactions", **kwargs)
+
+
+def get_user(ctx: Context, userid: str, **kwargs) -> Dict:
     return _get_resource(ctx, f"{PATH_USER}/{userid}", name=userid, **kwargs)
 
 
-def list_engines(ctx: Context, state=None) -> list:
+def list_engines(ctx: Context, state=None) -> List:
     kwargs = {}
     if state is not None:
         kwargs["state"] = state
     return _get_collection(ctx, PATH_ENGINE, key="computes", **kwargs)
 
 
-def list_databases(ctx: Context, state=None) -> list:
+def list_databases(ctx: Context, state=None) -> List:
     kwargs = {}
     if state is not None:
         kwargs["state"] = state
     return _get_collection(ctx, PATH_DATABASE, key="databases", **kwargs)
 
 
-def list_users(ctx: Context, **kwargs) -> list:
+def list_users(ctx: Context, **kwargs) -> List:
     return _get_collection(ctx, PATH_USER, key="users", **kwargs)
 
 
-def list_oauth_clients(ctx: Context, **kwargs) -> list:
+def list_oauth_clients(ctx: Context, **kwargs) -> List:
     return _get_collection(ctx, PATH_OAUTH_CLIENT, key="clients", **kwargs)
 
 
@@ -595,7 +599,7 @@ class Transaction(object):
             result["source_dbname"] = self.source_database
         return result
 
-    def run(self, ctx: Context, *args) -> dict:
+    def run(self, ctx: Context, *args) -> Dict:
         data = self.data
         data["actions"] = self._actions(args)
         # several of the request params are duplicated in the query
@@ -653,11 +657,11 @@ class TransactionAsync(object):
         raise Exception("invalid response type")
 
 
-def _delete_model_action(name: str) -> dict:
+def _delete_model_action(name: str) -> Dict:
     return {"type": "ModifyWorkspaceAction", "delete_source": [name]}
 
 
-def _install_model_action(name: str, model: str) -> dict:
+def _install_model_action(name: str, model: str) -> Dict:
     return {"type": "InstallAction", "sources": [_model(name, model)]}
 
 
@@ -670,7 +674,7 @@ def _list_edb_action():
 
 
 # Return rel key correponding to the given name and list of keys.
-def _rel_key(name: str, keys: list) -> dict:
+def _rel_key(name: str, keys: list) -> Dict:
     return {"type": "RelKey", "name": name, "keys": keys, "values": []}
 
 
@@ -682,7 +686,7 @@ def _rel_typename(v):
 
 
 # Return a qeury action input corresponding to the given name, value pair.
-def _query_action_input(name: str, value) -> dict:
+def _query_action_input(name: str, value) -> Dict:
     return {
         "columns": [[value]],
         "rel_key": _rel_key(name, [_rel_typename(value)]),
@@ -691,7 +695,7 @@ def _query_action_input(name: str, value) -> dict:
 
 
 # `inputs`: map of parameter name to input value
-def _query_action(model: str, inputs: dict = None, outputs: list = None) -> dict:
+def _query_action(model: str, inputs: dict = None, outputs: list = None) -> Dict:
     inputs = inputs or {}
     inputs = [_query_action_input(k, v) for k, v in inputs.items()]
     return {
@@ -703,7 +707,7 @@ def _query_action(model: str, inputs: dict = None, outputs: list = None) -> dict
     }
 
 
-def _model(name: str, model: str) -> dict:
+def _model(name: str, model: str) -> Dict:
     return {
         "type": "Source",
         "name": name,
@@ -713,7 +717,7 @@ def _model(name: str, model: str) -> dict:
 
 
 # Returns full list of models.
-def _list_models(ctx: Context, database: str, engine: str) -> dict:
+def _list_models(ctx: Context, database: str, engine: str) -> Dict:
     tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_action())
     actions = rsp["actions"]
@@ -723,14 +727,14 @@ def _list_models(ctx: Context, database: str, engine: str) -> dict:
     return models
 
 
-def create_database(ctx: Context, database: str, source: str = None, **kwargs) -> dict:
+def create_database(ctx: Context, database: str, source: str = None, **kwargs) -> Dict:
     data = {"name": database, "source_name": source}
     url = _mkurl(ctx, PATH_DATABASE)
     rsp = rest.put(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def delete_model(ctx: Context, database: str, engine: str, model: str) -> dict:
+def delete_model(ctx: Context, database: str, engine: str, model: str) -> Dict:
     tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
     actions = [_delete_model_action(model)]
     return tx.run(ctx, *actions)
@@ -745,13 +749,13 @@ def get_model(ctx: Context, database: str, engine: str, name: str) -> str:
     raise Exception(f"model '{name}' not found")
 
 
-def install_model(ctx: Context, database: str, engine: str, models: dict) -> dict:
+def install_model(ctx: Context, database: str, engine: str, models: dict) -> Dict:
     tx = Transaction(database, engine, mode=Mode.OPEN, readonly=False)
     actions = [_install_model_action(name, model) for name, model in models.items()]
     return tx.run(ctx, *actions)
 
 
-def list_edbs(ctx: Context, database: str, engine: str) -> list:
+def list_edbs(ctx: Context, database: str, engine: str) -> List:
     tx = Transaction(database, engine, mode=Mode.OPEN)
     rsp = tx.run(ctx, _list_edb_action())
     actions = rsp["actions"]
@@ -762,7 +766,7 @@ def list_edbs(ctx: Context, database: str, engine: str) -> list:
 
 
 # Returns a list of models installed in the given database.
-def list_models(ctx: Context, database: str, engine: str) -> list:
+def list_models(ctx: Context, database: str, engine: str) -> List:
     models = _list_models(ctx, database, engine)
     return [model["name"] for model in models]
 
@@ -832,7 +836,7 @@ def load_csv(
     relation: str,
     data: str or io.TextIOBase,
     syntax: dict = {},
-) -> dict:
+) -> Dict:
     if isinstance(data, str):
         pass  # ok
     elif isinstance(data, io.TextIOBase):
@@ -851,7 +855,7 @@ def load_json(
     engine: str,
     relation: str,
     data: str or io.TextIOBase,
-) -> dict:
+) -> Dict:
     if isinstance(data, str):
         pass  # ok
     elif isinstance(data, io.TextIOBase):
@@ -870,7 +874,7 @@ def exec_v1(
     command: str,
     inputs: dict = None,
     readonly: bool = True,
-) -> dict:
+) -> Dict:
     tx = Transaction(database, engine, readonly=readonly)
     return tx.run(ctx, _query_action(command, inputs=inputs))
 
