@@ -506,7 +506,7 @@ def get_transaction_results_and_problems(ctx: Context, id: str, **kwargs) -> Lis
 def get_transaction_query(ctx: Context, id: str, **kwargs) -> str:
     url = _mkurl(ctx, f"{PATH_TRANSACTIONS}/{id}/query")
     rsp = rest.get(ctx, url, **kwargs)
-    return str(rsp.read())
+    return rsp.read().decode("utf-8")
 
 
 def list_transactions(ctx: Context, **kwargs) -> List:
@@ -880,8 +880,6 @@ def exec_v1(
 
 
 # Answers if the given transaction state is a terminal state.
-
-
 def is_txn_term_state(state: str) -> bool:
     return state == "COMPLETED" or state == "ABORTED"
 
