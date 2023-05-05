@@ -34,7 +34,7 @@ setup(
     install_requires=[
         "ed25519==1.5",
         "pyarrow>=6.0.1",
-        "requests-toolbelt==0.9.1",
+        "requests-toolbelt==1.0.0",
         "protobuf==3.20.2"],
     license="http://www.apache.org/licenses/LICENSE-2.0",
     long_description="Enables access to the RelationalAI REST APIs from Python",
