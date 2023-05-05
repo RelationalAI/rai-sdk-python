@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.6.10
+
+* Fix for `ImportError: cannot import name 'appengine' from 'urllib3.contrib'`
+* Run tests using multiple python versions `[3.7, 3.8, 3.9]`
+
 ## v0.6.9
 
 * Added `poll_with_specified_overhead`
