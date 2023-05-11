@@ -20,7 +20,7 @@ from railib import api, config, show
 def run(database: str, engine: str, command: str, language: str, readonly: bool, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.exec_async(ctx, database, engine, command, language, readonly=readonly)
+    rsp = api.exec_async(ctx, database, engine, command, readonly=readonly, language=language)
     print(rsp)
     show.results(rsp)
 
