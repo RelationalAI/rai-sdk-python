@@ -928,7 +928,7 @@ def exec_async(
     command: str,
     readonly: bool = True,
     inputs: dict = None,
-    language: str = "",
+    language: str = "rel",
     **kwargs,
 ) -> TransactionAsyncResponse:
     tx = TransactionAsync(database, engine, readonly=readonly)
