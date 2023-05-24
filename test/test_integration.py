@@ -90,7 +90,7 @@ class TestTransactionAsync(unittest.TestCase):
 
         # run the current test
         cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-        rsp = api.exec_async(ctx, dbname, engine, cmd)
+        rsp = api.exec_async(ctx, "mocked_db", "mocked_engine", cmd)
 
         # transaction
         self.assertEqual("COMPLETED", rsp.transaction["state"])
