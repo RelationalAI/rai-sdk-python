@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.12
+
+* `create_engine` and `create_engine_wait` accept engine size as a string (e.g. "XS", "M", etc).
+
 ## v0.6.11
 
 * Log warnings if failed to read or write to the local access token cache.
