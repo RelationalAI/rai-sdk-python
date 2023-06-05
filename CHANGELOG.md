@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.11
+
+* Log warnings if failed to read or write to the local access token cache.
+
 ## v0.6.10
 
 * Fix for `ImportError: cannot import name 'appengine' from 'urllib3.contrib'`

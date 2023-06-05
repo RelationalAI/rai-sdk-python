@@ -126,7 +126,8 @@ def _read_cache() -> dict:
     try:
         with open(_cache_file(), 'r') as cache:
             return json.loads(cache.read())
-    except Exception:
+    except Exception as e:
+        logger.warning(f'Failed to read token cache {_cache_file()}: {e}')
         return {}
 
 
@@ -147,8 +148,8 @@ def _write_token_cache(creds: ClientCredentials):
 
         with open(_cache_file(), 'w') as f:
             f.write(json.dumps(cache, default=vars))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f'Failed to write to token cache {_cache_file()}: {e}')
 
 
 # Returns the current access token if valid, otherwise requests new token.
