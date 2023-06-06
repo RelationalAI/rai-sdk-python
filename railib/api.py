@@ -39,16 +39,6 @@ PATH_OAUTH_CLIENT = "/oauth-clients"
 logger = logging.getLogger(__package__)
 
 
-# Engine sizes
-@unique
-class EngineSize(str, Enum):
-    XS = "XS"
-    S = "S"
-    M = "M"
-    L = "L"
-    XL = "XL"
-
-
 # Database modes
 @unique
 class Mode(str, Enum):
@@ -113,7 +103,6 @@ class Permission(str, Enum):
 
 __all__ = [
     "Context",
-    "EngineSize",
     "Mode",
     "Role",
     "Permission",
@@ -371,14 +360,14 @@ def is_engine_term_state(state: str) -> bool:
     return state == "PROVISIONED" or ("FAILED" in state)
 
 
-def create_engine(ctx: Context, engine: str, size: EngineSize = EngineSize.XS, **kwargs):
-    data = {"region": ctx.region, "name": engine, "size": size.value}
+def create_engine(ctx: Context, engine: str, size: str = "XS", **kwargs):
+    data = {"region": ctx.region, "name": engine, "size": size}
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.put(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
-def create_engine_wait(ctx: Context, engine: str, size: EngineSize = EngineSize.XS, **kwargs):
+def create_engine_wait(ctx: Context, engine: str, size: str = "XS", **kwargs):
     create_engine(ctx, engine, size, **kwargs)
     poll_with_specified_overhead(
         lambda: is_engine_term_state(get_engine(ctx, engine)["state"]),

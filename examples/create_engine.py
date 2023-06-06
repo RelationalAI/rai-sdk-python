@@ -18,13 +18,12 @@ from argparse import ArgumentParser
 import json
 from urllib.request import HTTPError
 from railib import api, config, show
-from railib.api import EngineSize
 
 
 def run(engine: str, size: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    api.create_engine_wait(ctx, engine, EngineSize(size))
+    api.create_engine(ctx, engine, size)
     print(json.dumps(api.get_engine(ctx, engine), indent=2))
 
 
