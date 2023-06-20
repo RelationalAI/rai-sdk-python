@@ -36,7 +36,7 @@ else:
 
 ctx = api.Context(**cfg)
 
-suffix = uuid.uuid4()
+suffix = "{runId}-{python_version}".format(runId = os.getenv("RunId"), python_version = os.getenv("PYTHON_VERSION"))
 engine = f"python-sdk-{suffix}"
 dbname = f"python-sdk-{suffix}"
 

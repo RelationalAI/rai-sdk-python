@@ -59,6 +59,8 @@ runs:
         CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
         HOST: ${{ inputs.rai_host }}
         CUSTOM_HEADERS: ${{ inputs.custom_headers }}
+        RunId: ${{ github.run_id	}}
+        PYTHON_VERSION: ${{ matrix.python-version }}
       run: |
         mkdir -p ~/.rai
         python -m unittest
