@@ -41,4 +41,4 @@ jobs:
         client_id: ${{ secrets.CLIENT_ID }}
         client_secret: ${{ secrets.CLIENT_SECRET }}
         client_credentials_url: ${{ secrets.CLIENT_CREDENTIALS_URL }}
-        custom_headers: '{"x-rai-parameter-engine-spec":"{\"experimentalFeatures\":{\"useSpotEngines\": true}}"}'
+        custom_headers: '{"x-rai-parameter-engine-spec":"{\"experimentalFeatures\":{\"useSpotEngines\": false}}"}'
