@@ -31,7 +31,7 @@ jobs:
       id: spotdebugInfo
       if: steps.runonspot.outcome != 'success'
       run: |
-        echo "protential spot engine eviction check this link to confirm https://app.datadoghq.com/logs?query=service%3Aazure%20%40evt.name%3A%22Microsoft.Compute%2FvirtualMachineScaleSets%2FevictSpotVM%2Faction%22%20&agg_q=%40resourceId&cols=host%2Cservice&index=%2A&messageDisplay=inline&sort_m=count&sort_t=count&stream_sort=desc&top_n=10&top_o=top&viz=stream&x_missing=true&from_ts=1686931686080&to_ts=1686946086080&live=true"
+        echo "potential spot engine eviction check this link to confirm https://app.datadoghq.com/logs?query=service%3Aazure%20%40evt.name%3A%22Microsoft.Compute%2FvirtualMachineScaleSets%2FevictSpotVM%2Faction%22%20&agg_q=%40resourceId&cols=host%2Cservice&index=%2A&messageDisplay=inline&sort_m=count&sort_t=count&stream_sort=desc&top_n=10&top_o=top&viz=stream&x_missing=true&from_ts=1686931686080&to_ts=1686946086080&live=true"
 
     - name: TestOnRegular
       id: runonregular
