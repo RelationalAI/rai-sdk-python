@@ -83,5 +83,38 @@ class TestTransactionAsync(unittest.TestCase):
         api.delete_database(ctx, dbname)
 
 
+class TestEngineAPI(unittest.TestCase):
+    def test_get_engine(self):
+        testEngine = f"python-sdk-get-eng-test-{suffix}"
+
+        # ResourceNotFoundError is raised when engine does not exist
+        with self.assertRaises(api.ResourceNotFoundError):
+            api.get_engine(ctx, testEngine, headers=custom_headers)
+
+        # an engine with the name is returned when engine exists
+        api.create_engine_wait(ctx, testEngine, headers=custom_headers)
+
+        rsp = api.get_engine(ctx, testEngine, headers=custom_headers)
+        self.assertEqual(testEngine, rsp["name"])
+        self.assertEqual("PROVISIONED", rsp["state"])
+
+        api.delete_engine(ctx, testEngine, headers=custom_headers)
+
+    def test_delete_engine(self):
+        testEngine = f"python-sdk-del-eng-test-{suffix}"
+
+        rsp = api.create_engine_wait(ctx, testEngine, headers=custom_headers)
+        self.assertEqual("PROVISIONED", rsp["state"])
+        rsp = api.delete_engine(ctx, testEngine, headers=custom_headers)
+        self.assertEqual("DELETING", rsp["status"]["state"])
+
+    def test_delete_engine_wait(self):
+        testEngine = f"python-sdk-del-eng-w-test-{suffix}"
+
+        rsp = api.create_engine_wait(ctx, testEngine, headers=custom_headers)
+        res = api.delete_engine_wait(ctx, testEngine, headers=custom_headers)
+        self.assertEqual(None, res)
+
+
 if __name__ == '__main__':
     unittest.main()
