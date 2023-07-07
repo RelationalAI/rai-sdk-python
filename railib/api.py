@@ -101,6 +101,19 @@ class Permission(str, Enum):
     LIST_ACCESS_KEYS = "list:accesskey"
 
 
+@unique
+class EngineState(str, Enum):
+    REQUESTED = "REQUESTED"
+    UPDATING = "UPDATING"
+    PROVISIONING = "PROVISIONING"
+    PROVISIONED = "PROVISIONED"
+    PROVISION_FAILED = "PROVISION_FAILED"
+    DELETING = "DELETING"
+    SUSPENDED = "SUSPENDED"
+    DEPROVISIONING = "DEPROVISIONING"
+    UNKNOWN = "UNKNOWN"
+
+
 __all__ = [
     "Context",
     "Mode",
@@ -366,8 +379,8 @@ def poll_with_specified_overhead(
             time.sleep(duration)
 
 
-def is_engine_term_state(state: str, targetState: str) -> bool:
-    return state == targetState or ("FAILED" in state)
+def is_engine_provisioning_term_state(state: str) -> bool:
+    return state in [EngineState.PROVISIONED, EngineState.PROVISION_FAILED]
 
 
 def create_engine(ctx: Context, engine: str, size: str = "XS", **kwargs):
@@ -380,7 +393,7 @@ def create_engine(ctx: Context, engine: str, size: str = "XS", **kwargs):
 def create_engine_wait(ctx: Context, engine: str, size: str = "XS", **kwargs):
     create_engine(ctx, engine, size, **kwargs)
     poll_with_specified_overhead(
-        lambda: is_engine_term_state(get_engine(ctx, engine)["state"], "PROVISIONED"),
+        lambda: is_engine_provisioning_term_state(get_engine(ctx, engine)["state"]),
         overhead_rate=0.2,
         timeout=30 * 60,
     )
@@ -430,7 +443,7 @@ def delete_engine_wait(ctx: Context, engine: str, **kwargs) -> bool:
     rsp = delete_engine(ctx, engine, **kwargs)
     rsp = rsp["status"]
 
-    while not is_engine_term_state(rsp["state"], "DELETED"):
+    while rsp["state"] in [EngineState.DEPROVISIONING, EngineState.DELETING]:
         try:
             rsp = get_engine(ctx, engine)
         except ResourceNotFoundError:
