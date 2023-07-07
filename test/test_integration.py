@@ -111,9 +111,13 @@ class TestEngineAPI(unittest.TestCase):
     def test_delete_engine_wait(self):
         testEngine = f"python-sdk-del-eng-w-test-{suffix}"
 
-        rsp = api.create_engine_wait(ctx, testEngine, headers=custom_headers)
+        api.create_engine_wait(ctx, testEngine, headers=custom_headers)
         res = api.delete_engine_wait(ctx, testEngine, headers=custom_headers)
         self.assertEqual(None, res)
+
+        # verifying the engine has been deleted
+        with self.assertRaises(api.ResourceNotFoundError):
+            api.get_engine(ctx, testEngine, headers=custom_headers)
 
 
 if __name__ == '__main__':
