@@ -439,7 +439,7 @@ def delete_engine(ctx: Context, engine: str, **kwargs) -> Dict:
     return json.loads(rsp.read())
 
 
-def delete_engine_wait(ctx: Context, engine: str, **kwargs) -> bool:
+def delete_engine_wait(ctx: Context, engine: str, **kwargs):
     rsp = delete_engine(ctx, engine, **kwargs)
     rsp = rsp["status"]
 
