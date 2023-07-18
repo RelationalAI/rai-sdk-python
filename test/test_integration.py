@@ -83,6 +83,5 @@ class TestTransactionAsync(unittest.TestCase):
         api.delete_database(ctx, dbname)
 
 
-
 if __name__ == '__main__':
     unittest.main()
