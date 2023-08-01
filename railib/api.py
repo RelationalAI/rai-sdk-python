@@ -885,12 +885,13 @@ def exec(
     logger.info('exec: database %s engine %s readonly %s' % (database, engine, readonly))
     start_time = time.time()
     txn = exec_async(ctx, database, engine, command, inputs=inputs, readonly=readonly)
-    # in case of if short-path, return results directly, no need to poll for
-    # state
+    logger.debug('exec: transaction id - %s' % txn.transaction["id"])
+
+    # in case of if short-path, return results directly, no need to poll for state
     if not (txn.results is None):
-        logger.info('transaction id: %s' % txn.transaction["id"])
         return txn
 
+    logger.debug('exec: polling for transaction with id - %s' % txn.transaction["id"])
     rsp = TransactionAsyncResponse()
     txn = get_transaction(ctx, txn.transaction["id"], **kwargs)
 
@@ -899,8 +900,6 @@ def exec(
         overhead_rate=0.2,
         start_time=start_time,
     )
-
-    logger.info('transaction id: %s' % txn["id"])
 
     rsp.transaction = get_transaction(ctx, txn["id"], **kwargs)
     rsp.metadata = get_transaction_metadata(ctx, txn["id"], **kwargs)
