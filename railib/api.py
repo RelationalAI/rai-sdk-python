@@ -101,6 +101,19 @@ class Permission(str, Enum):
     LIST_ACCESS_KEYS = "list:accesskey"
 
 
+@unique
+class EngineState(str, Enum):
+    REQUESTED = "REQUESTED"
+    UPDATING = "UPDATING"
+    PROVISIONING = "PROVISIONING"
+    PROVISIONED = "PROVISIONED"
+    PROVISION_FAILED = "PROVISION_FAILED"
+    DELETING = "DELETING"
+    SUSPENDED = "SUSPENDED"
+    DEPROVISIONING = "DEPROVISIONING"
+    UNKNOWN = "UNKNOWN"
+
+
 __all__ = [
     "Context",
     "Mode",
@@ -112,6 +125,7 @@ __all__ = [
     "create_oauth_client",
     "delete_database",
     "delete_engine",
+    "delete_engine_wait",
     "delete_model",
     "disable_user",
     "enable_user",
@@ -134,7 +148,12 @@ __all__ = [
     "list_oauth_clients",
     "load_csv",
     "update_user",
+    "ResourceNotFoundError",
 ]
+
+class ResourceNotFoundError(Exception):
+    """An error response, typically triggered by a 412 response (for update) or 404 (for get/post)"""
+    pass
 
 
 # Context contains the state required to make rAI API calls.
@@ -221,11 +240,15 @@ def _get_resource(ctx: Context, path: str, key=None, **kwargs) -> Dict:
     url = _mkurl(ctx, path)
     rsp = rest.get(ctx, url, **kwargs)
     rsp = json.loads(rsp.read())
+
     if key:
         rsp = rsp[key]
-    if rsp and isinstance(rsp, list):
-        assert len(rsp) == 1
+
+    if isinstance(rsp, list):
+        if len(rsp) == 0:
+            raise ResourceNotFoundError(f"Resource not found at {url}")
         return rsp[0]
+
     return rsp
 
 
@@ -356,8 +379,8 @@ def poll_with_specified_overhead(
             time.sleep(duration)
 
 
-def is_engine_term_state(state: str) -> bool:
-    return state == "PROVISIONED" or ("FAILED" in state)
+def is_engine_provisioning_term_state(state: str) -> bool:
+    return state in [EngineState.PROVISIONED, EngineState.PROVISION_FAILED]
 
 
 def create_engine(ctx: Context, engine: str, size: str = "XS", **kwargs):
@@ -370,7 +393,7 @@ def create_engine(ctx: Context, engine: str, size: str = "XS", **kwargs):
 def create_engine_wait(ctx: Context, engine: str, size: str = "XS", **kwargs):
     create_engine(ctx, engine, size, **kwargs)
     poll_with_specified_overhead(
-        lambda: is_engine_term_state(get_engine(ctx, engine)["state"]),
+        lambda: is_engine_provisioning_term_state(get_engine(ctx, engine)["state"]),
         overhead_rate=0.2,
         timeout=30 * 60,
     )
@@ -414,6 +437,18 @@ def delete_engine(ctx: Context, engine: str, **kwargs) -> Dict:
     url = _mkurl(ctx, PATH_ENGINE)
     rsp = rest.delete(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
+
+
+def delete_engine_wait(ctx: Context, engine: str, **kwargs):
+    rsp = delete_engine(ctx, engine, **kwargs)
+    rsp = rsp["status"]
+
+    while rsp["state"] in [EngineState.DEPROVISIONING, EngineState.DELETING]:
+        try:
+            rsp = get_engine(ctx, engine)
+        except ResourceNotFoundError:
+            break
+        time.sleep(3)
 
 
 def delete_user(ctx: Context, id: str, **kwargs) -> Dict:
