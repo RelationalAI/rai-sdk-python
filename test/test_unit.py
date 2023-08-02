@@ -65,7 +65,7 @@ class TestURLOpenWithRetry(unittest.TestCase):
                 _urlopen_with_retry(req, 2)
 
         self.assertEqual(mock_urlopen.call_count, 3)  # Expect 1 original call and 2 calls for retries
-        self.assertEqual(len(log.output), 4)  # Expect 3 log messages for timeout and 1 for failure to connect
+        self.assertEqual(len(log.output), 4)  # Expect 3 log messages for retries and 1 for failure to connect
         self.assertIn('Timeout occurred', log.output[0])
         self.assertIn('Timeout occurred', log.output[1])
         self.assertIn('Timeout occurred', log.output[2])

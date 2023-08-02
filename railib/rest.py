@@ -217,6 +217,7 @@ def _authenticate(ctx: Context, req: Request) -> Request:
         return req
     raise Exception("unknown credential type")
 
+
 # Issues an HTTP request and retries if failed due to URLError.
 def _urlopen_with_retry(req: Request, retries: int = 0):
     if retries < 0:
@@ -232,9 +233,10 @@ def _urlopen_with_retry(req: Request, retries: int = 0):
                 logger.warning(f"Timeout occurred (attempt {attempt + 1}/{attempts}): {req.full_url}")
             else:
                 logger.warning(f"URLError occurred {e.reason} (attempt {attempt + 1}/{attempts}): {req.full_url}")
-
-    logger.error(f"Failed to connect to {req.full_url} after {attempts} attempt{'s' if attempts > 1 else ''}")
-    raise Exception(f"Failed after {attempts} attempt{'s' if attempts > 1 else ''}: {req.full_url}")
+            
+            if attempt == attempts - 1:
+                logger.error(f"Failed to connect to {req.full_url} after {attempts} attempt{'s' if attempts > 1 else ''}")
+                raise e
 
 
 # Issues an RAI REST API request, and returns response contents if successful.
