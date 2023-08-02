@@ -48,10 +48,11 @@ logger = logging.getLogger(__package__)
 
 # Context contains the state required to make rAI REST API calls.
 class Context(object):
-    def __init__(self, region: str = None, credentials: Credentials = None):
+    def __init__(self, region: str = None, credentials: Credentials = None, retries: int = 0):
         self.region = region or "us-east"
         self.credentials = credentials
         self.service = "transaction"
+        self.retries = retries
 
 
 # Answers if the keys of the passed dict contain a case insensitive match
@@ -214,19 +215,25 @@ def _authenticate(ctx: Context, req: Request) -> Request:
     raise Exception("unknown credential type")
 
 # Issues an HTTP request and retries if failed due to URLError.
-def _urlopen_with_retry(req: Request, retries: int = 3):
-    for attempt in range(retries):
+def _urlopen_with_retry(req: Request, retries: int = 0):
+    if retries < 0:
+        raise ValueError("Retries must be a non-negative integer")
+
+    attempts = retries + 1
+
+    for attempt in range(attempts):
         try:
             return urlopen(req)
         except URLError as e:
             if isinstance(e.reason, socket.timeout):
-                logger.warning(f"Timeout occurred (attempt {attempt + 1}/{retries}): {req.full_url}")
+                logger.warning(f"Timeout occurred (Attempt {attempt + 1}/{attempts}): {req.full_url}")
             else:
                 logger.warning(f"URLError occurred {e.reason}: {req.full_url}")
-        
-        time.sleep(attempt)
+
+        if retries > 0:
+            time.sleep(attempt + 1)
     
-    logger.error(f"Failed to connect to {req.full_url} after {retries} attempts")
+    logger.error(f"Failed to connect to {req.full_url} after {attempts} attempts")
     raise Exception(f"Failed after {retries} retries: {req.full_url}")
 
 
@@ -239,7 +246,7 @@ def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs
     req = Request(method=method, url=url, headers=headers, data=data)
     req = _authenticate(ctx, req)
     _print_request(req)
-    rsp = _urlopen_with_retry(req)
+    rsp = _urlopen_with_retry(req, ctx.retries)
 
     # logging
     content_type = headers["Content-Type"] if "Content-Type" in headers else ""

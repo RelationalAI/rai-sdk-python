@@ -147,8 +147,9 @@ class Context(rest.Context):
         region: str = None,
         credentials=None,
         audience: str = None,
+        retries: int = 0,
     ):
-        super().__init__(region=region, credentials=credentials)
+        super().__init__(region=region, credentials=credentials, retries=retries)
         self.host = host
         self.port = port or "443"
         self.scheme = scheme or "https"

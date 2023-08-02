@@ -38,10 +38,22 @@ class TestURLOpenWithRetry(unittest.TestCase):
         mock_response.read.return_value = b'Hello, World!'
 
         req = Request('https://example.com')
-        response = _urlopen_with_retry(req)
 
+        response = _urlopen_with_retry(req)
         self.assertEqual(response.read(), b'Hello, World!')
         mock_urlopen.assert_called_once_with(req)
+
+        response = _urlopen_with_retry(req, 3)
+        self.assertEqual(response.read(), b'Hello, World!')
+        self.assertEqual(mock_urlopen.call_count, 2)
+
+    def test_negative_retries(self, _):
+        req = Request('https://example.com')
+
+        with self.assertRaises(Exception) as e:
+            _urlopen_with_retry(req, -1)
+
+        self.assertIn("Retries must be a non-negative integer", str(e.exception))
 
     def test_timeout_retry(self, mock_urlopen):
         # Set up the mock urlopen to raise a socket timeout error
@@ -50,10 +62,10 @@ class TestURLOpenWithRetry(unittest.TestCase):
         req = Request('https://example.com')
         with self.assertLogs() as log:
             with self.assertRaises(Exception):
-                _urlopen_with_retry(req, 3)
+                _urlopen_with_retry(req, 2)
 
-        self.assertEqual(mock_urlopen.call_count, 3)  # Expect 3 calls for retries
-        self.assertEqual(len(log.output), 4)  # Expect 3 log messages for retries and 1 for failure to connect
+        self.assertEqual(mock_urlopen.call_count, 3)  # Expect 1 original call and 2 calls for retries
+        self.assertEqual(len(log.output), 4)  # Expect 3 log messages for timeout and 1 for failure to connect
         self.assertIn('Timeout occurred', log.output[0])
         self.assertIn('Timeout occurred', log.output[1])
         self.assertIn('Timeout occurred', log.output[2])
@@ -66,7 +78,7 @@ class TestURLOpenWithRetry(unittest.TestCase):
         req = Request('https://example.com')
         with self.assertLogs() as log:
             with self.assertRaises(Exception):
-                _urlopen_with_retry(req, retries=3)
+                _urlopen_with_retry(req, retries=2)
 
         self.assertEqual(mock_urlopen.call_count, 3)  # Expect 3 calls for retries
         self.assertEqual(len(log.output), 4)  # Expect 3 log messages for retries and 1 for failure to connect
