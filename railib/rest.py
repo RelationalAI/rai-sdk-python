@@ -49,6 +49,9 @@ logger = logging.getLogger(__package__)
 # Context contains the state required to make rAI REST API calls.
 class Context(object):
     def __init__(self, region: str = None, credentials: Credentials = None, retries: int = 0):
+        if retries < 0:
+            raise ValueError("Retries must be a non-negative integer")
+
         self.region = region or "us-east"
         self.credentials = credentials
         self.service = "transaction"
@@ -230,11 +233,8 @@ def _urlopen_with_retry(req: Request, retries: int = 0):
             else:
                 logger.warning(f"URLError occurred {e.reason} (attempt {attempt + 1}/{attempts}): {req.full_url}")
 
-        if retries > 0:
-            time.sleep(attempt + 1)
-    
     logger.error(f"Failed to connect to {req.full_url} after {attempts} attempt{'s' if attempts > 1 else ''}")
-    raise Exception(f"Failed after {retries} retries: {req.full_url}")
+    raise Exception(f"Failed after {attempts} attempt{'s' if attempts > 1 else ''}: {req.full_url}")
 
 
 # Issues an RAI REST API request, and returns response contents if successful.
