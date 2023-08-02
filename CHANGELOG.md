@@ -3,6 +3,8 @@
 ## v0.6.14
 
 * Added a retry mechanism for HTTP failures raised as `URLError`.
+    * Defaults to `0` retries
+    * Configurable through `Context` (example `Context(**cfg, retries=3)` to set retries to 3)
 
 ## v0.6.13
 
