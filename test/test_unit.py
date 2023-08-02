@@ -27,6 +27,7 @@ class TestPolling(unittest.TestCase):
         api.poll_with_specified_overhead(lambda: True, overhead_rate=0.1, max_tries=1)
         api.poll_with_specified_overhead(lambda: True, overhead_rate=0.1, timeout=1, max_tries=1)
 
+
 @patch('railib.rest.urlopen')
 class TestURLOpenWithRetry(unittest.TestCase):
 
