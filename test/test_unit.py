@@ -7,11 +7,6 @@ from urllib.request import Request
 from railib import api
 from railib.rest import _urlopen_with_retry
 
-import logging
-
-# Configure the logging settings for the tests
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
 
 class TestPolling(unittest.TestCase):
     def test_timeout_exception(self):
