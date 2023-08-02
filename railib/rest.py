@@ -213,7 +213,7 @@ def _authenticate(ctx: Context, req: Request) -> Request:
         return req
     raise Exception("unknown credential type")
 
-# Issues an HTTP request and retries if failed due to timeout.
+# Issues an HTTP request and retries if failed due to URLError.
 def _urlopen_with_retry(req: Request, retries: int = 3):
     for attempt in range(retries):
         try:
