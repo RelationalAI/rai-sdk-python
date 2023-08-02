@@ -17,6 +17,9 @@
 import json
 import logging
 from os import path
+import socket
+import time
+from urllib.error import URLError
 from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
 
@@ -45,10 +48,14 @@ logger = logging.getLogger(__package__)
 
 # Context contains the state required to make rAI REST API calls.
 class Context(object):
-    def __init__(self, region: str = None, credentials: Credentials = None):
+    def __init__(self, region: str = None, credentials: Credentials = None, retries: int = 0):
+        if retries < 0:
+            raise ValueError("Retries must be a non-negative integer")
+
         self.region = region or "us-east"
         self.credentials = credentials
         self.service = "transaction"
+        self.retries = retries
 
 
 # Answers if the keys of the passed dict contain a case insensitive match
@@ -211,6 +218,27 @@ def _authenticate(ctx: Context, req: Request) -> Request:
     raise Exception("unknown credential type")
 
 
+# Issues an HTTP request and retries if failed due to URLError.
+def _urlopen_with_retry(req: Request, retries: int = 0):
+    if retries < 0:
+        raise ValueError("Retries must be a non-negative integer")
+
+    attempts = retries + 1
+
+    for attempt in range(attempts):
+        try:
+            return urlopen(req)
+        except URLError as e:
+            if isinstance(e.reason, socket.timeout):
+                logger.warning(f"Timeout occurred (attempt {attempt + 1}/{attempts}): {req.full_url}")
+            else:
+                logger.warning(f"URLError occurred {e.reason} (attempt {attempt + 1}/{attempts}): {req.full_url}")
+            
+            if attempt == attempts - 1:
+                logger.error(f"Failed to connect to {req.full_url} after {attempts} attempt{'s' if attempts > 1 else ''}")
+                raise e
+
+
 # Issues an RAI REST API request, and returns response contents if successful.
 def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs):
     headers = _default_headers(url, headers)
@@ -220,7 +248,7 @@ def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs
     req = Request(method=method, url=url, headers=headers, data=data)
     req = _authenticate(ctx, req)
     _print_request(req)
-    rsp = urlopen(req)
+    rsp = _urlopen_with_retry(req, ctx.retries)
 
     # logging
     content_type = headers["Content-Type"] if "Content-Type" in headers else ""
