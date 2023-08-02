@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.6.13
+## v0.6.14
 
 * Added a retry mechanism for HTTP failures raised as `URLError`.
 
