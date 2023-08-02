@@ -17,6 +17,9 @@
 import json
 import logging
 from os import path
+import socket
+import time
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
 
@@ -210,6 +213,22 @@ def _authenticate(ctx: Context, req: Request) -> Request:
         return req
     raise Exception("unknown credential type")
 
+# Issues an HTTP request and retries if failed due to timeout.
+def _urlopen_with_retry(req: Request, retries: int = 3):
+    for attempt in range(retries):
+        try:
+            return urlopen(req)
+        except URLError as e:
+            if isinstance(e.reason, socket.timeout):
+                logger.warning(f"Timeout occurred (attempt {attempt + 1}/{retries}): {req.full_url}")
+            else:
+                logger.warning(f"URLError occurred {e.reason}: {req.full_url}")
+        
+        time.sleep(attempt)
+    
+    logger.error(f"Failed to connect to {req.full_url} after {retries} attempts")
+    raise Exception(f"Failed after {retries} retries: {req.full_url}")
+
 
 # Issues an RAI REST API request, and returns response contents if successful.
 def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs):
@@ -220,7 +239,7 @@ def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs
     req = Request(method=method, url=url, headers=headers, data=data)
     req = _authenticate(ctx, req)
     _print_request(req)
-    rsp = urlopen(req)
+    rsp = _urlopen_with_retry(req)
 
     # logging
     content_type = headers["Content-Type"] if "Content-Type" in headers else ""

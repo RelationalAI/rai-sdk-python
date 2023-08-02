@@ -2,6 +2,10 @@
 
 ## v0.6.13
 
+* Added a retry mechanism for HTTP failures raised as `URLError`.
+
+## v0.6.13
+
 * Improved debug logging for `exec`.
 
 ## v0.6.12
