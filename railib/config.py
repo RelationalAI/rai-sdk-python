@@ -60,7 +60,7 @@ def read(fname: str = "~/.rai/config", profile: str = "default"):
         raise Exception(f"can't find file: {path}")
     data = _read_config_profile(path, profile)
     creds = _read_credentials(data, path)
-    _keys = ["host", "port", "region", "scheme", "audience"]
+    _keys = ["host", "port", "region", "scheme", "audience", "retries"]
     result = {k: v for k, v in data.items() if k in _keys}
     result["credentials"] = creds
     return result
