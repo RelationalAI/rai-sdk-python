@@ -40,8 +40,8 @@ class AccessToken:
 
     def is_expired(self):
         return (
-            time.time() - self.created_on >= self.expires_in - 5
-        )  # anticipate token expiration by 5 seconds
+            time.time() - self.created_on >= self.expires_in - 60
+        )  # anticipate token expiration by 60 seconds
 
 
 # Represents OAuth client credentials.
