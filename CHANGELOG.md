@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.15
+
+* Increase auth token expiration buffer from 5s to 60s.
+
 ## v0.6.14
 
 * Added a retry mechanism for HTTP failures raised as `URLError`.
