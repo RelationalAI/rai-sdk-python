@@ -17,8 +17,6 @@
 import json
 import logging
 from os import path
-import socket
-import time
 from urllib.error import URLError
 from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
@@ -228,11 +226,8 @@ def _urlopen_with_retry(req: Request, retries: int = 0):
     for attempt in range(attempts):
         try:
             return urlopen(req)
-        except URLError as e:
-            if isinstance(e.reason, socket.timeout):
-                logger.warning(f"Timeout occurred (attempt {attempt + 1}/{attempts}): {req.full_url}")
-            else:
-                logger.warning(f"URLError occurred {e.reason} (attempt {attempt + 1}/{attempts}): {req.full_url}")
+        except (URLError, ConnectionError) as e:
+            logger.warning(f"URL/Connection error occured {req.full_url} (attempt {attempt + 1}/{attempts}). Error message: {str(e)}")
             
             if attempt == attempts - 1:
                 logger.error(f"Failed to connect to {req.full_url} after {attempts} attempt{'s' if attempts > 1 else ''}")

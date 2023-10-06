@@ -31,6 +31,9 @@ class TestPolling(unittest.TestCase):
 @patch('railib.rest.urlopen')
 class TestURLOpenWithRetry(unittest.TestCase):
 
+    WARNING_LOG_PREFIX = "URL/Connection error occured"
+    ERROR_LOG_PREFIX = "Failed to connect to"
+
     def test_successful_response(self, mock_urlopen):
         # Set up the mock urlopen to return a successful response
         mock_response = MagicMock()
@@ -55,7 +58,7 @@ class TestURLOpenWithRetry(unittest.TestCase):
 
         self.assertIn("Retries must be a non-negative integer", str(e.exception))
 
-    def test_timeout_retry(self, mock_urlopen):
+    def test_url_error_retry(self, mock_urlopen):
         # Set up the mock urlopen to raise a socket timeout error
         mock_urlopen.side_effect = URLError(socket.timeout())
 
@@ -66,26 +69,27 @@ class TestURLOpenWithRetry(unittest.TestCase):
 
         self.assertEqual(mock_urlopen.call_count, 3)  # Expect 1 original call and 2 calls for retries
         self.assertEqual(len(log.output), 4)  # Expect 3 log messages for retries and 1 for failure to connect
-        self.assertIn('Timeout occurred', log.output[0])
-        self.assertIn('Timeout occurred', log.output[1])
-        self.assertIn('Timeout occurred', log.output[2])
-        self.assertIn('Failed to connect to', log.output[3])
+        self.assertIn(TestURLOpenWithRetry.WARNING_LOG_PREFIX, log.output[0])
+        self.assertIn(TestURLOpenWithRetry.WARNING_LOG_PREFIX, log.output[1])
+        self.assertIn(TestURLOpenWithRetry.WARNING_LOG_PREFIX, log.output[2])
+        self.assertIn(TestURLOpenWithRetry.ERROR_LOG_PREFIX, log.output[3])
 
-    def test_other_error_retry(self, mock_urlopen):
-        # Set up the mock urlopen to raise a non-timeout URLError
-        mock_urlopen.side_effect = URLError('Some other error')
+    def test_connection_error_retry(self, mock_urlopen):
+        # Set up the mock urlopen to raise a error that is subclass of ConnectonError
+        mock_urlopen.side_effect = ConnectionResetError("connection reset by peer")
 
         req = Request('https://example.com')
         with self.assertLogs() as log:
             with self.assertRaises(Exception):
-                _urlopen_with_retry(req, retries=2)
+                _urlopen_with_retry(req, 2)
 
-        self.assertEqual(mock_urlopen.call_count, 3)  # Expect 3 calls for retries
+        self.assertEqual(mock_urlopen.call_count, 3)  # Expect 1 original call and 2 calls for retries
         self.assertEqual(len(log.output), 4)  # Expect 3 log messages for retries and 1 for failure to connect
-        self.assertIn('URLError occurred', log.output[0])
-        self.assertIn('URLError occurred', log.output[1])
-        self.assertIn('URLError occurred', log.output[2])
-        self.assertIn('Failed to connect to', log.output[3])
+        self.assertIn(TestURLOpenWithRetry.WARNING_LOG_PREFIX, log.output[0])
+        self.assertIn(TestURLOpenWithRetry.WARNING_LOG_PREFIX, log.output[1])
+        self.assertIn(TestURLOpenWithRetry.WARNING_LOG_PREFIX, log.output[2])
+        self.assertIn(TestURLOpenWithRetry.ERROR_LOG_PREFIX, log.output[3])
+
 
 
 if __name__ == '__main__':
