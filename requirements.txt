@@ -1,7 +1,5 @@
 grpcio==1.54.0
 grpcio-tools==1.47.0
-protobuf==3.20.2
-pyarrow==6.0.1
-requests==2.30.0
+protobuf==3.20.3
+pyarrow==10.0.1
 requests-toolbelt==1.0.0
-urllib3==2.0.2
