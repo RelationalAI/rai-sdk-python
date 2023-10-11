@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.6.17
+
+* Removed unnecessary dependencies of the SDK, bumped Pyarrow to v10.
+
+
 ## v0.6.16
 
 * Expanded the retry mechanism for HTTP failures raised as `ConnectionError`.
