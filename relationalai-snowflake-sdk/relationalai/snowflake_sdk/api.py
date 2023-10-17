@@ -35,19 +35,20 @@ __all__ = [
 ]
 
 
-def create_database(session: Session, database: str) -> DataFrame:
-    return session.sql(f"SELECT RAI.CREATE_RAI_DATABASE('{database}')")
+def create_database(session: Session, database: str) -> bool:
+    create_db_res = session.sql(f"SELECT RAI.CREATE_RAI_DATABASE('{database}')").collect()
 
-def delete_database(session: Session, database: str) -> DataFrame:
-    return session.sql(f"SELECT RAI.DELETE_RAI_DATABASE('{database}')")
+    return create_db_res[0][0] == '"ok"'
+
+def delete_database(session: Session, database: str) -> bool:
+    delete_db_res = session.sql(f"SELECT RAI.DELETE_RAI_DATABASE('{database}')").collect()
+
+    return delete_db_res[0][0] == '"ok"'
 
 def get_database(session: Session, database: str) -> DataFrame:
     return session.sql(f"SELECT RAI.GET_RAI_DATABASE('{database}')")
 
 def list_databases(session: Session) -> DataFrame:
-    return session.sql(f"SELECT RAI.LIST_RAI_DATABASES()")
-
-def tabular_list_databases(session: Session) -> DataFrame:
     return session.sql("""SELECT
         value:id::string as ID
         ,value:account_name::string as ACCOUNT_NAME
