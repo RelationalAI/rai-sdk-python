@@ -194,13 +194,15 @@ def _request_access_token(ctx: Context, url: str) -> AccessToken:
         data=data,
     )
     _print_request(req)
-    with urlopen(req) as rsp:
-        result = json.loads(rsp.read())
-        token = result.get(ACCESS_KEY_TOKEN_KEY, None)
-        if token is not None:
-            expires_in = result.get(EXPIRES_IN_KEY, None)
-            scope = result.get(SCOPE, None)
-            return AccessToken(token, scope, expires_in)
+    rsp = _urlopen_with_retry(req, ctx.retries)
+    result = json.loads(rsp.read())
+    token = result.get(ACCESS_KEY_TOKEN_KEY, None)
+
+    if token is not None:
+        expires_in = result.get(EXPIRES_IN_KEY, None)
+        scope = result.get(SCOPE, None)
+        return AccessToken(token, scope, expires_in)
+
     raise Exception("failed to get the access token")
 
 
