@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.18
+
+* Added retry mechanism for the authentication flow.
+
 ## v0.6.17
 
 * Removed unnecessary dependencies of the SDK, bumped Pyarrow to v10.
