@@ -39,7 +39,7 @@ connection_parameters = {
 
 session = Session.builder.configs(connection_parameters).create()
 
-api.use_schema(session, "#database.schema where RAI SQL Library is installed")
+api.use_schema(session, "DATABASE.SCHEMA where RelationalAI SQL Library is installed")
 
 api.create_database(session, "my-database")
 ```
