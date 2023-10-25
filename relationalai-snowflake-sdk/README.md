@@ -31,7 +31,7 @@ Create a session according to [Snowpark API](https://docs.snowflake.com/en/devel
 from snowflake.snowpark import Session
 from relationalai.snowflake_sdk import api
 
-# 
+
 connection_parameters = {
     "user": "...",
     # and any other connection parameters
