@@ -9,7 +9,7 @@ namespaces = true
 
 [project]
 name = "relationalai-snowflake-sdk"
-description = "The RelationalAI Software Development Kit for Python"
+description = "# The RelationalAI Software Development Kit for Snowflake Snowpark Python"
 license = { text = "http://www.apache.org/licenses/LICENSE-2.0" }
 readme = "README.md"
 authors = [

@@ -1,4 +1,4 @@
-# The RelationalAI Software Development Kit for Snowflake Snowpark
+# The RelationalAI Software Development Kit for Snowflake Snowpark Python
 
 The RelationalAI (RAI) SDK for Python enables developers to access the RAI
 APIs from Snowflake Snowpark.
