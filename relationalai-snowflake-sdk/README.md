@@ -23,6 +23,27 @@ $ cd rai-sdk-python
 $ [sudo] pip install -e relationalai-snowflake-sdk
 ```
 
+### Usage
+
+Create a session according to [Snowpark API](https://docs.snowflake.com/en/developer-guide/snowpark/python/creating-session)
+
+```python
+from snowflake.snowpark import Session
+from relationalai.snowflake_sdk import api
+
+# 
+connection_parameters = {
+    "user": "...",
+    # and any other connection parameters
+}
+
+session = Session.builder.configs(connection_parameters).create()
+
+api.use_schema(session, "#database.schema where RAI SQL Library is installed")
+
+api.create_database(session, "my-database")
+```
+
 ## Support
 
 You can reach the RAI developer support team at `support@relational.ai`
