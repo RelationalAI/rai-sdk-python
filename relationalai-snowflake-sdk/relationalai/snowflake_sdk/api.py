@@ -52,18 +52,17 @@ __all__ = [
     "ping",
 ]
 
-
 #################################
 # DATABASE
 #################################
 
 
 def create_database(session: Session, database: str) -> List[Row]:
-    return session.sql(f"select RAI.CREATE_RAI_DATABASE('{database}') as status").collect()
+    return session.sql(f"select CREATE_RAI_DATABASE('{database}') as status").collect()
 
 
 def delete_database(session: Session, database: str) -> List[Row]:
-    return session.sql(f"select RAI.DELETE_RAI_DATABASE('{database}') as status").collect()
+    return session.sql(f"select DELETE_RAI_DATABASE('{database}') as status").collect()
 
 
 def get_database(session: Session, database: str) -> DataFrame:
@@ -76,7 +75,7 @@ def get_database(session: Session, database: str) -> DataFrame:
             res:region::string        as region,
             res:state::string         as state
         from
-            (select RAI.GET_RAI_DATABASE('{database}') as res);
+            (select GET_RAI_DATABASE('{database}') as res);
     """)
 
 
@@ -90,13 +89,13 @@ def list_databases(session: Session) -> DataFrame:
             value:region::string       as region,
             value:state::string        as state
         from
-            (select RAI.LIST_RAI_DATABASES() as res),
+            (select LIST_RAI_DATABASES() as res),
             lateral flatten (input => res)
     """)
 
 
 def use_database(session: Session, database: str) -> List[Row]:
-    res = session.sql(f"call RAI.USE_RAI_DATABASE('{database}')").collect()
+    res = session.sql(f"call USE_RAI_DATABASE('{database}')").collect()
 
     if res[0][0] != database:
         rsp = json.loads(res[0][0])
@@ -108,7 +107,7 @@ def use_database(session: Session, database: str) -> List[Row]:
 
 
 def get_current_database(session: Session) -> DataFrame:
-    return session.sql("select RAI.CURRENT_RAI_DATABASE() as current_database")
+    return session.sql("select CURRENT_RAI_DATABASE() as current_database")
 
 
 #################################
@@ -116,11 +115,11 @@ def get_current_database(session: Session) -> DataFrame:
 #################################
 
 def create_engine(session: Session, engine: str, size: str = 'XS') -> List[Row]:
-    return session.sql(f"select RAI.CREATE_RAI_ENGINE('{engine}', '{size}') as status").collect()
+    return session.sql(f"select CREATE_RAI_ENGINE('{engine}', '{size}') as status").collect()
 
 
 def delete_engine(session: Session, engine: str) -> List[Row]:
-    return session.sql(f"select RAI.DELETE_RAI_ENGINE('{engine}') as status").collect()
+    return session.sql(f"select DELETE_RAI_ENGINE('{engine}') as status").collect()
 
 
 def get_engine(session: Session, engine: str) -> DataFrame:
@@ -135,7 +134,7 @@ def get_engine(session: Session, engine: str) -> DataFrame:
             res:size::string         as size,
             res:state::string        as state
         from
-            (select RAI.GET_RAI_ENGINE('{engine}') as res);
+            (select GET_RAI_ENGINE('{engine}') as res);
     """)
 
 
@@ -151,13 +150,13 @@ def list_engines(session: Session) -> DataFrame:
             value:size::string         as size,
             value:state::string        as state
         from
-            (select RAI.LIST_RAI_ENGINES() as res),
+            (select LIST_RAI_ENGINES() as res),
             lateral flatten (input => res);
 """)
 
 
 def use_engine(session: Session, engine: str) -> List[Row]:
-    res = session.sql(f"CALL RAI.USE_RAI_ENGINE('{engine}')").collect()
+    res = session.sql(f"CALL USE_RAI_ENGINE('{engine}')").collect()
 
     if res[0][0] != engine:
         rsp = json.loads(res[0][0])
@@ -169,7 +168,7 @@ def use_engine(session: Session, engine: str) -> List[Row]:
 
 
 def get_current_engine(session: Session) -> DataFrame:
-    return session.sql("select RAI.CURRENT_RAI_ENGINE() as current_engine")
+    return session.sql("select CURRENT_RAI_ENGINE() as current_engine")
 
 
 #################################
@@ -178,11 +177,11 @@ def get_current_engine(session: Session) -> DataFrame:
 
 
 def exec(session: Session, database: str, engine: str, query: str, data=None, readonly: bool = True) -> DataFrame:
-    return session.sql(f"select RAI.EXEC('{database}', '{engine}', '{query}', {data if data else 'null'}, {readonly})")
+    return session.sql(f"select EXEC('{database}', '{engine}', '{query}', {data if data else 'null'}, {readonly})")
 
 
 def exec_into(session: Session, database: str, engine: str, query: str, warehouse: str, target: str, data=None, readonly: bool = True) -> DataFrame:
-    return session.sql(f"select RAI.EXEC_INTO('{database}', '{engine}', '{query}', '{data if data else 'null'}', {readonly}, '{warehouse}', '{target}')")
+    return session.sql(f"select EXEC_INTO('{database}', '{engine}', '{query}', '{data if data else 'null'}', {readonly}, '{warehouse}', '{target}')")
 
 
 #################################
@@ -190,15 +189,15 @@ def exec_into(session: Session, database: str, engine: str, query: str, warehous
 #################################
 
 def load_model(session: Session, database: str, engine: str, name: str, path: str) -> List[Row]:
-    return session.sql(f"select RAI.LOAD_MODEL('{database}', '{engine}', '{name}', '{path}')").collect()
+    return session.sql(f"select LOAD_MODEL('{database}', '{engine}', '{name}', '{path}')").collect()
 
 
 def load_model_code(session: Session, database: str, engine: str, name: str, code: str) -> List[Row]:
-    return session.sql(f"select RAI.LOAD_MODEL_CODE('{database}', '{engine}', '{name}', '{code}')").collect()
+    return session.sql(f"select LOAD_MODEL_CODE('{database}', '{engine}', '{name}', '{code}')").collect()
 
 
 def load_model_query(session: Session, name: str, path: str) -> List[Row]:
-    return session.sql(f"select RAI.LOAD_MODEL_QUERY('{name}', '{path}')").collect()
+    return session.sql(f"select LOAD_MODEL_QUERY('{name}', '{path}')").collect()
 
 #################################
 # Data Stream
@@ -206,23 +205,23 @@ def load_model_query(session: Session, name: str, path: str) -> List[Row]:
 
 
 def create_data_stream(session: Session, data_source: str, database: str, base_relation: str) -> List[Row]:
-    return session.sql(f"select RAI.CREATE_DATA_STREAM('{data_source}', '{database}', '{base_relation}') as status").collect()
+    return session.sql(f"select CREATE_DATA_STREAM('{data_source}', '{database}', '{base_relation}') as status").collect()
 
 
 def delete_data_stream(session: Session, data_source: str) -> List[Row]:
-    return session.sql(f"select RAI.DELETE_DATA_STREAM('{data_source}') as status").collect()
+    return session.sql(f"select DELETE_DATA_STREAM('{data_source}') as status").collect()
 
 
 def get_data_stream(session: Session, data_source: str) -> DataFrame:
-    return session.sql(f"select RAI.GET_DATA_STREAM('{data_source}')")
+    return session.sql(f"select GET_DATA_STREAM('{data_source}')")
 
 
 def get_data_stream_status(session: Session, data_source: str) -> DataFrame:
-    return session.sql(f"select RAI.GET_DATA_STREAM_STATUS('{data_source}') as status")
+    return session.sql(f"select GET_DATA_STREAM_STATUS('{data_source}') as status")
 
 
 def list_data_streams(session: Session) -> DataFrame:
-    return session.sql(f"select RAI.LIST_DATA_STREAMS()")
+    return session.sql(f"select LIST_DATA_STREAMS()")
 
 #################################
 # Misc
@@ -230,8 +229,12 @@ def list_data_streams(session: Session) -> DataFrame:
 
 
 def load_data(session: Session, database: str, relation: str, primary_key: str, query: str) -> List[Row]:
-    return session.sql(f"select RAI.LOAD_DATA('{database}', '{relation}', '{primary_key}', '{query}')").collect()
+    return session.sql(f"select LOAD_DATA('{database}', '{relation}', '{primary_key}', '{query}')").collect()
 
 
 def ping(session: Session) -> List[Row]:
-    return session.sql("select RAI.PING() as result").collect()
+    return session.sql("select PING() as result").collect()
+
+
+def use_schema(session: Session, searchPath: str) -> List[Row]:
+    return session.sql(f"alter session set SEARCH_PATH = '$current, $public, {searchPath}'").collect()
