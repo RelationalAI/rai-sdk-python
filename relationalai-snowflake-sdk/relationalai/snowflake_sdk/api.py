@@ -204,24 +204,53 @@ def load_model_query(session: Session, name: str, path: str) -> List[Row]:
 #################################
 
 
-def create_data_stream(session: Session, data_source: str, database: str, base_relation: str) -> List[Row]:
-    return session.sql(f"select CREATE_DATA_STREAM('{data_source}', '{database}', '{base_relation}') as status").collect()
+def create_data_stream(session: Session, data_source: str, database: str, relation: str) -> List[Row]:
+    return session.sql(f"call CREATE_DATA_STREAM('{data_source}', '{database}', '{relation}')").collect()
 
 
 def delete_data_stream(session: Session, data_source: str) -> List[Row]:
-    return session.sql(f"select DELETE_DATA_STREAM('{data_source}') as status").collect()
+    return session.sql(f"call DELETE_DATA_STREAM('{data_source}')").collect()
 
 
-def get_data_stream(session: Session, data_source: str) -> DataFrame:
-    return session.sql(f"select GET_DATA_STREAM('{data_source}')")
+def get_data_stream(session: Session, data_source_fq_name: str) -> DataFrame:
+    return session.sql(f"""
+        select
+            res:id::string            as id,
+            res:account::string       as account,
+            res:createdBy::string     as created_by,
+            res:createdOn::string     as created_on,
+            res:dbLink::string        as database_link,
+            res:integration::string   as integration,
+            res:name::string          as name,
+            res:state::string         as state,
+            res:rai::object           as rai,
+            res:snowflake::object     as snowflake
+        from
+            (select GET_DATA_STREAM('{data_source_fq_name}') as res)
+    """)
 
 
-def get_data_stream_status(session: Session, data_source: str) -> DataFrame:
-    return session.sql(f"select GET_DATA_STREAM_STATUS('{data_source}') as status")
+def get_data_stream_status(session: Session, data_source_name: str) -> DataFrame:
+    return session.sql(f"call GET_DATA_STREAM_STATUS('{data_source_name}')")
 
 
 def list_data_streams(session: Session) -> DataFrame:
-    return session.sql(f"select LIST_DATA_STREAMS()")
+    return session.sql(f"""
+        select
+            value:id::string            as id,
+            value:account::string       as account,
+            value:createdBy::string     as created_by,
+            value:createdOn::string     as created_on,
+            value:dbLink::string        as database_link,
+            value:integration::string   as integration,
+            value:name::string          as name,
+            value:state::string         as state,
+            value:rai::object           as rai,
+            value:snowflake::object     as snowflake
+        from
+            (select LIST_DATA_STREAMS() as res),
+            lateral flatten (input => res)
+    """)
 
 #################################
 # Misc
