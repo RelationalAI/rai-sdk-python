@@ -11,7 +11,7 @@ from logging.config import fileConfig
 from relationalai.snowflake_sdk import api
 
 
-connection_parameters = {
+connection_parameters = { # override to your own connection parameters
     "user": "",
     "password": "",
     "account": "",
@@ -19,6 +19,8 @@ connection_parameters = {
     "schema": "",
 }
 
+FQ_SCHEMA = "<SF_DB>.<SF_SCHEMA>" # override to whatever schema you want to use for testing
+RAI_SCHEMA = "<SF_DB>.<SF_SCHEMA_FOR_RAI_LIB>" # override to whatever schema you want to use for testing
 
 suffix = uuid.uuid4()
 engine_name = f"snowflake-python-sdk-{suffix}"
@@ -28,14 +30,24 @@ db_name = f"snowflake-python-sdk-{suffix}"
 fileConfig("./test/logger.config")
 
 
+def generate_engine_name():
+    return f"snowflake-python-sdk-eng-{uuid.uuid4()}"
+
+
+def generate_db_name():
+    return f"snowflake-python-sdk-db-{uuid.uuid4()}"
+
+
 def check_status_ok(res: List[Row]):
     return res[0]["STATUS"] == '"ok"'
 
 
 class TestDatabaseAPI(unittest.TestCase):
+    DATABASE_RESPONSE_FIELDS = ["ID", "ACCOUNT_NAME", "CREATED_BY", "NAME", "REGION", "STATE"]
+
     def setUp(self):
         self.session = Session.builder.configs(connection_parameters).create()
-        api.use_schema(self.session, "SNOWFLAKE_INTEGRATION_SANDBOX.RAI")
+        api.use_schema(self.session, RAI_SCHEMA)
 
     def test_create_database(self):
         create_database_res = api.create_database(self.session, db_name)
@@ -62,12 +74,8 @@ class TestDatabaseAPI(unittest.TestCase):
 
         first_db = list_dbs_res[0]
 
-        self.assertTrue(hasattr(first_db, 'ID'))
-        self.assertTrue(hasattr(first_db, 'ACCOUNT_NAME'))
-        self.assertTrue(hasattr(first_db, 'CREATED_BY'))
-        self.assertTrue(hasattr(first_db, 'NAME'))
-        self.assertTrue(hasattr(first_db, 'REGION'))
-        self.assertTrue(hasattr(first_db, 'STATE'))
+        for field in self.DATABASE_RESPONSE_FIELDS:
+            self.assertTrue(hasattr(first_db, field))
 
         api.delete_database(self.session, db_name)
 
@@ -79,12 +87,8 @@ class TestDatabaseAPI(unittest.TestCase):
 
         first_db = get_db_res[0]
 
-        self.assertTrue(hasattr(first_db, 'ID'))
-        self.assertTrue(hasattr(first_db, 'ACCOUNT_NAME'))
-        self.assertTrue(hasattr(first_db, 'CREATED_BY'))
-        self.assertTrue(hasattr(first_db, 'NAME'))
-        self.assertTrue(hasattr(first_db, 'REGION'))
-        self.assertTrue(hasattr(first_db, 'STATE'))
+        for field in self.DATABASE_RESPONSE_FIELDS:
+            self.assertTrue(hasattr(first_db, field))
 
     def test_use_database(self):
         api.create_database(self.session, db_name)
@@ -103,93 +107,81 @@ class TestDatabaseAPI(unittest.TestCase):
         self.session.close()
 
 
-# Commenting out because the tests fail intermittently because of the SF timeout handling and SF external function retries.
-# Can be uncommented once we modify the implementation of create engine API in the snoflake integration service to handle the timeout and retries  behavior of SF.
-#
-# class TestEngineAPI(unittest.TestCase):
-#     def setUp(self):
-#         self.session = session or Session.builder.configs(connection_parameters).create()
-#         self.engine_name = f"snowflake-python-sdk-{uuid.uuid4()}"
+@unittest.skip("Skipping until we implement a new engine API that follows the async pattern.")
+class TestEngineAPI(unittest.TestCase):
+    ENGINE_RESPONSE_FIELDS = ["ACCOUNT_NAME", "CREATED_BY", "CREATED_ON", "ID", "NAME", "REGION", "SIZE", "STATE"]
 
-#     def test_create_engine(self):
-#         print("test_create_engine", self.engine_name)
-#         create_engine_res = api.create_engine(self.session, self.engine_name)
-#         self.assertTrue(check_status_ok(create_engine_res))
+    def setUp(self):
+        self.session = Session.builder.configs(connection_parameters).create()
+        self.engine_name = generate_engine_name()
 
-#         with self.assertRaises(SnowparkSQLException):
-#             api.create_engine(self.session, self.engine_name)
+    def test_create_engine(self):
+        print("test_create_engine", self.engine_name)
+        create_engine_res = api.create_engine(self.session, self.engine_name)
+        self.assertTrue(check_status_ok(create_engine_res))
 
-#     def test_delete_engine(self):
-#         print("test_delete_engine", self.engine_name)
-#         create_engine_res = api.create_engine(self.session, self.engine_name)
-#         self.assertTrue(check_status_ok(create_engine_res))
+        with self.assertRaises(SnowparkSQLException):
+            api.create_engine(self.session, self.engine_name)
 
-#         delete_engine_res = api.delete_engine(self.session, self.engine_name)
-#         self.assertTrue(check_status_ok(delete_engine_res))
+    def test_delete_engine(self):
+        print("test_delete_engine", self.engine_name)
+        create_engine_res = api.create_engine(self.session, self.engine_name)
+        self.assertTrue(check_status_ok(create_engine_res))
 
-#         delete_engine_res = api.delete_engine(self.session, "random-engine-name-that-doesnt-exist")
-#         self.assertFalse(check_status_ok(delete_engine_res))
+        delete_engine_res = api.delete_engine(self.session, self.engine_name)
+        self.assertTrue(check_status_ok(delete_engine_res))
 
-#     def test_list_engines(self):
-#         print("test_list_engines", self.engine_name)
-#         api.create_engine(self.session, self.engine_name)
+        delete_engine_res = api.delete_engine(self.session, "random-engine-name-that-doesnt-exist")
+        self.assertFalse(check_status_ok(delete_engine_res))
 
-#         list_engines_res = api.list_engines(self.session).collect()
-#         self.assertTrue(len(list_engines_res) > 0)
+    def test_list_engines(self):
+        print("test_list_engines", self.engine_name)
+        api.create_engine(self.session, self.engine_name)
 
-#         first_engine = list_engines_res[0]
+        list_engines_res = api.list_engines(self.session).collect()
+        self.assertTrue(len(list_engines_res) > 0)
 
-#         self.assertTrue(hasattr(first_engine, 'ACCOUNT_NAME'))
-#         self.assertTrue(hasattr(first_engine, 'CREATED_BY'))
-#         self.assertTrue(hasattr(first_engine, 'CREATED_ON'))
-#         self.assertTrue(hasattr(first_engine, 'ID'))
-#         self.assertTrue(hasattr(first_engine, 'NAME'))
-#         self.assertTrue(hasattr(first_engine, 'REGION'))
-#         self.assertTrue(hasattr(first_engine, 'SIZE'))
-#         self.assertTrue(hasattr(first_engine, 'STATE'))
+        first_engine = list_engines_res[0]
 
-#     def test_get_engine(self):
-#         api.create_engine(self.session, self.engine_name)
+        for field in self.ENGINE_RESPONSE_FIELDS:
+            self.assertTrue(hasattr(first_engine, field))
 
-#         get_engine_res = api.get_engine(self.session, self.engine_name).collect()
-#         self.assertTrue(len(get_engine_res) == 1)
+    def test_get_engine(self):
+        api.create_engine(self.session, self.engine_name)
 
-#         first_engine = get_engine_res[0]
+        get_engine_res = api.get_engine(self.session, self.engine_name).collect()
+        self.assertTrue(len(get_engine_res) == 1)
 
-#         self.assertTrue(hasattr(first_engine, 'ACCOUNT_NAME'))
-#         self.assertTrue(hasattr(first_engine, 'CREATED_BY'))
-#         self.assertTrue(hasattr(first_engine, 'CREATED_ON'))
-#         self.assertTrue(hasattr(first_engine, 'ID'))
-#         self.assertTrue(hasattr(first_engine, 'NAME'))
-#         self.assertTrue(hasattr(first_engine, 'REGION'))
-#         self.assertTrue(hasattr(first_engine, 'SIZE'))
-#         self.assertTrue(hasattr(first_engine, 'STATE'))
+        first_engine = get_engine_res[0]
 
-#     def test_use_engine(self):
-#         print("test_use_engine", self.engine_name)
-#         api.create_engine(self.session, self.engine_name)
+        for field in self.ENGINE_RESPONSE_FIELDS:
+            self.assertTrue(hasattr(first_engine, field))
 
-#         use_engine_res = api.use_engine(self.session, self.engine_name)
-#         self.assertEqual(use_engine_res[0][0], self.engine_name)
+    def test_use_engine(self):
+        print("test_use_engine", self.engine_name)
+        api.create_engine(self.session, self.engine_name)
 
-#         current_engine_res = api.get_current_engine(self.session).collect()
-#         self.assertEqual(current_engine_res[0]["CURRENT_ENGINE"], self.engine_name)
+        use_engine_res = api.use_engine(self.session, self.engine_name)
+        self.assertEqual(use_engine_res[0][0], self.engine_name)
 
-#         with self.assertRaises(Exception):
-#             api.use_engine(self.session, "random-engine-name-that-doesnt-exist")
+        current_engine_res = api.get_current_engine(self.session).collect()
+        self.assertEqual(current_engine_res[0]["CURRENT_ENGINE"], self.engine_name)
 
-#     def tearDown(self):
-#         api.delete_engine(self.session, self.engine_name)
-#         pass
+        with self.assertRaises(Exception):
+            api.use_engine(self.session, "random-engine-name-that-doesnt-exist")
+
+    def tearDown(self):
+        api.delete_engine(self.session, self.engine_name)
+        pass
 
 
 class TestExecApi(unittest.TestCase):
     def setUp(self) -> None:
         self.session = Session.builder.configs(connection_parameters).create()
-        self.engine_name = f"snowflake-python-sdk-{uuid.uuid4()}"
-        self.db_name = f"snowflake-python-sdk-{uuid.uuid4()}"
+        self.engine_name = generate_engine_name()
+        self.db_name = generate_db_name()
 
-        api.use_schema(self.session, "SNOWFLAKE_INTEGRATION_SANDBOX.RAI")
+        api.use_schema(self.session, RAI_SCHEMA)
         api.create_database(self.session, self.db_name)
         api.create_engine(self.session, self.engine_name)
 
@@ -207,10 +199,10 @@ class TestExecApi(unittest.TestCase):
 class TestModelApi(unittest.TestCase):
     def setUp(self) -> None:
         self.session = Session.builder.configs(connection_parameters).create()
-        self.engine_name = f"snowflake-python-sdk-{uuid.uuid4()}"
-        self.db_name = f"snowflake-python-sdk-{uuid.uuid4()}"
+        self.engine_name = generate_engine_name()
+        self.db_name = generate_db_name()
 
-        api.use_schema(self.session, "SNOWFLAKE_INTEGRATION_SANDBOX.RAI")
+        api.use_schema(self.session, RAI_SCHEMA)
         api.create_database(self.session, self.db_name)
         api.create_engine(self.session, self.engine_name)
 
@@ -224,6 +216,64 @@ class TestModelApi(unittest.TestCase):
         api.delete_database(self.session, self.db_name)
         api.delete_engine(self.session, self.engine_name)
         self.session.close()
+
+
+class TestDataStreamApi(unittest.TestCase):
+    DATA_STREAM_RESPONSE_FIELDS = ["ID", "NAME", "ACCOUNT", "CREATED_BY", "CREATED_ON", "RAI", "SNOWFLAKE", "STATE", "DATABASE_LINK", "INTEGRATION"]
+
+    # Create a table under your SF account that you'd like to create a data stream for and specify the name in DATA_STREAM_TABLE_NAME
+    # Can be a simple table like this:
+    # CREATE TABLE my_edges(x INT, y INT) AS SELECT * FROM VALUES (1, 2), (2, 3);
+    DATA_STREAM_TABLE_NAME = "my_edges" # override to whatever table you want to use for testings
+
+    @classmethod
+    def setUpClass(cls):
+        cls._session = Session.builder.configs(connection_parameters).create()
+        cls._engine_name = generate_engine_name()
+        cls._db_name = generate_db_name()
+
+        api.use_schema(cls._session, RAI_SCHEMA)
+        api.create_database(cls._session, cls._db_name)
+        api.create_engine(cls._session, cls._engine_name)
+        api.use_database(cls._session, cls._db_name)
+        api.use_engine(cls._session, cls._engine_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        api.delete_database(cls._session, cls._db_name)
+        api.delete_engine(cls._session, cls._engine_name)
+        cls._session.close()
+
+    def test_create_delete_data_stream(self):
+        res = json.loads(api.create_data_stream(self._session, self.DATA_STREAM_TABLE_NAME, self._db_name, self.DATA_STREAM_TABLE_NAME)[0]["CREATE_DATA_STREAM"])
+        self.assertIsNotNone(res["id"])
+        self.assertIsNotNone(res["name"])
+        self.assertEqual(res["state"], "CREATED")
+
+        res = api.delete_data_stream(self._session, self.DATA_STREAM_TABLE_NAME)
+        self.assertEqual(res[0]["DELETE_DATA_STREAM"], '"ok"')
+
+    def test_get_data_stream(self):
+        api.create_data_stream(self._session, self.DATA_STREAM_TABLE_NAME, self._db_name, self.DATA_STREAM_TABLE_NAME)
+
+        res = api.get_data_stream(self._session, f"{FQ_SCHEMA}.{self.DATA_STREAM_TABLE_NAME}").collect()
+        first_ds = res[0]
+
+        for field in self.DATA_STREAM_RESPONSE_FIELDS:
+            self.assertTrue(hasattr(first_ds, field))
+
+        api.delete_data_stream(self._session, self.DATA_STREAM_TABLE_NAME)
+
+    def test_list_data_stream(self):
+        api.create_data_stream(self._session, self.DATA_STREAM_TABLE_NAME, self._db_name, self.DATA_STREAM_TABLE_NAME)
+
+        res = api.list_data_streams(self._session).collect()
+        first_ds = res[0]
+
+        for field in self.DATA_STREAM_RESPONSE_FIELDS:
+            self.assertTrue(hasattr(first_ds, field))
+
+        api.delete_data_stream(self._session, self.DATA_STREAM_TABLE_NAME)
 
 
 if __name__ == '__main__':
