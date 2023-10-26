@@ -10,13 +10,13 @@ from snowflake.snowpark.row import Row
 from logging.config import fileConfig
 from relationalai.snowflake_sdk import api
 
-#################################
-# Variables to override for running locally
-#    - connection_parameters
-#    - FQ_SCHEMA
-#    - RAI_SCHEMA
-#    - TestDataStreamApi.DATA_STREAM_TABLE_NAME
-#################################
+#################################################
+# Variables to override for running locally     #
+#    - connection_parameters                    #
+#    - FQ_SCHEMA                                #
+#    - RAI_SCHEMA                               #
+#    - TestDataStreamApi.DATA_STREAM_TABLE_NAME #
+#################################################
 
 
 connection_parameters = {  # override to your own connection parameters
