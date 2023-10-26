@@ -53,31 +53,36 @@ def check_status_ok(res: List[Row]):
 class TestDatabaseAPI(unittest.TestCase):
     DATABASE_RESPONSE_FIELDS = ["ID", "ACCOUNT_NAME", "CREATED_BY", "NAME", "REGION", "STATE"]
 
-    def setUp(self):
-        self.session = Session.builder.configs(connection_parameters).create()
-        api.use_schema(self.session, RAI_SCHEMA)
+    @classmethod
+    def setUpClass(cls):
+        cls._session = Session.builder.configs(connection_parameters).create()
+        api.use_schema(cls._session, RAI_SCHEMA)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._session.close()
 
     def test_create_database(self):
-        create_database_res = api.create_database(self.session, db_name)
+        create_database_res = api.create_database(self._session, db_name)
         self.assertTrue(check_status_ok(create_database_res))
 
         with self.assertRaises(SnowparkSQLException):
-            api.create_database(self.session, db_name)
+            api.create_database(self._session, db_name)
 
     def test_delete_database_api(self):
-        create_database_res = api.create_database(self.session, db_name)
+        create_database_res = api.create_database(self._session, db_name)
         self.assertTrue(check_status_ok(create_database_res))
 
-        delete_database_res = api.delete_database(self.session, db_name)
+        delete_database_res = api.delete_database(self._session, db_name)
         self.assertTrue(check_status_ok(delete_database_res))
 
-        delete_database_res = api.delete_database(self.session, "random-db-name-that-doesnt-exist")
+        delete_database_res = api.delete_database(self._session, "random-db-name-that-doesnt-exist")
         self.assertFalse(check_status_ok(delete_database_res))
 
     def test_list_databases(self):
-        api.create_database(self.session, db_name)
+        api.create_database(self._session, db_name)
 
-        list_dbs_res = api.list_databases(self.session).collect()
+        list_dbs_res = api.list_databases(self._session).collect()
         self.assertTrue(len(list_dbs_res) > 0)
 
         first_db = list_dbs_res[0]
@@ -85,12 +90,12 @@ class TestDatabaseAPI(unittest.TestCase):
         for field in self.DATABASE_RESPONSE_FIELDS:
             self.assertTrue(hasattr(first_db, field))
 
-        api.delete_database(self.session, db_name)
+        api.delete_database(self._session, db_name)
 
     def test_get_database(self):
-        api.create_database(self.session, db_name)
+        api.create_database(self._session, db_name)
 
-        get_db_res = api.get_database(self.session, db_name).collect()
+        get_db_res = api.get_database(self._session, db_name).collect()
         self.assertTrue(len(get_db_res) == 1)
 
         first_db = get_db_res[0]
@@ -99,20 +104,19 @@ class TestDatabaseAPI(unittest.TestCase):
             self.assertTrue(hasattr(first_db, field))
 
     def test_use_database(self):
-        api.create_database(self.session, db_name)
+        api.create_database(self._session, db_name)
 
-        use_database_res = api.use_database(self.session, db_name)
+        use_database_res = api.use_database(self._session, db_name)
         self.assertEqual(use_database_res[0][0], db_name)
 
-        current_db_res = api.get_current_database(self.session).collect()
+        current_db_res = api.get_current_database(self._session).collect()
         self.assertEqual(current_db_res[0]["CURRENT_DATABASE"], db_name)
 
         with self.assertRaises(Exception):
-            api.use_database(self.session, "random-db-name-that-doesnt-exist")
+            api.use_database(self._session, "random-db-name-that-doesnt-exist")
 
     def tearDown(self):
-        api.delete_database(self.session, db_name)
-        self.session.close()
+        api.delete_database(self._session, db_name)
 
 
 @unittest.skip("Skipping until we implement a new engine API that follows the async pattern.")
