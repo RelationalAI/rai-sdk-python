@@ -10,8 +10,16 @@ from snowflake.snowpark.row import Row
 from logging.config import fileConfig
 from relationalai.snowflake_sdk import api
 
+#################################
+# Variables to override for running locally
+#    - connection_parameters
+#    - FQ_SCHEMA
+#    - RAI_SCHEMA
+#    - TestDataStreamApi.DATA_STREAM_TABLE_NAME
+#################################
 
-connection_parameters = { # override to your own connection parameters
+
+connection_parameters = {  # override to your own connection parameters
     "user": "",
     "password": "",
     "account": "",
@@ -19,8 +27,8 @@ connection_parameters = { # override to your own connection parameters
     "schema": "",
 }
 
-FQ_SCHEMA = "<SF_DB>.<SF_SCHEMA>" # override to whatever schema you want to use for testing
-RAI_SCHEMA = "<SF_DB>.<SF_SCHEMA_FOR_RAI_LIB>" # override to whatever schema you want to use for testing
+FQ_SCHEMA = "<SF_DB>.<SF_SCHEMA>"  # override to whatever schema you want to use for testing
+RAI_SCHEMA = "<SF_DB>.<SF_SCHEMA_FOR_RAI_LIB>"  # override to whatever schema you want to use for testing
 
 suffix = uuid.uuid4()
 engine_name = f"snowflake-python-sdk-{suffix}"
@@ -224,7 +232,7 @@ class TestDataStreamApi(unittest.TestCase):
     # Create a table under your SF account that you'd like to create a data stream for and specify the name in DATA_STREAM_TABLE_NAME
     # Can be a simple table like this:
     # CREATE TABLE my_edges(x INT, y INT) AS SELECT * FROM VALUES (1, 2), (2, 3);
-    DATA_STREAM_TABLE_NAME = "my_edges" # override to whatever table you want to use for testings
+    DATA_STREAM_TABLE_NAME = "my_edges"  # override to whatever table you want to use for testings
 
     @classmethod
     def setUpClass(cls):
