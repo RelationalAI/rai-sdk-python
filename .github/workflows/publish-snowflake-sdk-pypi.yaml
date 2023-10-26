@@ -10,10 +10,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          path: ./relationalai-sdk-snowflake
-      - run: python3 -m pip install --upgrade build && python3 -m build
-      - name: Publish package
+      - name: Build
+        working-directory: ./relationalai-sdk-snowflake
+        run: python3 -m pip install --upgrade build && python3 -m build
+      - name: Publish package to PyPi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: ./relationalai-sdk-snowflake/dist
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
