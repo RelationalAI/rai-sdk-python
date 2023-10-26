@@ -19,7 +19,7 @@ Install from source in `editable` mode.
 ```console
 $ git clone git@github.com:RelationalAI/rai-sdk-python.git
 $ cd rai-sdk-python
-$ [sudo] pip install -e relationalai-snowflake-sdk
+$ [sudo] pip install -e relationalai-sdk-snowflake
 ```
 
 ### Usage
