@@ -128,7 +128,6 @@ class TestEngineAPI(unittest.TestCase):
         self.engine_name = generate_engine_name()
 
     def test_create_engine(self):
-        print("test_create_engine", self.engine_name)
         create_engine_res = api.create_engine(self.session, self.engine_name)
         self.assertTrue(check_status_ok(create_engine_res))
 
@@ -136,7 +135,6 @@ class TestEngineAPI(unittest.TestCase):
             api.create_engine(self.session, self.engine_name)
 
     def test_delete_engine(self):
-        print("test_delete_engine", self.engine_name)
         create_engine_res = api.create_engine(self.session, self.engine_name)
         self.assertTrue(check_status_ok(create_engine_res))
 
@@ -147,7 +145,6 @@ class TestEngineAPI(unittest.TestCase):
         self.assertFalse(check_status_ok(delete_engine_res))
 
     def test_list_engines(self):
-        print("test_list_engines", self.engine_name)
         api.create_engine(self.session, self.engine_name)
 
         list_engines_res = api.list_engines(self.session).collect()
@@ -170,7 +167,6 @@ class TestEngineAPI(unittest.TestCase):
             self.assertTrue(hasattr(first_engine, field))
 
     def test_use_engine(self):
-        print("test_use_engine", self.engine_name)
         api.create_engine(self.session, self.engine_name)
 
         use_engine_res = api.use_engine(self.session, self.engine_name)
