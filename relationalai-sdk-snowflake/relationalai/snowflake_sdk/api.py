@@ -43,7 +43,6 @@ __all__ = [
     "load_data",
     "load_model",
     "load_model_code",
-    "load_model_query",
     "create_data_stream",
     "delete_data_stream",
     "get_data_stream",
@@ -51,6 +50,19 @@ __all__ = [
     "list_data_streams",
     "ping",
 ]
+
+
+#################################
+# Setup
+#################################
+
+
+def ping(session: Session) -> List[Row]:
+    return session.sql("select PING() as result").collect()
+
+
+def use_schema(session: Session, searchPath: str) -> List[Row]:
+    return session.sql(f"alter session set SEARCH_PATH = '$current, $public, {searchPath}'").collect()
 
 #################################
 # DATABASE
@@ -180,8 +192,8 @@ def exec(session: Session, database: str, engine: str, query: str, data=None, re
     return session.sql(f"select EXEC('{database}', '{engine}', '{query}', {data if data else 'null'}, {readonly})")
 
 
-def exec_into(session: Session, database: str, engine: str, query: str, warehouse: str, target: str, data=None, readonly: bool = True) -> DataFrame:
-    return session.sql(f"select EXEC_INTO('{database}', '{engine}', '{query}', '{data if data else 'null'}', {readonly}, '{warehouse}', '{target}')")
+def exec_into(session: Session, database: str, engine: str, query: str, warehouse: str, target: str, data=None, readonly: bool = True) -> List[Row]:
+    return session.sql(f"select EXEC_INTO('{database}', '{engine}', '{query}', '{data if data else 'null'}', {readonly}, '{warehouse}', '{target}') as status").collect()
 
 
 #################################
@@ -195,9 +207,6 @@ def load_model(session: Session, database: str, engine: str, name: str, path: st
 def load_model_code(session: Session, database: str, engine: str, name: str, code: str) -> List[Row]:
     return session.sql(f"select LOAD_MODEL_CODE('{database}', '{engine}', '{name}', '{code}')").collect()
 
-
-def load_model_query(session: Session, name: str, path: str) -> List[Row]:
-    return session.sql(f"select LOAD_MODEL_QUERY('{name}', '{path}')").collect()
 
 #################################
 # Data Stream
@@ -251,19 +260,3 @@ def list_data_streams(session: Session) -> DataFrame:
             (select LIST_DATA_STREAMS() as res),
             lateral flatten (input => res)
     """)
-
-#################################
-# Misc
-#################################
-
-
-def load_data(session: Session, database: str, relation: str, primary_key: str, query: str) -> List[Row]:
-    return session.sql(f"select LOAD_DATA('{database}', '{relation}', '{primary_key}', '{query}')").collect()
-
-
-def ping(session: Session) -> List[Row]:
-    return session.sql("select PING() as result").collect()
-
-
-def use_schema(session: Session, searchPath: str) -> List[Row]:
-    return session.sql(f"alter session set SEARCH_PATH = '$current, $public, {searchPath}'").collect()
