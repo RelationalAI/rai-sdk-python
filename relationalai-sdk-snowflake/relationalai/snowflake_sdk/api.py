@@ -192,8 +192,8 @@ def exec(session: Session, database: str, engine: str, query: str, data=None, re
     return session.sql(f"select EXEC('{database}', '{engine}', '{query}', {data if data else 'null'}, {readonly})")
 
 
-def exec_into(session: Session, database: str, engine: str, query: str, warehouse: str, target: str, data=None, readonly: bool = True) -> List[Row]:
-    return session.sql(f"select EXEC_INTO('{database}', '{engine}', '{query}', '{data if data else 'null'}', {readonly}, '{warehouse}', '{target}') as status").collect()
+def exec_into(session: Session, database: str, engine: str, query: str, warehouse: str, fq_target: str, data=None, readonly: bool = True) -> List[Row]:
+    return session.sql(f"select EXEC_INTO('{database}', '{engine}', '{query}', {data if data else 'null' }, {readonly}, '{warehouse}', '{fq_target}') as status").collect()
 
 
 #################################

@@ -1,34 +1,41 @@
-import unittest
-import uuid
+from logging.config import fileConfig
 from typing import List
 import json
+import os
+import unittest
+import uuid
 
 from snowflake.snowpark import Session
 from snowflake.snowpark.exceptions import SnowparkSQLException
 from snowflake.snowpark.row import Row
 
-from logging.config import fileConfig
 from relationalai.snowflake_sdk import api
 
-#################################################
-# Variables to override for running locally     #
-#    - connection_parameters                    #
-#    - FQ_SCHEMA                                #
-#    - RAI_SCHEMA                               #
-#    - TestDataStreamApi.DATA_STREAM_TABLE_NAME #
-#################################################
+
+# Default Snowflake Session connection parameters
+SF_USER = os.getenv("SF_USER")
+SF_PASSWORD = os.getenv("SF_PASSWORD")
+SF_ACCOUNT = os.getenv("SF_ACCOUNT")
+SF_ROLE = os.getenv("SF_ROLE")
+SF_WAREHOUSE = os.getenv("SF_WAREHOUSE")
+SF_DATABASE = os.getenv("SF_DATABASE")
+SF_SCHEMA = os.getenv("SF_SCHEMA")
+
+# Fully qualified schema and schema where RAI is installed
+FQ_SCHEMA = f"{SF_DATABASE}.{SF_SCHEMA}"
+RAI_SCHEMA = f"{SF_DATABASE}.RAI"
 
 
-connection_parameters = {  # override to your own connection parameters
-    "user": "",
-    "password": "",
-    "account": "",
-    "database": "",
-    "schema": "",
+connection_parameters = {
+    "user": SF_USER,
+    "password": SF_PASSWORD,
+    "account": SF_ACCOUNT,
+    "role": SF_ROLE,
+    "warehouse": SF_WAREHOUSE,
+    "database": SF_DATABASE,
+    "schema": SF_SCHEMA,
 }
 
-FQ_SCHEMA = "<SF_DB>.<SF_SCHEMA>"  # override to whatever schema you want to use for testing
-RAI_SCHEMA = "<SF_DB>.<SF_SCHEMA_FOR_RAI_LIB>"  # override to whatever schema you want to use for testing
 
 suffix = uuid.uuid4()
 engine_name = f"snowflake-python-sdk-{suffix}"
@@ -184,24 +191,61 @@ class TestEngineAPI(unittest.TestCase):
 
 
 class TestExecApi(unittest.TestCase):
-    def setUp(self) -> None:
-        self.session = Session.builder.configs(connection_parameters).create()
-        self.engine_name = generate_engine_name()
-        self.db_name = generate_db_name()
+    @classmethod
+    def setUpClass(cls):
+        cls._session = Session.builder.configs(connection_parameters).create()
+        cls._engine_name = generate_engine_name()
+        cls._db_name = generate_db_name()
 
-        api.use_schema(self.session, RAI_SCHEMA)
-        api.create_database(self.session, self.db_name)
-        api.create_engine(self.session, self.engine_name)
+        api.use_schema(cls._session, RAI_SCHEMA)
+        api.create_database(cls._session, cls._db_name)
+        api.create_engine(cls._session, cls._engine_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        api.delete_database(cls._session, cls._db_name)
+        api.delete_engine(cls._session, cls._engine_name)
+        cls._session.close()
 
     def test_exec(self):
-        res = json.loads(api.exec(self.session, self.db_name, self.engine_name, "def output = 1 + 1").collect()[0][0])
+        res = json.loads(api.exec(self._session, self._db_name, self._engine_name, "def output = 1 + 1").collect()[0][0])
 
         self.assertEqual(res[0][0], 2)
 
-    def tearDown(self) -> None:
-        api.delete_database(self.session, self.db_name)
-        api.delete_engine(self.session, self.engine_name)
-        self.session.close()
+    def test_exec_with_data(self):
+        res = api.exec(
+            self._session,
+            self._db_name,
+            self._engine_name,
+            "def output = foo",
+            {"foo": "hello"}
+        ).collect()[0][0]
+
+        self.assertEqual(json.loads(res)[0][0], "hello")
+
+    def test_exec_into(self):
+        table_name = f"{FQ_SCHEMA}.test_exec_into_table"
+        res = api.exec_into(self._session, self._db_name, self._engine_name, "def output = 1 + 1", connection_parameters["warehouse"], table_name)
+        self.assertTrue(check_status_ok(res))
+
+        res = self._session.sql(f"select * from {table_name}").collect()
+        self.assertEqual(res[0][0], "2")
+
+    def test_exec_into_with_data(self):
+        table_name = f"{FQ_SCHEMA}.test_exec_into_table"
+        res = api.exec_into(
+            self._session,
+            self._db_name,
+            self._engine_name,
+            "def output = foo",
+            connection_parameters["warehouse"],
+            table_name,
+            {"foo": "hello"}
+        )
+        self.assertTrue(check_status_ok(res))
+
+        res = self._session.sql(f"select * from {table_name}").collect()
+        self.assertEqual(res[0][0], "hello")
 
 
 class TestModelApi(unittest.TestCase):
@@ -228,11 +272,7 @@ class TestModelApi(unittest.TestCase):
 
 class TestDataStreamApi(unittest.TestCase):
     DATA_STREAM_RESPONSE_FIELDS = ["ID", "NAME", "ACCOUNT", "CREATED_BY", "CREATED_ON", "RAI", "SNOWFLAKE", "STATE", "DATABASE_LINK", "INTEGRATION"]
-
-    # Create a table under your SF account that you'd like to create a data stream for and specify the name in DATA_STREAM_TABLE_NAME
-    # Can be a simple table like this:
-    # CREATE TABLE my_edges(x INT, y INT) AS SELECT * FROM VALUES (1, 2), (2, 3);
-    DATA_STREAM_TABLE_NAME = "my_edges"  # override to whatever table you want to use for testings
+    DATA_STREAM_TABLE_NAME = "my_edges"
 
     @classmethod
     def setUpClass(cls):
@@ -246,10 +286,13 @@ class TestDataStreamApi(unittest.TestCase):
         api.use_database(cls._session, cls._db_name)
         api.use_engine(cls._session, cls._engine_name)
 
+        cls._session.sql(f"CREATE OR REPLACE TABLE {cls.DATA_STREAM_TABLE_NAME}(x INT, y INT) AS SELECT * FROM VALUES (1, 2), (2, 3)").collect()
+
     @classmethod
     def tearDownClass(cls):
         api.delete_database(cls._session, cls._db_name)
         api.delete_engine(cls._session, cls._engine_name)
+        cls._session.sql(f"DROP TABLE {cls.DATA_STREAM_TABLE_NAME}").collect()
         cls._session.close()
 
     def test_create_delete_data_stream(self):
