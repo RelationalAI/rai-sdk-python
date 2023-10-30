@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["relationalai"]
+namespaces = true
+
+[project]
+name = "relationalai-sdk-snowflake"
+description = "The RelationalAI Software Development Kit for Snowflake Snowpark Python"
+license = { text = "http://www.apache.org/licenses/LICENSE-2.0" }
+readme = "README.md"
+keywords = ["RelationalAI", "SDK", "Snowflake", "Snowpark", "Python"]
+authors = [
+    {name = "RelationalAI, Inc.", email = "support@relational.ai"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+]
+requires-python = ">=3.8"
+dependencies = ["snowflake-snowpark-python"]
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/RelationalAI/rai-sdk-python/tree/main/relationalai-sdk-snowflake"
+"Source" = "https://github.com/RelationalAI/rai-sdk-python/tree/main/relationalai-sdk-snowflake"
+
+[tool.setuptools.dynamic]
+version = {attr = "relationalai.snowflake_sdk.__version__"}
