@@ -18,4 +18,4 @@ jobs:
         with:
           packages-dir: ./relationalai-sdk-snowflake/dist
           user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          password: ${{ secrets.SNOWFLAKE_SDK_PYPI_TOKEN }}
