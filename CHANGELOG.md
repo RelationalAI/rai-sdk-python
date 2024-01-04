@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6.19
+
+* Fix setting of created_on attribute on AccessToken
+* Fix show.problems on TransactionAsyncResponse
+* add logging to _request_access_token
+* remove spurious warning log when tokens.json file does not exist
+* Fix several problems with the examples
+
 ## v0.6.18
 
 * Added retry mechanism for the authentication flow.

@@ -157,8 +157,6 @@ class Context(rest.Context):
 
 
 # Transaction async response class
-
-
 class TransactionAsyncResponse:
     def __init__(
         self,
@@ -184,8 +182,6 @@ class TransactionAsyncResponse:
 
 
 # Transaction async file class
-
-
 class TransactionAsyncFile:
     def __init__(
         self,
@@ -238,8 +234,6 @@ def _get_collection(ctx, path: str, key=None, **kwargs):
 
 
 # Parse "multipart/form-data" response
-
-
 def _parse_multipart_form(
     content_type: str, content: bytes
 ) -> List[TransactionAsyncFile]:
@@ -268,8 +262,6 @@ def _parse_multipart_form(
 
 
 # Parse TransactionAsync response
-
-
 def _parse_transaction_async_response(
     files: List[TransactionAsyncFile],
 ) -> TransactionAsyncResponse:

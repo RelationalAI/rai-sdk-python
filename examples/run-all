@@ -26,12 +26,12 @@ python3 ./list_databases.py --state=CREATED
 python3 ./list_databases.py --state=NONSENSE
 python3 ./list_edbs.py $DATABASE $ENGINE
 python3 ./list_models.py $DATABASE $ENGINE
-python3 ./get_model.py $DATABASE $ENGINE stdlib
+python3 ./get_model.py $DATABASE $ENGINE "rel/stdlib"
 
 # run query
 QUERY="x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-python3 ./run_query.py $DATABASE $ENGINE "$QUERY"
-python3 ./run_query.py $DATABASE $ENGINE "$QUERY" --readonly
+python3 ./execute.py $DATABASE $ENGINE "$QUERY"
+python3 ./execute.py $DATABASE $ENGINE "$QUERY" --readonly
 python3 ./show_results.py $DATABASE $ENGINE
 python3 ./show_problems.py $DATABASE $ENGINE
 
@@ -44,16 +44,16 @@ python3 ./list_models.py $DATABASE $ENGINE
 
 # load_csv
 python3 ./load_csv.py $DATABASE $ENGINE sample.csv -r sample_csv
-python3 ./run_query.py $DATABASE $ENGINE sample_csv
+python3 ./execute.py $DATABASE $ENGINE sample_csv
 python3 ./load_csv.py $DATABASE $ENGINE sample_no_header.csv --header-row=0 -r sample_no_header_csv
-python3 ./run_query.py $DATABASE $ENGINE sample_no_header_csv
+python3 ./execute.py $DATABASE $ENGINE sample_no_header_csv
 python3 ./load_csv.py $DATABASE $ENGINE sample_alt_syntax.csv --delim="|" --quotechar="'" -r sample_alt_syntax_csv
-python3 ./run_query.py $DATABASE $ENGINE sample_alt_syntax_csv
+python3 ./execute.py $DATABASE $ENGINE sample_alt_syntax_csv
 python3 ./list_edbs.py $DATABASE $ENGINE
 
 # load_json
 python3 ./load_json.py $DATABASE $ENGINE sample.json -r sample_json
-python3 ./run_query.py $DATABASE $ENGINE sample_json
+python3 ./execute.py $DATABASE $ENGINE sample_json
 python3 ./list_edbs.py $DATABASE $ENGINE
 
 # clone database

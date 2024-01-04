@@ -23,7 +23,7 @@ from railib import api, config, show
 def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.query(ctx, database, engine, "def output = **nonsense**")
+    rsp = api.exec(ctx, database, engine, "def output = **nonsense**")
     show.problems(rsp)
 
 

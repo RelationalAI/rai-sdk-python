@@ -128,11 +128,14 @@ def _cache_file() -> str:
 
 # Read oauth cache
 def _read_cache() -> dict:
+    filename = _cache_file()
+    if not path.exists(filename):
+        return {}
     try:
-        with open(_cache_file(), 'r') as cache:
+        with open(filename, 'r') as cache:
             return json.loads(cache.read())
     except Exception as e:
-        logger.warning(f'Failed to read token cache {_cache_file()}: {e}')
+        logger.error(f"can't read token cache {filename}: {e}")
         return {}
 
 
@@ -150,7 +153,6 @@ def _write_token_cache(creds: ClientCredentials):
     try:
         cache = _read_cache()
         cache[creds.client_id] = creds.access_token
-
         with open(_cache_file(), 'w') as f:
             f.write(json.dumps(cache, default=vars))
     except Exception as e:
@@ -167,6 +169,13 @@ def _get_access_token(ctx: Context, url: str) -> AccessToken:
             creds.access_token = _request_access_token(ctx, url)
             _write_token_cache(creds)
     return creds.access_token.access_token
+
+
+def _log_request_response(req, rsp):
+    content_type = req.headers["Content-Type"] if "Content-Type" in req.headers else ""
+    agent = req.headers["User-Agent"] if "User-Agent" in req.headers else ""
+    request_id = rsp.headers["X-Request-ID"] if "X-Request-ID" in rsp.headers else ""
+    logger.debug(f"{rsp._method} HTTP/{rsp.version} {content_type} {rsp.url} {rsp.status} {agent} {request_id}")
 
 
 def _request_access_token(ctx: Context, url: str) -> AccessToken:
@@ -195,9 +204,9 @@ def _request_access_token(ctx: Context, url: str) -> AccessToken:
     )
     _print_request(req)
     with _urlopen_with_retry(req, ctx.retries) as rsp:
+        _log_request_response(req, rsp)
         result = json.loads(rsp.read())
         token = result.get(ACCESS_KEY_TOKEN_KEY, None)
-
         if token is not None:
             expires_in = result.get(EXPIRES_IN_KEY, None)
             scope = result.get(SCOPE, None)
@@ -230,7 +239,7 @@ def _urlopen_with_retry(req: Request, retries: int = 0):
             return urlopen(req)
         except (URLError, ConnectionError) as e:
             logger.warning(f"URL/Connection error occured {req.full_url} (attempt {attempt + 1}/{attempts}). Error message: {str(e)}")
-            
+
             if attempt == attempts - 1:
                 logger.error(f"Failed to connect to {req.full_url} after {attempts} attempt{'s' if attempts > 1 else ''}")
                 raise e
@@ -246,12 +255,7 @@ def request(ctx: Context, method: str, url: str, headers={}, data=None, **kwargs
     req = _authenticate(ctx, req)
     _print_request(req)
     rsp = _urlopen_with_retry(req, ctx.retries)
-
-    # logging
-    content_type = headers["Content-Type"] if "Content-Type" in headers else ""
-    agent = headers["User-Agent"] if "User-Agent" in headers else ""
-    request_id = rsp.headers["X-Request-ID"] if "X-Request-ID" in rsp.headers else ""
-    logger.debug(f"{rsp._method} HTTP/{rsp.version} {content_type} {rsp.url} {rsp.status} {agent} {request_id}")
+    _log_request_response(req, rsp)
     return rsp
 
 
