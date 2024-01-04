@@ -74,10 +74,15 @@ def _show_rel(rsp: dict) -> None:
 
 
 # Print the problems in the given response dict.
-def problems(rsp: dict) -> None:
+def problems(rsp) -> None:
     if rsp is None:
         return
-    problems = rsp.get("problems", None)
+    if isinstance(rsp, dict):  # v1 transaction
+        problems = rsp.get("problems", None)
+    elif isinstance(rsp, TransactionAsyncResponse):
+        problems = rsp.problems
+    else:
+        raise ValueError("bad response type")
     if not problems:
         return
     for problem in problems:

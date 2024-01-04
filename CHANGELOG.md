@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.19
+
+* Fix setting of created_on attribute on AccessToken
+* Fix show.problems on TransactionAsyncResponse
+* Fix several problems with the examples
+
 ## v0.6.18
 
 * Added retry mechanism for the authentication flow.
