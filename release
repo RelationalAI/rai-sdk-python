@@ -8,8 +8,29 @@
 # 4. Run ./release-build, make sure no issues
 # 5. Run this script
 # 6. Verify that the expected version appears on https://pypi.org
-
-# Note, requires twine: `pip install twine`
+#
+# In order to upload to PyPI you will need to login to https://pypi.org,
+# using credentials that IT can provide, and create an API Token in the 
+# rai-sdk project. Then you need to create a $HOME/.pypirc file that looks
+# like the following:
+#
+# ~~~
+# [distutils]
+#  index-servers =
+#    pypi
+#
+# [pypi]
+# username = __token__
+# password = <API Token>
+# [rai-sdk]
+# username = __token__
+# password = <API Token>
+# ~~~
+#
+# The upload script will error on the .egg file, you you can ignore, the error
+# is benign.
+#
+# Note, the script requires twine: `pip install twine`
 
 set -ex
 

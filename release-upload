@@ -3,4 +3,4 @@
 set -ex
 
 # upload to production repo
-twine upload --skip-existing dist/*
+twine upload --repository pypi --skip-existing dist/*
