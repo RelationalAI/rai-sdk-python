@@ -55,6 +55,7 @@ class Mode(str, Enum):
 class Role(str, Enum):
     USER = "user"
     ADMIN = "admin"
+    USER_READ_ONLY = "user-read-only"
 
 
 # User/OAuth-client permissions
