@@ -33,10 +33,10 @@ setup(
     ],
     description="The RelationalAI Software Development Kit for Python",
     install_requires=[
-        "pandas==2.2.0",
-        "pyarrow==15.0.0",
+        "pandas>=2.0.0,<3.0.0",
+        "pyarrow>=10.0.0,<16.0.0",
         "requests-toolbelt==1.0.0",
-        "protobuf==4.25.3"],
+        "protobuf>=3.20.3,<5.0.0"],
     license="http://www.apache.org/licenses/LICENSE-2.0",
     long_description="Enables access to the RelationalAI REST APIs from Python",
     long_description_content_type="text/markdown",
