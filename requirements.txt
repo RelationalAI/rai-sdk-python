@@ -1,5 +1,6 @@
-grpcio==1.54.0
-grpcio-tools==1.47.0
-protobuf==3.20.3
-pyarrow==10.0.1
+grpcio>=1.54.0,<=1.60.1
+grpcio-tools>=1.47.0,<=1.60.1
+protobuf>=3.20.3,<5.0.0
+pandas<3.0.0
+pyarrow>=10.0.0,<16.0.0
 requests-toolbelt==1.0.0
