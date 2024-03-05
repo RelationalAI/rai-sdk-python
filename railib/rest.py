@@ -16,7 +16,7 @@
 
 import json
 import logging
-from os import path
+from os import path, makedirs
 from urllib.error import URLError
 from urllib.parse import urlencode, urlsplit, quote
 from urllib.request import Request, urlopen
@@ -151,6 +151,8 @@ def _read_token_cache(creds: ClientCredentials) -> AccessToken:
 # write access token to cache
 def _write_token_cache(creds: ClientCredentials):
     try:
+        cache_dir = path.dirname(_cache_file())
+        makedirs(cache_dir, exist_ok=True)
         cache = _read_cache()
         cache[creds.client_id] = creds.access_token
         with open(_cache_file(), 'w') as f:
