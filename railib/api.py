@@ -324,11 +324,13 @@ def _parse_arrow_results(files: List[TransactionAsyncFile]):
 def poll_with_specified_overhead(
     f,
     overhead_rate: float,
-    start_time: int = time.time(),
+    start_time: float = None,
     timeout: int = None,
     max_tries: int = None,
     max_delay: int = 120,
 ):
+    if start_time is None:
+        start_time = time.time()
     tries = 0
     max_time = time.time() + timeout if timeout else None
 
