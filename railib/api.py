@@ -376,14 +376,14 @@ def create_engine_wait(ctx: Context, engine: str, size: str = "XS", **kwargs):
 
 
 def suspend_engine(ctx: Context, engine: str, **kwargs):
-    data = { "suspend": True }
+    data = {"suspend": True}
     url = _mkurl(ctx, f"{PATH_ENGINE}/{engine}")
     rsp = rest.patch(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
 
 
 def resume_engine(ctx: Context, engine: str, **kwargs):
-    data = { "suspend": False }
+    data = {"suspend": False}
     url = _mkurl(ctx, f"{PATH_ENGINE}/{engine}")
     rsp = rest.patch(ctx, url, data, **kwargs)
     return json.loads(rsp.read())
