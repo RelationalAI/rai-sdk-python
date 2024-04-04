@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.6.20
+
+* Add suspend/resume engine to the api
+* Add examples for suspend/resume
+
 ## v0.6.19
 
 * Fix setting of created_on attribute on AccessToken
