@@ -135,6 +135,8 @@ __all__ = [
     "list_oauth_clients",
     "load_csv",
     "update_user",
+    "suspend_engine",
+    "resume_engine",
 ]
 
 
@@ -365,6 +367,30 @@ def create_engine(ctx: Context, engine: str, size: str = "XS", **kwargs):
 
 def create_engine_wait(ctx: Context, engine: str, size: str = "XS", **kwargs):
     create_engine(ctx, engine, size, **kwargs)
+    poll_with_specified_overhead(
+        lambda: is_engine_term_state(get_engine(ctx, engine)["state"]),
+        overhead_rate=0.2,
+        timeout=30 * 60,
+    )
+    return get_engine(ctx, engine)
+
+
+def suspend_engine(ctx: Context, engine: str, **kwargs):
+    data = {"suspend": True}
+    url = _mkurl(ctx, f"{PATH_ENGINE}/{engine}")
+    rsp = rest.patch(ctx, url, data, **kwargs)
+    return json.loads(rsp.read())
+
+
+def resume_engine(ctx: Context, engine: str, **kwargs):
+    data = {"suspend": False}
+    url = _mkurl(ctx, f"{PATH_ENGINE}/{engine}")
+    rsp = rest.patch(ctx, url, data, **kwargs)
+    return json.loads(rsp.read())
+
+
+def resume_engine_wait(ctx: Context, engine: str, **kwargs):
+    resume_engine(ctx, engine, **kwargs)
     poll_with_specified_overhead(
         lambda: is_engine_term_state(get_engine(ctx, engine)["state"]),
         overhead_rate=0.2,
