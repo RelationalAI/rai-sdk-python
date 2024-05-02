@@ -333,6 +333,7 @@ def poll_with_specified_overhead(
 ):
     if start_time is None:
         start_time = time.time()
+    
     tries = 0
     max_time = time.time() + timeout if timeout else None
 
@@ -340,18 +341,19 @@ def poll_with_specified_overhead(
         if f():
             break
 
+        current_time = time.time()
+        
         if max_tries is not None and tries >= max_tries:
             raise Exception(f'max tries {max_tries} exhausted')
 
-        if max_time is not None and time.time() >= max_time:
+        if max_time is not None and current_time >= max_time:
             raise Exception(f'timed out after {timeout} seconds')
 
+        duration = (current_time - start_time) * overhead_rate
+        duration = min(duration, max_delay)
+        
+        time.sleep(duration) 
         tries += 1
-        duration = min((time.time() - start_time) * overhead_rate, max_delay)
-        if tries == 1:
-            time.sleep(0.5)
-        else:
-            time.sleep(duration)
 
 
 def is_engine_term_state(state: str) -> bool:
