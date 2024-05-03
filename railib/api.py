@@ -331,6 +331,9 @@ def poll_with_specified_overhead(
     max_tries: int = None,
     max_delay: int = 120,
 ):
+    if overhead_rate < 0:
+        raise ValueError("overhead_rate must be non-negative")
+
     if start_time is None:
         start_time = time.time()
     
