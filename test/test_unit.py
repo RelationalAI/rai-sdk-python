@@ -10,8 +10,6 @@ from railib.rest import _urlopen_with_retry
 
 
 class TestPolling(unittest.TestCase):
-    @patch('time.sleep', return_value=None)
-    @patch('time.time')
     def test_timeout_exception(self):
         try:
             api.poll_with_specified_overhead(lambda: False, overhead_rate=0.1, timeout=1)
@@ -30,6 +28,8 @@ class TestPolling(unittest.TestCase):
         api.poll_with_specified_overhead(lambda: True, overhead_rate=0.1, max_tries=1)
         api.poll_with_specified_overhead(lambda: True, overhead_rate=0.1, timeout=1, max_tries=1)
 
+    @patch('time.sleep', return_value=None)
+    @patch('time.time')
     def test_initial_delay(self, mock_time, mock_sleep):
         start_time = 100  # Fixed start time
         mock_time.return_value = start_time + 0.0001  # Fixed increment
