@@ -1,4 +1,5 @@
 import socket
+import time
 import unittest
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
@@ -27,6 +28,42 @@ class TestPolling(unittest.TestCase):
         api.poll_with_specified_overhead(lambda: True, overhead_rate=0.1, max_tries=1)
         api.poll_with_specified_overhead(lambda: True, overhead_rate=0.1, timeout=1, max_tries=1)
 
+    def test_initial_delay(self):
+        start_time = time.time()
+        with patch('time.sleep') as mock_sleep:
+            try:
+                api.poll_with_specified_overhead(lambda: False, overhead_rate=0.1, max_tries=1)
+            except Exception:
+                pass
+            mock_sleep.assert_called_with((time.time() - start_time) * 0.1)
+    
+    def test_max_delay_cap(self):
+        with patch('time.sleep') as mock_sleep:
+            try:
+                api.poll_with_specified_overhead(lambda: False, overhead_rate=1, max_tries=2, start_time=time.time() - 200)
+            except Exception:
+                pass
+            # Ensure that the maximum delay of 120 seconds is not exceeded
+            mock_sleep.assert_called_with(120)
+
+    def test_polling_success(self):
+        with patch('time.sleep', return_value=None) as mock_sleep:
+            api.poll_with_specified_overhead(lambda: True, overhead_rate=0.1)
+            mock_sleep.assert_not_called()
+
+    def test_negative_overhead_rate(self):
+        with self.assertRaises(ValueError):
+            api.poll_with_specified_overhead(lambda: True, overhead_rate=-0.1)
+
+    def test_realistic_scenario(self):
+        responses = [False, False, True]
+        def side_effect():
+            return responses.pop(0)
+
+        with patch('time.sleep') as mock_sleep:
+            api.poll_with_specified_overhead(side_effect, overhead_rate=0.1, max_tries=3)
+            # Ensure that `time.sleep` was called twice (for two false returns)
+            self.assertEqual(mock_sleep.call_count, 2)
 
 @patch('railib.rest.urlopen')
 class TestURLOpenWithRetry(unittest.TestCase):
