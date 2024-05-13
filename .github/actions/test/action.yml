@@ -61,5 +61,5 @@ runs:
         CUSTOM_HEADERS: ${{ inputs.custom_headers }}
       run: |
         mkdir -p ~/.rai
-        python -m unittest
+        python -m unittest -v
       shell: bash
