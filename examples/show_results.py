@@ -24,7 +24,7 @@ from show_error import show_error
 def run(database: str, engine: str, profile: str):
     cfg = config.read(profile=profile)
     ctx = api.Context(**cfg)
-    rsp = api.exec(ctx, database, engine, "def output = 'a'; 'b'; 'c'")
+    rsp = api.exec(ctx, database, engine, "def output { 'a'; 'b'; 'c' }")
     show.results(rsp)
 
 

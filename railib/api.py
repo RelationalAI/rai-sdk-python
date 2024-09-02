@@ -336,7 +336,7 @@ def poll_with_specified_overhead(
 
     if start_time is None:
         start_time = time.time()
-    
+
     tries = 0
     max_time = time.time() + timeout if timeout else None
 
@@ -345,7 +345,7 @@ def poll_with_specified_overhead(
             break
 
         current_time = time.time()
-        
+
         if max_tries is not None and tries >= max_tries:
             raise Exception(f'max tries {max_tries} exhausted')
 
@@ -354,8 +354,8 @@ def poll_with_specified_overhead(
 
         duration = (current_time - start_time) * overhead_rate
         duration = min(duration, max_delay)
-        
-        time.sleep(duration) 
+
+        time.sleep(duration)
         tries += 1
 
 
@@ -800,7 +800,7 @@ def _gen_literal_list(items: list) -> str:
     result = []
     for item in items:
         result.append(_gen_literal(item))
-    return "{" + ",".join(result) + "}"
+    return "(" + ",".join(result) + ")"
 
 
 # Genearte a rel literal for the given string.
@@ -832,7 +832,7 @@ def _gen_syntax_config(syntax: dict = {}) -> str:
     for k in _syntax_options:
         v = syntax.get(k, None)
         if v is not None:
-            result += f"def config:syntax:{k}={_gen_literal(v)}\n"
+            result += f"def config[:syntax, :{k}]: {_gen_literal(v)}\n"
     return result
 
 
@@ -861,7 +861,7 @@ def load_csv(
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
     inputs = {"data": data}
     command = _gen_syntax_config(syntax)
-    command += "def config:data = data\n" "def insert:%s = load_csv[config]" % relation
+    command += "def config[:data]: data\n" "def insert[:%s]: load_csv[config]" % relation
     return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
@@ -879,7 +879,7 @@ def load_json(
     else:
         raise TypeError(f"bad type for arg 'data': {data.__class__.__name__}")
     inputs = {"data": data}
-    command = "def config:data = data\n" "def insert:%s = load_json[config]" % relation
+    command = "def config[:data]: data\n" "def insert[:%s]: load_json[config]" % relation
     return exec_v1(ctx, database, engine, command, inputs=inputs, readonly=False)
 
 
