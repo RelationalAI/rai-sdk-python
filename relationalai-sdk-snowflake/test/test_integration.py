@@ -208,7 +208,7 @@ class TestExecApi(unittest.TestCase):
         cls._session.close()
 
     def test_exec(self):
-        res = json.loads(api.exec(self._session, self._db_name, self._engine_name, "def output = 1 + 1").collect()[0][0])
+        res = json.loads(api.exec(self._session, self._db_name, self._engine_name, "def output {1 + 1}").collect()[0][0])
 
         self.assertEqual(res[0][0], 2)
 
@@ -217,7 +217,7 @@ class TestExecApi(unittest.TestCase):
             self._session,
             self._db_name,
             self._engine_name,
-            "def output = foo",
+            "def output { foo }",
             {"foo": "hello"}
         ).collect()[0][0]
 
@@ -225,7 +225,7 @@ class TestExecApi(unittest.TestCase):
 
     def test_exec_into(self):
         table_name = f"{FQ_SCHEMA}.test_exec_into_table"
-        res = api.exec_into(self._session, self._db_name, self._engine_name, "def output = 1 + 1", connection_parameters["warehouse"], table_name)
+        res = api.exec_into(self._session, self._db_name, self._engine_name, "def output {1 + 1}", connection_parameters["warehouse"], table_name)
         self.assertTrue(check_status_ok(res))
 
         res = self._session.sql(f"select * from {table_name}").collect()
@@ -237,7 +237,7 @@ class TestExecApi(unittest.TestCase):
             self._session,
             self._db_name,
             self._engine_name,
-            "def output = foo",
+            "def output { foo }",
             connection_parameters["warehouse"],
             table_name,
             {"foo": "hello"}
@@ -259,8 +259,8 @@ class TestModelApi(unittest.TestCase):
         api.create_engine(self.session, self.engine_name)
 
     def test_load_model_code(self):
-        res = api.load_model_code(self.session, self.db_name, self.engine_name, "my_model", "def mymax[x, y] = maximum[abs[x], abs[y]]")
-        res = json.loads(api.exec(self.session, self.db_name, self.engine_name, "def output = mymax[5, -10]").collect()[0][0])
+        res = api.load_model_code(self.session, self.db_name, self.engine_name, "my_model", "def mymax[x, y]: maximum[abs[x], abs[y]]")
+        res = json.loads(api.exec(self.session, self.db_name, self.engine_name, "def output { mymax[5, -10] }").collect()[0][0])
 
         self.assertEqual(res[0][0], 10)
 
