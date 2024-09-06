@@ -7,7 +7,7 @@ import tempfile
 from logging.config import fileConfig
 from pathlib import Path
 from railib import api, config
-
+from unittest.mock import patch, MagicMock
 
 # Get creds from env vars if exists
 client_id = os.getenv("CLIENT_ID")
@@ -54,6 +54,43 @@ class TestTransactionAsync(unittest.TestCase):
     def test_v2_exec(self):
         cmd = "def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
         rsp = api.exec(ctx, dbname, engine, cmd)
+
+        # transaction
+        self.assertEqual("COMPLETED", rsp.transaction["state"])
+
+        # metadata
+        with open(os.path.join(Path(__file__).parent, "metadata.pb"), "rb") as f:
+            data = f.read()
+            self.assertEqual(
+                rsp.metadata,
+                api._parse_metadata_proto(data)
+            )
+
+        # problems
+        self.assertEqual(0, len(rsp.problems))
+
+        # results
+        self.assertEqual(
+            {
+                'v1': [
+                    1, 2, 3, 4, 5], 'v2': [
+                    1, 4, 9, 16, 25], 'v3': [
+                    1, 8, 27, 64, 125], 'v4': [
+                        1, 16, 81, 256, 625]}, rsp.results[0]["table"].to_pydict())
+
+    @patch('railib.rest.request')
+    def test_v2_exec_mocked(self, mock_urlopen):
+        # mock the multipart response
+        mocked_resp = MagicMock()
+        mocked_resp.headers.get.return_value = "multipart/form-data; boundary=b11385ead6144ee0a9550db3672a7ccf"
+        with open(os.path.join(Path(__file__).parent, "multipart.data"), "rb") as f:
+            mocked_resp.read.return_value = f.read()
+
+        mock_urlopen.return_value = mocked_resp
+
+        # run the current test
+        cmd = "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+        rsp = api.exec_async(ctx, "mocked_db", "mocked_engine", cmd)
 
         # transaction
         self.assertEqual("COMPLETED", rsp.transaction["state"])
