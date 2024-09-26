@@ -26,7 +26,7 @@ inputs:
   python_version:
     required: false
     description: 'Python version to test with'
-    default: '3.7'
+    default: '3.9'
 
 runs:
   using: 'composite'
@@ -36,7 +36,7 @@ runs:
         repository: RelationalAI/rai-sdk-python
 
     - name: Initialize Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5 
       with:
         python-version: ${{ matrix.python-version || inputs.python_version }}
 
