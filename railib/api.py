@@ -257,7 +257,7 @@ def _parse_multipart_form(
             txn_file.name = name.group(1).decode()
         filename = re.match(b'.*filename="(.+?)"', disposition)
         if not (filename is None):
-            txn_file.filename = name.group(1).decode()
+            txn_file.filename = filename.group(1).decode()
 
         result.append(txn_file)
 
