@@ -2,7 +2,38 @@
 
 ## v0.7.6
 
-* Updated pyarrow
+* Updated pyarrow to 22.0.0
+* Updated protobuf to 4.25.8
+* Regenerated protobuf files with protobuf 4.25.0 compiler
+
+## v0.7.5
+
+* Update setup.py to support Python 3.13 (#154)
+* Migrate Python SDK files for Rel v0.2 (#153)
+
+## v0.7.4
+
+* Fix polling duration calculation in `poll_with_specified_overhead` function (#151)
+
+## v0.7.3
+
+* Add suspend/resume engine to the api (#150)
+* Polling fix (#149)
+
+## v0.7.2
+
+* Create `~/.rai` directory if necessary (#147)
+
+## v0.7.1
+
+* Upgrade dependencies to support Python 3.12 (#146)
+* Relax pandas requirement to be conditional on Python version support
+* Update version constraints to maintain Python 3.7 and 3.8 support
+
+## v0.7.0
+
+* Added read only user support (#144)
+* Fix access token `created_on` attribute setting (#143)
 
 ## v0.6.20
 
