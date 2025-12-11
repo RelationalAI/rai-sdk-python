@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.3
+
+* Updated pyarrow
+
 ## v0.6.20
 
 * Add suspend/resume engine to the api
