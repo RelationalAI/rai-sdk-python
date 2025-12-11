@@ -3,7 +3,7 @@
 ## v0.7.6
 
 * Updated pyarrow to 22.0.0
-* Regenerated protobuf files with protobuf
+* Regenerated protobuf files with protobuf 4.25.0 compiler
 
 ## v0.7.5
 
