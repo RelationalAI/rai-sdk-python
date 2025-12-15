@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.7
+
+* Trigger build workflow / fix issue with pypi
+
 ## v0.7.6
 
 * Updated pyarrow to 22.0.0
