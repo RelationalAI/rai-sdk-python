@@ -40,7 +40,7 @@ setup(
         "pandas>=2.0.0,<3.0.0;python_version>'3.8'",
         "pyarrow>=10.0.0,<23.0.0",
         "requests-toolbelt==1.0.0",
-        "protobuf>=3.20.3,<5.0.0"],
+        "protobuf>=3.20.3,<6.0.0"],
     license="http://www.apache.org/licenses/LICENSE-2.0",
     long_description="Enables access to the RelationalAI REST APIs from Python",
     long_description_content_type="text/markdown",
