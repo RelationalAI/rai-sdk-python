@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.8
+
+* Relax protobuf upper bound to <6.0.0 for lqp compatibility
+
 ## v0.7.7
 
 * Trigger build workflow / fix issue with pypi
