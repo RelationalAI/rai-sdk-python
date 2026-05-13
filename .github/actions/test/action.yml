@@ -1,4 +1,5 @@
 name: 'rai-sdk-python test'
+description: 'Run tests for rai-sdk-python'
 
 inputs:
   client_id:
@@ -31,12 +32,12 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
       with:
         repository: RelationalAI/rai-sdk-python
 
     - name: Initialize Python
-      uses: actions/setup-python@v5 
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version || inputs.python_version }}
 
